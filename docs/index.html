@@ -1,0 +1,2786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3f6b4a">
+<meta name="description" content="Veg Plot Planner — plan, log and track a home vegetable plot, synced across devices.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%95%3C/text%3E%3C/svg%3E">
+<title>Veg Plot Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Sora:wght@500;600;700&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --m-bg: #f2f4ee; --m-surface: #ffffff; --m-surface-2: #e8ece2; --m-border: #d7ddcd;
+  --m-text: #23291f; --m-text-dim: #5b6353;
+  --m-accent: #3f6b4a; --m-accent-ink: #ffffff; --m-accent-2: #b5842a;
+  --m-warn: #b5482a; --m-ok: #3f6b4a; --m-soil: #8a6a4d;
+
+  --p-bg: #cfe6b0; --p-surface: #f4ecd8; --p-surface-2: #e3d6ae; --p-border: #2b2118;
+  --p-text: #2b2118; --p-text-dim: #5b4a37;
+  --p-accent: #4c7a34; --p-accent-ink: #f4ecd8; --p-accent-2: #d18a2b;
+  --p-warn: #c0392b; --p-ok: #4c7a34; --p-soil: #6b4a34; --p-sky: #bfe6f5;
+
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Karla', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-wordmark: 'Press Start 2P', var(--font-display);
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-mode="light"]){
+    --m-bg:#171b14; --m-surface:#202519; --m-surface-2:#262c1e; --m-border:#38402c;
+    --m-text:#e9ede1; --m-text-dim:#a9b39c; --m-accent:#7bbf6a; --m-accent-ink:#10230f;
+    --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f;
+    --p-bg:#16210f; --p-surface:#241d13; --p-surface-2:#2e2416; --p-border:#efe4c8;
+    --p-text:#f4ecd8; --p-text-dim:#cbb98f; --p-accent:#7bbf6a; --p-accent-ink:#16210f;
+    --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57;
+  }
+}
+:root[data-mode="dark"]{
+  --m-bg:#171b14; --m-surface:#202519; --m-surface-2:#262c1e; --m-border:#38402c;
+  --m-text:#e9ede1; --m-text-dim:#a9b39c; --m-accent:#7bbf6a; --m-accent-ink:#10230f;
+  --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f;
+  --p-bg:#16210f; --p-surface:#241d13; --p-surface-2:#2e2416; --p-border:#efe4c8;
+  --p-text:#f4ecd8; --p-text-dim:#cbb98f; --p-accent:#7bbf6a; --p-accent-ink:#16210f;
+  --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; }
+body{ background:var(--m-bg); color:var(--m-text); font-family:var(--font-body); padding-bottom:4rem; }
+
+/* ---------- theme settings (in-header) ---------- */
+.header-right{ display:flex; align-items:center; gap:.6rem; }
+.theme-btn{
+  font-size:.85rem; line-height:1; width:1.7rem; height:1.7rem; border-radius:6px;
+  border:1px solid currentColor; opacity:.65; background:transparent; color:inherit;
+  cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; flex:none;
+}
+.theme-btn:hover{ opacity:1; }
+body[data-style="pixel"] .theme-btn{ border-radius:0; border:2px solid var(--p-accent-ink); }
+.theme-menu{ min-width:210px; }
+.theme-menu .tm-label{ font-family:var(--font-mono); font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; color:var(--m-text-dim); }
+.seg{ display:flex; border:1px solid var(--m-border); border-radius:6px; overflow:hidden; }
+.seg button{ flex:1; font-family:var(--font-mono); font-size:.72rem; color:var(--m-text); background:var(--m-surface-2); border:none; padding:.4rem .5rem; cursor:pointer; }
+.seg button.active{ background:var(--m-accent); color:var(--m-accent-ink); font-weight:700; }
+.seg button:not(:last-child){ border-right:1px solid var(--m-border); }
+
+.stage{ max-width:960px; margin:0 auto; padding:1.5rem 1rem 0; }
+.page{ display:none; }
+.page.active{ display:block; }
+.note{ max-width:960px; margin:1rem auto 0; padding:.75rem 1rem 0; border-top:1px dashed var(--m-border); font-family:var(--font-mono); font-size:.72rem; line-height:1.5; color:var(--m-text-dim); }
+.note b{ color:var(--m-text); font-weight:600; }
+body[data-style="pixel"] .note{ border-top-color:var(--p-border); color:var(--p-text-dim); }
+body[data-style="pixel"] .note b{ color:var(--p-text); }
+
+/* ============================================================
+   SHARED APP SHELL (Modern base -- Mixed reuses this almost entirely)
+   ============================================================ */
+body[data-style="modern"] .app-shell, body[data-style="mixed"] .app-shell{
+  border:1px solid var(--m-border); border-radius:16px; overflow:hidden; background:var(--m-surface);
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+body[data-style="mixed"] .app-shell{ border:2px solid var(--p-border); border-radius:10px; box-shadow:3px 3px 0 rgba(0,0,0,.15); }
+body[data-style="modern"] .app-header, body[data-style="mixed"] .app-header{
+  padding:1rem 1.4rem; border-bottom:1px solid var(--m-border);
+  display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+}
+body[data-style="modern"] .app-header h1, body[data-style="mixed"] .app-header h1{ font-family:var(--font-display); font-size:1.1rem; font-weight:700; margin:0; }
+body[data-style="mixed"] .app-header{ background:linear-gradient(135deg, var(--m-accent) 0%, #6b8f52 100%); color:#fff; border-bottom:4px solid var(--p-border); }
+body[data-style="mixed"] .app-nav{ border-bottom:2px solid var(--p-border); }
+body[data-style="mixed"] .stat{ border:2px solid var(--p-border); border-radius:6px; }
+body[data-style="mixed"] .inv-card{ border-radius:8px; box-shadow:2px 2px 0 rgba(0,0,0,.1); }
+body[data-style="mixed"] .app-header .date{ color:rgba(255,255,255,.85) !important; }
+body[data-style="modern"] .app-header .date, body[data-style="mixed"] .app-header .date{ font-family:var(--font-mono); color:var(--m-text-dim); font-size:.82rem; }
+body[data-style="modern"] .app-nav, body[data-style="mixed"] .app-nav{ display:flex; gap:0; padding:0 1.4rem; border-bottom:1px solid var(--m-border); }
+body[data-style="modern"] .app-nav a, body[data-style="mixed"] .app-nav a{
+  font-family:var(--font-body); font-size:.85rem; font-weight:600; color:var(--m-text-dim); text-decoration:none;
+  padding:.75rem .2rem; border-bottom:2px solid transparent; margin-right:1.1rem;
+}
+body[data-style="modern"] .app-nav a.current, body[data-style="mixed"] .app-nav a.current{ color:var(--m-accent); border-color:var(--m-accent); }
+body[data-style="modern"] .app-body, body[data-style="mixed"] .app-body{ padding:1.3rem; display:grid; gap:1.05rem; }
+
+body[data-style="modern"] .grid-2, body[data-style="mixed"] .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:1.05rem; align-items:stretch; }
+body[data-style="modern"] .grid-2 > .card, body[data-style="mixed"] .grid-2 > .card{ margin-top:0; display:flex; flex-direction:column; }
+@media (max-width:720px){ body[data-style="modern"] .grid-2, body[data-style="mixed"] .grid-2{ grid-template-columns:1fr; } }
+
+body[data-style="modern"] .card, body[data-style="mixed"] .card{ background:var(--m-surface); border:1px solid var(--m-border); border-radius:12px; padding:1rem 1.15rem; margin:0; }
+body[data-style="mixed"] .card{ border:2px solid var(--p-border); border-radius:8px; box-shadow:2px 2px 0 rgba(0,0,0,.12); border-top:4px solid var(--m-accent); }
+body[data-style="modern"] .card h3, body[data-style="mixed"] .card h3{ font-family:var(--font-display); font-size:.92rem; font-weight:700; margin:0 0 .65rem; display:flex; align-items:center; gap:.5rem; }
+body[data-style="modern"] .eyebrow, body[data-style="mixed"] .eyebrow{ font-family:var(--font-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--m-text-dim); }
+body[data-style="modern"] .stat-row, body[data-style="mixed"] .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; }
+body[data-style="modern"] .stat, body[data-style="mixed"] .stat{ background:var(--m-surface-2); border-radius:10px; padding:.75rem .85rem; }
+body[data-style="modern"] .stat .n, body[data-style="mixed"] .stat .n{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.4rem; font-weight:700; }
+body[data-style="modern"] .stat .l, body[data-style="mixed"] .stat .l{ font-size:.7rem; color:var(--m-text-dim); margin-top:.15rem; }
+
+body[data-style="modern"] ul.tasks, body[data-style="mixed"] ul.tasks{ list-style:none; margin:0; padding:0; display:grid; gap:.5rem; }
+body[data-style="modern"] ul.tasks li, body[data-style="mixed"] ul.tasks li{ display:flex; gap:.6rem; align-items:flex-start; font-size:.86rem; }
+body[data-style="modern"] ul.tasks .chk, body[data-style="mixed"] ul.tasks .chk{ width:17px; height:17px; border-radius:5px; border:1.5px solid var(--m-border); margin-top:.1rem; flex:none; }
+body[data-style="modern"] ul.tasks .due, body[data-style="mixed"] ul.tasks .due{ font-family:var(--font-mono); font-size:.7rem; color:var(--m-text-dim); }
+body[data-style="modern"] .pill, body[data-style="mixed"] .pill{ display:inline-flex; align-items:center; gap:.3rem; font-size:.66rem; font-weight:700; padding:.15rem .5rem; border-radius:999px; font-family:var(--font-mono); }
+body[data-style="modern"] .pill.warn, body[data-style="mixed"] .pill.warn{ background:#f6e3da; color:var(--m-warn); }
+body[data-style="modern"] .pill.ok, body[data-style="mixed"] .pill.ok{ background:#dfe9d9; color:var(--m-ok); }
+body[data-style="modern"] .pill.info, body[data-style="mixed"] .pill.info{ background:#e6e0f0; color:#5b4a8a; }
+body[data-style="modern"] .pill.prop, body[data-style="mixed"] .pill.prop{ background:#dfeaf2; color:#2d5f7a; }
+
+body[data-style="modern"] .events, body[data-style="mixed"] .events{ display:grid; gap:.55rem; }
+body[data-style="modern"] .event, body[data-style="mixed"] .event{ display:flex; justify-content:space-between; align-items:baseline; font-size:.84rem; border-bottom:1px dashed var(--m-border); padding-bottom:.5rem; }
+body[data-style="modern"] .event:last-child, body[data-style="mixed"] .event:last-child{ border:none; padding:0; }
+body[data-style="modern"] .event .d, body[data-style="mixed"] .event .d{ font-family:var(--font-mono); color:var(--m-accent-2); font-weight:600; }
+
+body[data-style="modern"] .inv-grid, body[data-style="mixed"] .inv-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; }
+@media (max-width:560px){ body[data-style="modern"] .inv-grid, body[data-style="mixed"] .inv-grid{ grid-template-columns:1fr; } }
+body[data-style="modern"] .inv-card, body[data-style="mixed"] .inv-card{ border:1px solid var(--m-border); border-radius:12px; padding:.85rem 1rem; background:var(--m-surface); display:grid; align-content:space-between; gap:.5rem; }
+body[data-style="mixed"] .inv-card{ border-color: var(--p-border); }
+.inv-top{ display:flex; gap:.7rem; align-items:center; padding-right:1.6rem; }
+body[data-style="modern"] .inv-top .sprite-wrap, body[data-style="mixed"] .inv-top .sprite-wrap{ background:var(--m-surface-2); border-radius:8px; padding:5px; }
+body[data-style="mixed"] .inv-top .sprite-wrap{ background:var(--p-sky); border-radius:4px; box-shadow:inset 0 0 0 2px var(--p-border); }
+.inv-name{ font-family:var(--font-display); font-weight:700; font-size:.9rem; }
+.inv-variety{ font-size:.74rem; color:var(--m-text-dim); }
+.inv-meta{ display:grid; grid-template-columns:repeat(2,1fr); gap:.35rem .75rem; font-size:.71rem; color:var(--m-text-dim); }
+.inv-meta b{ color:var(--m-text); font-weight:600; display:block; font-size:.77rem; }
+.inv-count{ font-family:var(--font-mono); font-size:.7rem; background:var(--m-surface-2); border-radius:6px; padding:.15rem .5rem; align-self:flex-start; }
+
+.legend{ display:flex; gap:1rem; flex-wrap:wrap; font-size:.75rem; color:var(--m-text-dim); margin-top:.85rem; }
+.legend .sw{ width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:.35rem; vertical-align:-1px; }
+
+/* ============================================================
+   PIXEL / FARM-GAME THEME (chrome is game-like; TEXT stays plain)
+   ============================================================ */
+body[data-style="pixel"]{
+  background:var(--p-bg); color:var(--p-text); font-family:var(--font-body); font-size:1rem;
+  background-image: linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px);
+  background-size:16px 16px;
+}
+body[data-style="pixel"] .app-shell{ border:4px solid var(--p-text); border-radius:0; background:var(--p-surface); box-shadow:6px 6px 0 rgba(0,0,0,.25); }
+body[data-style="pixel"] .app-header{ background:var(--p-accent); color:var(--p-accent-ink); padding:.85rem 1.1rem; border-bottom:4px solid var(--p-text); display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+body[data-style="pixel"] .app-header h1{ font-family:var(--font-wordmark); font-size:.72rem; line-height:1.6; letter-spacing:.02em; margin:0; }
+body[data-style="pixel"] .app-header .date{ font-family:var(--font-mono); font-size:.85rem; }
+body[data-style="pixel"] .app-nav{ display:flex; gap:0; border-bottom:4px solid var(--p-text); background:var(--p-surface-2); }
+body[data-style="pixel"] .app-nav a{ font-family:var(--font-body); font-weight:600; font-size:.88rem; color:var(--p-text); text-decoration:none; padding:.6rem 1.05rem; border-right:3px solid var(--p-text); }
+body[data-style="pixel"] .app-nav a.current{ background:var(--p-bg); box-shadow:inset 0 -4px 0 var(--p-accent-2); }
+body[data-style="pixel"] .app-body{ padding:1.2rem; display:grid; gap:1rem; }
+body[data-style="pixel"] .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:1rem; align-items:stretch; }
+body[data-style="pixel"] .grid-2 > .card{ margin-top:0; display:flex; flex-direction:column; }
+@media (max-width:720px){ body[data-style="pixel"] .grid-2{ grid-template-columns:1fr; } }
+body[data-style="pixel"] .card{ background:var(--p-surface); border:3px solid var(--p-text); padding:.9rem 1rem; margin:0; box-shadow:4px 4px 0 rgba(0,0,0,.2); }
+body[data-style="pixel"] .card h3{ font-family:var(--font-display); font-size:.95rem; font-weight:700; margin:0 0 .65rem; display:flex; align-items:center; gap:.5rem; }
+body[data-style="pixel"] .eyebrow{ font-family:var(--font-mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--p-text-dim); }
+body[data-style="pixel"] .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; }
+body[data-style="pixel"] .stat{ background:var(--p-surface-2); border:2px solid var(--p-text); padding:.6rem .5rem; text-align:center; }
+body[data-style="pixel"] .stat .n{ font-family:var(--font-mono); font-size:1.2rem; font-weight:700; }
+body[data-style="pixel"] .stat .l{ font-family:var(--font-body); font-size:.72rem; color:var(--p-text-dim); }
+body[data-style="pixel"] ul.tasks{ list-style:none; margin:0; padding:0; display:grid; gap:.5rem; }
+body[data-style="pixel"] ul.tasks li{ display:flex; gap:.6rem; align-items:flex-start; font-size:.9rem; }
+body[data-style="pixel"] ul.tasks .chk{ width:18px; height:18px; border:2px solid var(--p-text); margin-top:.1rem; flex:none; background:var(--p-surface); }
+body[data-style="pixel"] ul.tasks .due{ font-family:var(--font-mono); font-size:.76rem; color:var(--p-text-dim); }
+body[data-style="pixel"] .pill{ display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; padding:.08rem .5rem; border:2px solid var(--p-text); font-family:var(--font-body); }
+body[data-style="pixel"] .pill.warn{ background:var(--p-warn); color:#fff; }
+body[data-style="pixel"] .pill.ok{ background:var(--p-ok); color:#fff; }
+body[data-style="pixel"] .pill.info{ background:var(--p-sky); color:var(--p-text); }
+body[data-style="pixel"] .pill.prop{ background:#cfe0ea; color:#1f4a5c; }
+body[data-style="pixel"] .events{ display:grid; gap:.5rem; }
+body[data-style="pixel"] .event{ display:flex; justify-content:space-between; align-items:baseline; font-size:.88rem; border-bottom:2px dotted var(--p-text); padding-bottom:.4rem; }
+body[data-style="pixel"] .event:last-child{ border:none; padding:0; }
+body[data-style="pixel"] .event .d{ font-family:var(--font-mono); color:var(--p-accent-2); font-weight:700; }
+body[data-style="pixel"] .inv-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:.8rem; }
+@media (max-width:560px){ body[data-style="pixel"] .inv-grid{ grid-template-columns:1fr; } }
+body[data-style="pixel"] .inv-card{ border:3px solid var(--p-text); padding:.8rem .9rem; background:var(--p-surface); display:grid; align-content:space-between; gap:.5rem; box-shadow:4px 4px 0 rgba(0,0,0,.2); }
+body[data-style="pixel"] .inv-top .sprite-wrap{ background:var(--p-sky); border:2px solid var(--p-text); padding:4px; }
+body[data-style="pixel"] .inv-name{ font-family:var(--font-display); font-size:.86rem; }
+body[data-style="pixel"] .inv-variety{ font-size:.76rem; color:var(--p-text-dim); }
+body[data-style="pixel"] .inv-meta{ font-family:var(--font-body); font-size:.78rem; color:var(--p-text-dim); }
+body[data-style="pixel"] .inv-meta b{ color:var(--p-text); font-size:.8rem; }
+body[data-style="pixel"] .inv-count{ font-family:var(--font-mono); font-size:.72rem; background:var(--p-surface-2); border:2px solid var(--p-text); padding:.05rem .45rem; align-self:flex-start; }
+body[data-style="pixel"] .legend{ font-family:var(--font-body); }
+body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
+
+/* ============================================================
+   BED DIAGRAM -- shared structure, per-style skin
+   A / B vertical columns + walkway, matching the paper layout
+   ============================================================ */
+.bed-diagram{ display:block; width:100%; max-width:420px; margin:0 auto; }
+.bed-grid{
+  display:grid; grid-template-columns: 24px 1fr 14px 1fr; grid-auto-rows:auto; align-items:stretch; row-gap:0;
+  width:100%;
+}
+.bed-grid > *{ min-width:0; }
+.lab{ display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.78rem; padding:.3rem 0 .5rem; }
+.bed-rownum{ display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:.7rem; color:var(--m-text-dim); }
+.bed-walk{ background: repeating-linear-gradient(180deg, #9aa08e 0 6px, #8a9080 6px 12px); }
+.bed-hr{ grid-column:1/-1; border:none; border-top:1px solid var(--m-border); margin:.5rem 0 .3rem; width:100%; }
+.bed-foot{ grid-column:1/-1; text-align:center; font-family:var(--font-mono); font-size:.72rem; padding:0 0 .3rem; letter-spacing:.05em; text-transform:uppercase; color:var(--m-text-dim); }
+.bed-caption{ text-align:center; font-family:var(--font-mono); font-size:.68rem; color:var(--m-text-dim); margin-top:.5rem; }
+
+.section{
+  min-height:40px; margin:2px 0; position:relative; display:flex; align-items:center; gap:.5rem; padding:0 .5rem;
+  background: var(--m-soil); border-radius:6px;
+}
+.section .label{ font-family:var(--font-mono); font-size:.62rem; color:rgba(255,255,255,.75); position:absolute; top:2px; left:6px; }
+.section.empty{ opacity:.5; }
+.section .crop-name{ font-size:.72rem; color:#fff; font-weight:600; }
+.section .ready-ring{ position:absolute; inset:-2px; border-radius:8px; border:2px solid var(--m-accent-2); animation:pulse 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion:reduce){ .section .ready-ring{ animation:none; } }
+@keyframes pulse{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
+.section .check{ position:absolute; bottom:3px; right:4px; width:14px; height:14px; border-radius:4px; background:rgba(255,255,255,.85); border:1px solid rgba(0,0,0,.2); }
+.section .sprite{ flex:none; }
+.section.ready-tile{ box-shadow: inset 0 0 0 1px rgba(0,0,0,.12), inset 0 0 0 3px var(--m-accent-2); }
+.section .ready-flag{
+  position:absolute; top:2px; right:2px; background:var(--m-accent-2); color:#241a06; font-size:.56rem; font-weight:800;
+  text-transform:uppercase; letter-spacing:.03em; padding:.06rem .32rem; border-radius:4px; z-index:2;
+}
+.section .volunteer-btn{
+  position:absolute; bottom:2px; left:4px; width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(255,255,255,.85);
+  background:rgba(0,0,0,.18); font-size:.6rem; line-height:13px; text-align:center; color:#fff; cursor:pointer; z-index:3; padding:0;
+}
+.section .volunteer-btn.logged{ background:var(--m-accent-2); border-color:rgba(0,0,0,.35); color:#241a06; }
+.volunteer-form{
+  position:absolute; z-index:20; background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:.6rem;
+  box-shadow:0 6px 18px rgba(0,0,0,.22); display:grid; gap:.4rem; font-size:.72rem; min-width:180px; color:var(--m-text);
+}
+.volunteer-form label{ display:grid; gap:.15rem; }
+.volunteer-form input{ font-size:.75rem; padding:.3rem; border-radius:5px; border:1px solid var(--m-border); font-family:var(--font-body); }
+.volunteer-form .row{ display:flex; gap:.4rem; }
+.volunteer-form .row button{ flex:1; font-family:var(--font-mono); font-size:.68rem; padding:.3rem .4rem; border-radius:5px; border:none; cursor:pointer; }
+.volunteer-form .save{ background:var(--m-accent); color:var(--m-accent-ink); }
+.volunteer-form .cancel{ background:var(--m-surface-2); color:var(--m-text-dim); }
+/* thin outline on every sprite icon so it's clear where the artwork should fill to */
+.sprite{ outline:1px solid rgba(0,0,0,.4); outline-offset:-1px; }
+
+/* the in-page nav (top of every page) now actually switches pages */
+.app-nav a{ cursor:pointer; }
+
+/* remove control for a user-added task/event */
+.custom-item-rm{ background:none; border:none; cursor:pointer; font-size:.68rem; color:var(--m-text-dim); padding:.1rem .3rem; flex:none; }
+.custom-item-rm:hover{ color:var(--m-warn); }
+ul.tasks li .custom-item-rm{ margin-left:auto; }
+
+/* Overview task checkboxes are real controls now: ticking one either just
+   marks it done, or (for a sow/harvest task) timestamps a real record --
+   see markPlanted() / openHarvestLogForm() in the script. */
+ul.tasks .chk{ cursor:pointer; padding:0; -webkit-appearance:none; appearance:none; position:relative; }
+ul.tasks .chk:disabled{ cursor:default; }
+ul.tasks li.done{ opacity:.6; }
+ul.tasks li.done .task-text{ text-decoration:line-through; }
+ul.tasks li.done .chk{ background:var(--m-accent); border-color:var(--m-accent); }
+ul.tasks li.done .chk::after{
+  content:''; position:absolute; left:4px; top:1px; width:5px; height:9px;
+  border:solid var(--m-accent-ink); border-width:0 2px 2px 0; transform:rotate(45deg);
+}
+body[data-style="pixel"] ul.tasks li.done .chk{ background:var(--p-accent); border-color:var(--p-text); }
+body[data-style="pixel"] ul.tasks li.done .chk::after{ border-color:var(--p-accent-ink); }
+
+/* Overview tasks act as shortcuts into the rest of the app: jump to the
+   relevant page and pulse the thing the task is about so it's easy to spot. */
+ul.tasks li.task-link{ cursor:pointer; border-radius:8px; margin:0 -.4rem; padding:.15rem .4rem; transition:background .15s; }
+ul.tasks li.task-link:hover{ background:var(--m-surface-2); }
+body[data-style="pixel"] ul.tasks li.task-link:hover{ background:var(--p-surface-2); }
+ul.tasks li.task-link .goto-arrow{ margin-left:auto; padding-left:.4rem; opacity:.5; font-family:var(--font-mono); font-size:.78rem; align-self:center; }
+ul.tasks li.task-link:hover .goto-arrow{ opacity:1; }
+@keyframes gotoPulse{
+  0%{ box-shadow:0 0 0 0 rgba(224,168,63,.6); }
+  70%{ box-shadow:0 0 0 14px rgba(224,168,63,0); }
+  100%{ box-shadow:0 0 0 0 rgba(224,168,63,0); }
+}
+.goto-flash{ animation: gotoPulse 1.4s ease-out 2; position:relative; z-index:1; }
+body[data-style="pixel"] .goto-flash{ outline:3px solid var(--p-accent-2); outline-offset:2px; }
+body[data-style="modern"] .goto-flash, body[data-style="mixed"] .goto-flash{ outline:3px solid var(--m-accent-2); outline-offset:2px; border-radius:6px; }
+
+/* ---------- Stats page: monthly bar chart (now driven by real logged data) ---------- */
+.stats-chart{ display:flex; align-items:flex-end; gap:.35rem; height:150px; padding:.5rem .2rem 0; border-bottom:1px solid var(--m-border); }
+.stats-month-group{ flex:1; display:flex; flex-direction:column; align-items:center; gap:.4rem; min-width:0; }
+.stats-bars{ display:flex; align-items:flex-end; gap:2px; height:128px; }
+.stats-bar{ width:10px; border-radius:4px 4px 0 0; background:var(--m-accent-2); cursor:pointer; transition:opacity .15s, filter .15s; }
+.stats-bar.harvested{ background:var(--m-accent); }
+.stats-bar:focus-visible{ outline:2px solid var(--m-accent); outline-offset:2px; }
+.stats-bar.hover{ filter:brightness(1.12); }
+.stats-month-label{ font-family:var(--font-mono); font-size:.62rem; color:var(--m-text-dim); }
+.stats-legend{ display:flex; gap:1.1rem; margin-top:.6rem; font-size:.74rem; color:var(--m-text-dim); }
+.stats-legend .sw{ width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:.35rem; vertical-align:-1px; }
+.stats-legend .sw.sown{ background:var(--m-accent-2); }
+.stats-legend .sw.harvested{ background:var(--m-accent); }
+.stats-tooltip{ position:fixed; transform:translate(-50%,-100%); background:var(--m-text); color:var(--m-bg); font-family:var(--font-mono); font-size:.7rem; line-height:1.5; padding:.4rem .65rem; border-radius:8px; pointer-events:none; opacity:0; transition:opacity .12s; z-index:80; white-space:nowrap; }
+.stats-tooltip.show{ opacity:1; }
+.stats-tooltip b.hd{ display:block; font-family:var(--font-body); font-weight:700; margin-bottom:.15rem; }
+.stats-tooltip .row{ display:block; }
+body[data-style="pixel"] .stats-bar{ border-radius:0; }
+body[data-style="pixel"] .stats-chart{ border-bottom-color:var(--p-border); }
+body[data-style="pixel"] .stats-tooltip{ background:var(--p-text); color:var(--p-bg); border-radius:0; border:2px solid var(--p-text); }
+
+/* ---------- Stats page: crop ranking, harvest log, notes ---------- */
+.stats-rank-row{ display:grid; grid-template-columns:26px 1fr 2fr auto; align-items:center; gap:.6rem; padding:.35rem 0; }
+.stats-rank-row .sprite-wrap{ background:var(--m-surface-2); border-radius:6px; padding:2px; display:flex; align-items:center; justify-content:center; }
+.stats-rank-name{ font-size:.82rem; }
+.stats-rank-bar-wrap{ background:var(--m-surface-2); border-radius:6px; height:10px; overflow:hidden; }
+.stats-rank-bar{ height:100%; background:var(--m-accent); border-radius:6px; }
+.stats-rank-val{ font-family:var(--font-mono); font-size:.68rem; color:var(--m-text-dim); white-space:nowrap; }
+body[data-style="pixel"] .stats-rank-row .sprite-wrap{ background:var(--p-sky); border:2px solid var(--p-text); border-radius:0; }
+body[data-style="pixel"] .stats-rank-bar-wrap, body[data-style="pixel"] .stats-rank-bar{ border-radius:0; }
+
+.stats-harvest-item{ padding:.6rem 0; border-bottom:1px dashed var(--m-border); }
+.stats-harvest-item:last-child{ border-bottom:none; padding-bottom:0; }
+.stats-harvest-item:first-child{ padding-top:0; }
+.stats-harvest-head{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.stats-harvest-head .sprite-wrap{ background:var(--m-surface-2); border-radius:6px; padding:2px; flex:none; }
+.stats-harvest-head b{ font-size:.86rem; }
+.stats-harvest-total{ margin-left:auto; font-family:var(--font-mono); font-size:.72rem; color:var(--m-text-dim); }
+.stats-harvest-occasions{ list-style:none; margin:.4rem 0 0; padding:0 0 0 2.15rem; display:grid; gap:.2rem; font-size:.78rem; color:var(--m-text-dim); }
+body[data-style="pixel"] .stats-harvest-head .sprite-wrap{ background:var(--p-sky); border:2px solid var(--p-text); border-radius:0; }
+body[data-style="pixel"] .stats-harvest-item{ border-bottom:2px dotted var(--p-text); }
+
+.stats-notes-input{ width:100%; font-family:var(--font-body); font-size:.84rem; padding:.65rem .75rem; border-radius:8px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); resize:vertical; }
+body[data-style="pixel"] .stats-notes-input{ border-radius:0; border:2px solid var(--p-text); background:var(--p-surface); color:var(--p-text); }
+
+body[data-style="modern"] .bed-grid, body[data-style="mixed"] .bed-grid{ padding:.2rem; }
+body[data-style="modern"] .lab, body[data-style="mixed"] .lab{ color:var(--m-text-dim); }
+body[data-style="modern"] .section, body[data-style="mixed"] .section{ margin:3px 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+body[data-style="mixed"] .section{ background-image: radial-gradient(rgba(0,0,0,.16) 22%, transparent 23%); background-size:9px 9px; background-blend-mode:multiply; }
+body[data-style="modern"] .bed-walk, body[data-style="mixed"] .bed-walk{ margin:3px 2px; border-radius:4px; }
+
+body[data-style="pixel"] .bed-grid{ background:var(--p-surface-2); border:3px solid var(--p-text); padding:.3rem; gap:2px; }
+body[data-style="pixel"] .lab{ color:var(--p-text); }
+body[data-style="pixel"] .bed-rownum{ font-family:var(--font-body); font-size:.82rem; color:var(--p-text-dim); }
+body[data-style="pixel"] .bed-foot{ font-family:var(--font-body); font-size:.8rem; color:var(--p-text-dim); }
+body[data-style="pixel"] .bed-hr{ border-top:2px solid var(--p-text); }
+body[data-style="pixel"] .bed-caption{ color:var(--p-text-dim); }
+body[data-style="pixel"] .section{ border-radius:0; background-image: radial-gradient(rgba(0,0,0,.18) 20%, transparent 21%); background-size:8px 8px; }
+body[data-style="pixel"] .section .label{ font-family:var(--font-body); font-size:.72rem; }
+body[data-style="pixel"] .section .crop-name{ font-family:var(--font-body); font-size:.76rem; }
+
+/* ============================================================
+   PLAN PAGE
+   ============================================================ */
+.year-tabs{ display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
+.year-tabs .seg button{ font-family:var(--font-mono); font-size:.78rem; color:var(--m-text); background:var(--m-surface-2); border:none; padding:.35rem .8rem; cursor:pointer; }
+.year-tabs .seg{ border:1px solid var(--m-border); border-radius:6px; overflow:hidden; }
+.year-tabs .seg button:not(:last-child){ border-right:1px solid var(--m-border); }
+.year-tabs .seg button.active{ background:var(--m-accent); color:var(--m-accent-ink); font-weight:700; }
+.year-tabs .seg button:disabled{ opacity:.5; cursor:not-allowed; }
+.plan-hint{ font-size:.76rem; color:var(--m-text-dim); }
+
+.plan-layout{ display:grid; grid-template-columns:200px 1fr; gap:1rem; align-items:stretch; }
+.plan-layout > *{ min-width:0; }
+/* The calendar is the fixed reference (the plot itself doesn't resize) --
+   align-self:start stops it being stretched to match whatever height the
+   grid row ends up computing (which, without this, includes the seed
+   bank's OWN specified height as an input -- a feedback loop where each
+   side keeps re-measuring a value the other side already distorted). This
+   keeps .plan-main-wrap's offsetHeight always equal to its true, natural
+   content height, so syncPlanSidebarHeight() has a stable number to peg to. */
+.plan-main-wrap{ align-self:start; }
+@media (max-width:680px){ .plan-layout{ grid-template-columns:1fr; align-items:start; } }
+
+/* Height here is set in px by JS (syncPlanSidebarHeight), not CSS: the
+   calendar's real height depends on content that changes (pots added, year
+   switched), and two independent-content flex/grid siblings can't reliably
+   stretch to match each other with a plain percentage -- one side ends up
+   "winning" the auto-size contest and the other is left with dead space. */
+.plan-sidebar-col{ display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.plan-sidebar{ display:grid; align-content:start; gap:.5rem; flex:1; min-height:0; overflow-y:auto; padding:.15rem; }
+@media (max-width:680px){ .plan-sidebar-col{ height:auto !important; } .plan-sidebar{ grid-auto-flow:column; grid-auto-columns:150px; overflow-x:auto; overflow-y:visible; } }
+.plan-seed{
+  display:flex; gap:.55rem; align-items:center; padding:.45rem .55rem; border:1px solid var(--m-border); border-radius:8px;
+  background:var(--m-surface); cursor:grab; touch-action:none; user-select:none;
+}
+.plan-seed:active{ cursor:grabbing; }
+.plan-seed .sprite-wrap{ flex:none; background:var(--m-surface-2); border-radius:6px; padding:3px; }
+.plan-seed .txt{ display:grid; gap:.05rem; min-width:0; }
+.plan-seed .nm{ font-size:.76rem; font-weight:700; line-height:1.2; }
+.plan-seed .sub{ font-size:.65rem; color:var(--m-text-dim); line-height:1.3; }
+.ghost-drag .ghost-txt{ display:grid; gap:.05rem; }
+.ghost-drag .ghost-span{ font-size:.62rem; font-weight:500; color:var(--m-text-dim); }
+
+.plan-main{ overflow-x:auto; border:1px solid var(--m-border); border-radius:10px; }
+.plan-grid{ display:grid; grid-template-columns:76px repeat(12, minmax(56px,1fr)); min-width:820px; }
+.plan-head{ position:sticky; top:0; background:var(--m-surface-2); font-family:var(--font-mono); font-size:.64rem; text-transform:uppercase; letter-spacing:.04em; text-align:center; padding:.5rem 0; border-bottom:1px solid var(--m-border); z-index:3; }
+.plan-head.corner{ position:sticky; left:0; z-index:4; }
+.plan-rowlabel{ position:sticky; left:0; background:var(--m-surface); font-family:var(--font-mono); font-size:.7rem; display:flex; align-items:center; padding:0 .5rem; border-right:1px solid var(--m-border); border-bottom:1px solid var(--m-border); z-index:2; }
+.plan-cell{ border-right:1px solid var(--m-border); border-bottom:1px solid var(--m-border); min-height:46px; position:relative; }
+.plan-cell.drop-hover{ background:rgba(63,107,74,.16); }
+.plan-block{
+  position:relative; margin:3px; border-radius:6px; display:flex; align-items:center; gap:.3rem; padding:0 .4rem;
+  color:#fff; font-size:.68rem; font-weight:700; cursor:pointer; overflow:hidden; white-space:nowrap; z-index:1;
+  background:var(--m-accent);
+}
+.plan-block .sprite{ flex:none; }
+.plan-block .nm{ overflow:hidden; text-overflow:ellipsis; }
+.plan-block .badge{ margin-left:auto; font-family:var(--font-mono); font-size:.6rem; background:rgba(255,255,255,.28); border-radius:999px; padding:.05rem .4rem; flex:none; }
+/* the tick that timestamps an actual "I sowed this today" record, separate
+   from the drag-drop which only schedules the intent -- see markPlanted() */
+.plan-block .sow-tick{ flex:none; width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(255,255,255,.7); background:transparent; color:inherit; font-size:.6rem; line-height:1; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer; margin-left:.3rem; }
+.plan-block .sow-tick:hover{ background:rgba(255,255,255,.3); }
+.plan-block .sow-tick.done{ background:rgba(255,255,255,.92); color:var(--m-accent); border-color:transparent; cursor:default; }
+.plan-block .rm{ flex:none; font-size:.75rem; opacity:.8; padding-left:.1rem; }
+.plan-block.warn{ outline:2px dashed var(--m-warn); outline-offset:-2px; }
+.plan-block:not(.continues-in){ cursor:grab; }
+.plan-block:not(.continues-in):active{ cursor:grabbing; }
+.plan-block.continues-out{ border-right:3px dashed rgba(255,255,255,.7); }
+.plan-block.continues-in{ opacity:.82; border-left:3px dashed rgba(255,255,255,.7); cursor:pointer; }
+.plan-block.continues-in .nm{ font-style:italic; }
+.plan-addrow{ display:flex; align-items:center; padding:.4rem .5rem; }
+.plan-addrow button{ font-family:var(--font-mono); font-size:.7rem; color:var(--m-text-dim); background:transparent; border:1px dashed var(--m-border); border-radius:6px; padding:.3rem .6rem; cursor:pointer; }
+
+.plan-legend{ display:flex; gap:1.1rem; flex-wrap:wrap; font-size:.74rem; color:var(--m-text-dim); }
+.plan-legend .sw{ width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:.35rem; vertical-align:-1px; background:var(--m-accent); }
+.plan-legend .dash-sw{ width:12px; height:12px; display:inline-block; margin-right:.35rem; vertical-align:-1px; border:2px dashed var(--m-warn); border-radius:3px; }
+
+.companion-card .companion-empty{ margin:0; font-size:.82rem; color:var(--m-text-dim); }
+.companion-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media (max-width:560px){ .companion-grid{ grid-template-columns:1fr; } }
+.companion-grid h4{ margin:0 0 .5rem; font-family:var(--font-display); font-size:.8rem; }
+.companion-list{ list-style:none; margin:0; padding:0; display:grid; gap:.4rem; }
+.companion-list li{ font-size:.8rem; display:flex; align-items:center; gap:.4rem; }
+.companion-list .dot{ width:8px; height:8px; border-radius:50%; background:var(--m-accent); flex:none; }
+.companion-list.not-owned .dot{ background:var(--m-text-dim); }
+.companion-list.not-owned li{ color:var(--m-text-dim); }
+
+.ghost-drag{ position:fixed; pointer-events:none; z-index:999; display:flex; gap:.4rem; align-items:center; padding:.4rem .6rem; border-radius:8px; background:var(--m-surface); border:1px solid var(--m-border); box-shadow:0 4px 14px rgba(0,0,0,.18); font-size:.76rem; font-weight:700; transform:translate(-50%,-50%); }
+
+/* crop rotation flag + blocked carry-over drop + toast */
+.plan-cell.rotation-flag{ background:rgba(178,40,60,.2); }
+.plan-block.rotation-warn{ box-shadow: inset 0 0 0 2px rgba(178,40,60,.9); }
+.plan-block .clear-carry{ font-family:var(--font-mono); font-size:.6rem; background:rgba(255,255,255,.3); border:none; border-radius:4px; padding:.05rem .35rem; margin-left:.3rem; cursor:pointer; color:inherit; flex:none; }
+.plan-legend .sw.rotation{ background:rgba(178,40,60,.55); border-radius:3px; }
+.plan-toast{
+  position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px); background:#1b1f17; color:#eef1e6;
+  padding:.6rem 1.1rem; border-radius:8px; font-size:.8rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+  z-index:1000; max-width:min(80vw,420px); text-align:center;
+}
+.plan-toast.show{ opacity:1; transform:translate(-50%,0); }
+
+/* ---------- list toolbar: sort + add (Inventory & Plan sidebar) ---------- */
+.list-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+.list-toolbar .sort-control{ display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:var(--m-text-dim); }
+.list-toolbar select{ font-family:var(--font-body); font-size:.76rem; padding:.3rem .5rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
+.list-toolbar .add-btn{ font-family:var(--font-mono); font-size:.72rem; background:var(--m-accent); color:var(--m-accent-ink); border:none; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
+body[data-style="pixel"] .list-toolbar select{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); color:var(--p-text); }
+body[data-style="pixel"] .list-toolbar .add-btn{ border-radius:0; border:2px solid var(--p-text); }
+
+/* ---------- inventory: stock control, flip-to-comments, add form ---------- */
+/* Cards sit in a CSS Grid row and stretch to match the tallest card in that
+   row by default, but that stretch only reaches .inv-card-outer -- without
+   an explicit height:100% chain down to the visible bordered face, the
+   border itself still hugs just its own content, so cards with less text
+   (e.g. no variety) visibly look shorter than their row-mates. */
+.inv-card-outer{ perspective:1600px; height:100%; }
+.inv-card-inner{ position:relative; transition:transform .5s; transform-style:preserve-3d; height:100%; }
+.inv-card-outer.flipped .inv-card-inner{ transform:rotateY(180deg); }
+.inv-card-face.front{ backface-visibility:hidden; height:100%; position:relative; }
+.inv-delete-btn{ position:absolute; top:.55rem; right:.55rem; background:none; border:none; cursor:pointer; color:var(--m-text-dim); padding:.25rem; border-radius:6px; line-height:0; }
+.inv-delete-btn svg{ width:15px; height:15px; display:block; }
+.inv-delete-btn:hover{ color:var(--m-warn); background:var(--m-surface-2); }
+.inv-delete-btn:disabled{ opacity:.3; cursor:not-allowed; }
+.inv-delete-btn:disabled:hover{ color:var(--m-text-dim); background:none; }
+body[data-style="pixel"] .inv-delete-btn:hover{ background:var(--p-surface-2); }
+.inv-card-face.back{
+  position:absolute; inset:0; backface-visibility:hidden; transform:rotateY(180deg);
+  display:flex; flex-direction:column; gap:.5rem;
+}
+.inv-card-face.back textarea{
+  flex:1; resize:none; font-family:var(--font-body); font-size:.78rem; padding:.5rem; border-radius:8px;
+  border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); min-height:90px;
+}
+.inv-back-head{ display:flex; align-items:center; justify-content:space-between; }
+.inv-back-head b{ font-size:.82rem; }
+.inv-actions{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+.inv-stock{ display:flex; align-items:center; gap:.3rem; font-size:.66rem; color:var(--m-text-dim); }
+.inv-stock select{ font-family:var(--font-mono); font-size:.66rem; padding:.15rem .35rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface-2); color:var(--m-text); }
+.inv-icon-btn{ background:none; border:none; cursor:pointer; font-size:.85rem; color:var(--m-text-dim); padding:.1rem .3rem; }
+.inv-icon-btn:hover{ color:var(--m-text); }
+.inv-icon-btn:disabled{ opacity:.3; cursor:not-allowed; }
+.inv-top .sprite-wrap.out-of-stock{ filter:grayscale(1) opacity(.45); }
+.inv-add-form{ display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem; padding:1rem; border:1px dashed var(--m-border); border-radius:12px; }
+.inv-add-form[hidden]{ display:none; } /* the [hidden] attribute alone loses to the rule above -- author styles beat the browser's own [hidden]{display:none}, same specificity, later in the cascade */
+.inv-add-form label{ display:grid; gap:.25rem; font-size:.68rem; color:var(--m-text-dim); }
+.inv-add-form input, .inv-add-form select{ font-family:var(--font-body); font-size:.8rem; padding:.4rem .5rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
+.inv-add-form .full{ grid-column:1/-1; display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+.inv-add-form button{ font-family:var(--font-mono); font-size:.76rem; padding:.5rem 1rem; border-radius:6px; border:none; background:var(--m-accent); color:var(--m-accent-ink); cursor:pointer; }
+.inv-add-form .cancel-add{ background:var(--m-surface-2); color:var(--m-text-dim); }
+@media (max-width:680px){ .inv-add-form{ grid-template-columns:1fr 1fr; } }
+
+body[data-style="pixel"] .year-tabs .seg{ border:2px solid var(--p-text); border-radius:0; }
+body[data-style="pixel"] .year-tabs .seg button{ background:var(--p-surface-2); color:var(--p-text); }
+body[data-style="pixel"] .year-tabs .seg button.active{ background:var(--p-accent); color:var(--p-accent-ink); }
+body[data-style="pixel"] .plan-hint, body[data-style="pixel"] .plan-legend{ color:var(--p-text-dim); }
+body[data-style="pixel"] .plan-seed{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); }
+body[data-style="pixel"] .plan-seed .sprite-wrap{ background:var(--p-sky); border-radius:0; }
+body[data-style="pixel"] .plan-main{ border:3px solid var(--p-text); border-radius:0; }
+body[data-style="pixel"] .plan-head{ background:var(--p-surface-2); border-bottom:2px solid var(--p-text); color:var(--p-text); }
+body[data-style="pixel"] .plan-rowlabel{ background:var(--p-surface); border-right:2px solid var(--p-text); border-bottom:2px solid var(--p-text); color:var(--p-text); }
+body[data-style="pixel"] .plan-cell{ border-right:2px solid var(--p-border); border-bottom:2px solid var(--p-border); }
+body[data-style="pixel"] .plan-cell.drop-hover{ background:rgba(76,122,52,.25); }
+body[data-style="pixel"] .plan-block{ border-radius:0; border:2px solid var(--p-text); }
+body[data-style="pixel"] .plan-addrow button{ border:2px dashed var(--p-border); border-radius:0; color:var(--p-text-dim); }
+body[data-style="pixel"] .ghost-drag{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); }
+body[data-style="mixed"] .plan-main{ border:2px solid var(--p-border); border-radius:8px; }
+body[data-style="mixed"] .plan-seed{ border:2px solid var(--p-border); box-shadow:2px 2px 0 rgba(0,0,0,.08); }
+
+/* propagation strip */
+.prop-strip{ display:grid; grid-template-columns:repeat(2,1fr); gap:.7rem; }
+@media (max-width:560px){ .prop-strip{ grid-template-columns:1fr; } }
+.prop-item{ display:flex; gap:.6rem; align-items:center; padding:.6rem .7rem; border-radius:10px; background:var(--m-surface-2); }
+body[data-style="pixel"] .prop-item{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface-2); }
+.prop-item .sprite-wrap{ flex:none; }
+.prop-item .txt b{ display:block; font-size:.82rem; }
+.prop-item .txt span{ font-size:.72rem; color:var(--m-text-dim); }
+body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
+
+/* ---------- Export: Plan page "print to PDF" ---------- */
+.print-only{ display:none; }
+@media print{
+  @page{ size:landscape; margin:10mm; }
+  /* Browsers default to skipping backgrounds/colors on print to save ink
+     unless a page opts in -- without this, the plan blocks and sprite
+     icons print as empty white boxes with invisible (white-on-white) text. */
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+  /* The pixel theme's tiled graph-paper background covers the whole page,
+     not just the card -- fine on screen, wasteful ink and an odd border
+     around the calendar on paper. */
+  body{ background:#fff !important; background-image:none !important; }
+  .app-nav, .theme-btn, .plan-sidebar-col, .plan-hint, .year-tabs .seg, .companion-card, .note, .export-btn{ display:none !important; }
+  .print-only{ display:block !important; font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:.6rem; }
+  /* .stage/.plan-layout are sized for the on-screen sidebar-plus-calendar
+     layout (960px cap, 200px sidebar column). With the sidebar hidden above,
+     leaving those in place starves the calendar of the full landscape page
+     width -- worse, since a display:none grid item is dropped from auto-
+     placement entirely, the calendar was falling into the sidebar's own
+     200px column instead of the remaining space, squeezing 12 months into
+     under 200px and truncating every crop name. Both are reset here so the
+     calendar gets the whole printable width. */
+  .stage{ max-width:none !important; margin:0 !important; padding:0 !important; }
+  /* .app-shell's rounded corners come from overflow:hidden (clips the header's
+     square corners to match the border-radius) -- but a browser can't
+     fragment an overflow:hidden box across pages, so it treats the whole
+     card as one unbreakable unit. Since that unit is taller than a page,
+     the browser pushes it whole onto page 2 (leaving page 1 almost blank)
+     and then still has to spill the remainder onto page 3 anyway. Letting
+     it overflow:visible for print lets the calendar break cleanly between
+     rows instead. */
+  .app-shell{ overflow:visible !important; }
+  .plan-layout{ grid-template-columns:1fr !important; }
+  .plan-main-wrap{ align-self:auto !important; }
+  .plan-main{ overflow:visible !important; }
+  #plan-grid{ grid-template-columns:70px repeat(12, 1fr) !important; min-width:0 !important; }
+  /* Sow/remove controls are for on-screen editing only -- meaningless (and
+     just clutter) on a printed sheet. */
+  .plan-block .sow-tick, .plan-block .rm{ display:none !important; }
+  /* Fit the whole 20-row calendar on one landscape page: every row, and the
+     chrome around it, is sized for a big interactive screen. None of that
+     headroom is needed on paper, so it's all shrunk down together -- if any
+     one of these were left at its screen size, the grid alone is taller
+     than a page and rows would spill onto a second sheet. */
+  .app-header{ padding:.4rem 1rem !important; }
+  .app-header h1{ font-size:.85rem !important; }
+  .app-header .date{ font-size:.7rem !important; }
+  .app-body{ padding:.5rem !important; gap:.4rem !important; }
+  .print-only{ font-size:.85rem !important; margin-bottom:.3rem !important; }
+  .plan-head{ padding:.15rem 0 !important; font-size:.52rem !important; }
+  .plan-rowlabel{ font-size:.6rem !important; padding:0 .3rem !important; }
+  .plan-cell{ min-height:22px !important; }
+  .plan-block{ font-size:.58rem !important; margin:1px !important; padding:0 .3rem !important; gap:.2rem !important; }
+  .plan-block .sprite{ width:12px !important; height:12px !important; }
+  .plan-block .badge{ font-size:.5rem !important; padding:0 .3rem !important; }
+  .plan-addrow{ padding:.15rem .3rem !important; }
+  .plan-addrow button{ font-size:.6rem !important; padding:.15rem .4rem !important; }
+  .bed-hr{ margin:.2rem 0 !important; }
+  .bed-foot{ font-size:.6rem !important; padding:0 !important; }
+  .plan-legend{ font-size:.62rem !important; gap:.6rem !important; margin-top:.3rem !important; }
+}
+
+/* ---------- sign-in overlay (cross-device sync via Supabase) ---------- */
+#auth-overlay{
+  position:fixed; inset:0; z-index:100; background:var(--m-bg);
+  display:grid; place-items:center; padding:1.2rem;
+}
+/* Per the hard-won lesson on this project: never put `display` directly on
+   the ID selector when JS toggles [hidden] on the same element -- an ID
+   rule (specificity 100) silently beats the browser's own [hidden]{display:
+   none} (specificity 10), so `el.hidden = true` would do nothing visible.
+   Scoping to :not([hidden]) keeps the two in sync. */
+#auth-overlay:not([hidden]){ display:grid; }
+#auth-overlay[hidden]{ display:none; }
+.auth-box{
+  width:100%; max-width:340px; background:var(--m-surface); border:1px solid var(--m-border);
+  border-radius:14px; padding:1.6rem 1.4rem; box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.auth-box h1{ font-family:var(--font-display); font-size:1.15rem; margin:0 0 .3rem; color:var(--m-text); }
+.auth-sub{ font-size:.82rem; color:var(--m-text-dim); margin:0 0 1.1rem; }
+.auth-box form{ display:grid; gap:.7rem; }
+.auth-box label{ display:grid; gap:.25rem; font-size:.74rem; color:var(--m-text-dim); }
+.auth-box input{ font-family:var(--font-body); font-size:.86rem; padding:.55rem .65rem; border-radius:8px; border:1px solid var(--m-border); background:var(--m-bg); color:var(--m-text); }
+.auth-box button[type="submit"]{ margin-top:.2rem; font-family:var(--font-mono); font-size:.8rem; padding:.6rem; border-radius:8px; border:none; background:var(--m-accent); color:var(--m-accent-ink); cursor:pointer; }
+.auth-links{ display:flex; justify-content:space-between; gap:.5rem; margin:.9rem 0 0; font-size:.74rem; flex-wrap:wrap; }
+.auth-links a{ color:var(--m-accent-2); text-decoration:none; cursor:pointer; }
+.auth-links a:hover{ text-decoration:underline; }
+.auth-msg{ font-size:.76rem; margin:.8rem 0 0; min-height:1em; }
+.auth-msg.error{ color:var(--m-warn); }
+.auth-msg.ok{ color:var(--m-ok); }
+.sync-status{ font-family:var(--font-mono); font-size:.62rem; color:var(--m-text-dim); white-space:nowrap; }
+.sync-status.error{ color:var(--m-warn); }
+</style>
+</head>
+<body>
+
+<div id="auth-overlay" hidden>
+  <div class="auth-box">
+    <h1>Veg Plot Planner</h1>
+    <p class="auth-sub" id="auth-sub">Sign in to sync your plot across devices.</p>
+    <form id="auth-form">
+      <label>Email<input type="email" id="auth-email" required autocomplete="email"></label>
+      <label id="auth-password-field">Password<input type="password" id="auth-password" autocomplete="current-password" minlength="6"></label>
+      <button type="submit" id="auth-submit">Sign in</button>
+    </form>
+    <p class="auth-links">
+      <a id="auth-toggle-mode">Need an account? Sign up</a>
+      <a id="auth-forgot">Forgot password?</a>
+    </p>
+    <p class="auth-msg" id="auth-msg"></p>
+  </div>
+</div>
+
+<div class="stage">
+  <!-- ============================= OVERVIEW ============================= -->
+  <section id="page-overview" class="page active">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="overview"></nav>
+      <div class="app-body">
+        <div class="card">
+          <h3>Current Status</h3>
+          <div class="stat-row">
+            <div class="stat"><div class="n">14 / 24</div><div class="l">sections planted</div></div>
+            <div class="stat"><div class="n">3</div><div class="l">ready to harvest</div></div>
+            <div class="stat"><div class="n">2</div><div class="l">trays propagating</div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="list-toolbar">
+              <h3 style="margin:0;">Upcoming tasks</h3>
+              <button class="add-btn" onclick="openAddTaskEventForm(this, 'task')">+ Add task</button>
+            </div>
+            <ul class="tasks" id="overview-tasks">
+              <li class="task-link" onclick="taskGoto('patch', ['A7','A8'])" title="Go to A7&ndash;A8 on the Veg Patch page"><button type="button" class="chk" data-task-kind="harvest" data-task-item="courgette" data-task-year="2026" title="Log this harvest"></button><span class="task-text">Harvest courgette/marrow before they get woody &mdash; <span class="due">A7&ndash;A8, due now</span></span><span class="goto-arrow">&rarr;</span></li>
+              <li class="task-link" onclick="taskGoto('patch', ['B9','B10'])" title="Go to B9&ndash;B10 on the Veg Patch page"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Earth up leeks as they thicken &mdash; <span class="due">B9&ndash;B10, this week</span></span><span class="goto-arrow">&rarr;</span></li>
+              <li class="task-link" onclick="taskGoto('overview', ['tray-indoor-1'])" title="Go to the Windowsill tray"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Pot on Brussels sprout seedlings from the windowsill tray &mdash; <span class="due">Indoor tray 1, next few days</span></span><span class="goto-arrow">&rarr;</span></li>
+              <li class="task-link" onclick="taskGoto('plan', ['A9','A10'])" title="Go to A9&ndash;A10 on the Plan page"><button type="button" class="chk" data-task-kind="sow" data-task-rows="A9,A10" data-task-year="2026" title="Log as sown today"></button><span class="task-text">Sow overwintering onion sets &mdash; <span class="due">A9&ndash;A10, from 28 Sep</span></span><span class="goto-arrow">&rarr;</span></li>
+              <li class="task-link" onclick="taskGoto('patch', ['Pot 1'])" title="Go to Pot 1 on the Veg Patch page"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Bring the cucumber pot into the greenhouse before first chill &mdash; <span class="due">Pot 1, by 10 Oct</span></span><span class="goto-arrow">&rarr;</span></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Look out for</h3>
+            <div class="events">
+              <div class="event"><span><span class="pill warn">Blight risk</span> Cool damp spell forecast</span></div>
+              <div class="event"><span><span class="pill info">Slugs</span> Active around Brussels sprouts</span></div>
+              <div class="event"><span><span class="pill prop">Damping off</span> Check windowsill tray airflow</span></div>
+              <div class="event"><span><span class="pill ok">On track</span> Beetroot bed clear for next crop</span></div>
+              <div class="event" id="volunteer-alert" hidden><span><span class="pill warn">Volunteer potatoes</span> <span class="msg"></span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="card-greenhouse">
+          <h3>Greenhouse</h3>
+          <div class="prop-strip">
+            <div class="prop-item"><div class="sprite-wrap" data-sprite="tomato" data-stage="seedling"></div>
+              <div class="txt"><b>Tomato (Red Cherry)</b><span>Greenhouse tray &middot; sown 4 Mar &middot; ready to pot on</span></div></div>
+            <div class="prop-item"><div class="sprite-wrap" data-sprite="cucumber" data-stage="seedling"></div>
+              <div class="txt"><b>Cucumber (Wisconsin)</b><span>Greenhouse tray &middot; sown 12 May &middot; hardening off</span></div></div>
+          </div>
+        </div>
+        <div class="card" id="card-windowsill">
+          <h3>Windowsill</h3>
+          <div class="prop-strip">
+            <div class="prop-item" id="tray-indoor-1"><div class="sprite-wrap" data-sprite="brusselsprout" data-stage="seedling"></div>
+              <div class="txt"><b>Brussels Sprout (x6)</b><span>Windowsill tray &middot; sown 3 Mar &middot; true leaves forming</span></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="list-toolbar">
+            <h3 style="margin:0;">Upcoming Events</h3>
+            <button class="add-btn" onclick="openAddTaskEventForm(this, 'event')">+ Add event</button>
+          </div>
+          <div class="events" id="upcoming-events-list">
+            <div class="event"><span>First expected autumn frost</span><span class="d">~15 Oct</span></div>
+            <div class="event"><span>Last safe sowing &ndash; overwintering onions</span><span class="d">10 Oct</span></div>
+            <div class="event"><span>Brussels sprout indoor sow (2027)</span><span class="d">1 Feb</span></div>
+            <div class="event"><span>Last expected spring frost (2027)</span><span class="d">~5 May</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Overview</b> &mdash; figures shown are placeholders, not live counts.</p>
+  </section>
+
+  <!-- ============================= INVENTORY ============================= -->
+  <section id="page-inventory" class="page">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-2"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="inventory"></nav>
+      <div class="app-body">
+        <div class="list-toolbar">
+          <span class="sort-control">Sort
+            <select id="inv-sort" onchange="setInvSort(this.value)">
+              <option value="name">Alphabetical</option>
+              <option value="sow-early">Earliest sow month</option>
+              <option value="sow-late">Latest sow month</option>
+              <option value="harvest-early">Earliest harvest</option>
+              <option value="harvest-late">Latest harvest</option>
+              <option value="duration">Time in ground</option>
+            </select>
+          </span>
+          <button class="add-btn" onclick="toggleAddForm()">+ Add seed</button>
+        </div>
+
+        <form class="inv-add-form" id="inv-add-form" hidden onsubmit="return submitAddForm(event)">
+          <label>Name<input required id="af-name" placeholder="e.g. Carrot"></label>
+          <label>Variety<input id="af-variety" placeholder="optional"></label>
+          <label>Icon<select id="af-sprite"></select></label>
+          <label>Stock<select id="af-stock"><option value="sealed">Sealed packet</option><option value="open">Open packet</option><option value="none" selected>None yet</option></select></label>
+          <label>Sow from<select id="af-sow0"></select></label>
+          <label>Sow to<select id="af-sow1"></select></label>
+          <label>Harvest from<select id="af-harv0"></select></label>
+          <label>Harvest to<select id="af-harv1"></select></label>
+          <label>Spacing (cm)<input id="af-spacing" type="number" min="2" value="30"></label>
+          <label>Sun<input id="af-sun" value="Full sun"></label>
+          <div class="full">
+            <button type="submit">Add to inventory</button>
+            <button type="button" class="cancel-add" onclick="toggleAddForm(false)">Cancel</button>
+          </div>
+        </form>
+
+        <div class="card">
+          <h3><span class="eyebrow">Seed store</span></h3>
+          <div class="inv-grid" id="inv-grid"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Inventory</b> &mdash; flip a card for notes; greyed-out artwork means it's out of stock.</p>
+  </section>
+
+  <!-- ============================= PLAN ============================= -->
+  <section id="page-plan" class="page">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-4"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="plan"></nav>
+      <div class="app-body">
+        <div class="print-only" id="plan-print-title"></div>
+        <div class="year-tabs">
+          <span class="seg">
+            <button class="active" data-year="2026" onclick="setPlanYear(2026)">2026</button>
+            <button data-year="2027" onclick="setPlanYear(2027)">2027</button>
+          </span>
+          <span class="plan-hint">Drag a seed onto a month to plant it, or drag an existing planting to move it. Winter crops that run past December carry through into next year's plan.</span>
+          <button class="add-btn export-btn" style="margin-left:auto;" onclick="exportPlanPDF()" title="Prints just the calendar grid — choose &quot;Save as PDF&quot; in the print dialog">Export PDF</button>
+        </div>
+
+        <div class="plan-layout">
+          <div class="plan-sidebar-col" id="plan-sidebar-col">
+            <div class="list-toolbar" style="margin-bottom:.5rem;">
+              <span class="sort-control">Sort
+                <select id="plan-sort" onchange="setPlanSort(this.value)">
+                  <option value="name">Alphabetical</option>
+                  <option value="sow-early">Earliest sow month</option>
+                  <option value="sow-late">Latest sow month</option>
+                  <option value="harvest-early">Earliest harvest</option>
+                  <option value="harvest-late">Latest harvest</option>
+                  <option value="duration">Time in ground</option>
+                </select>
+              </span>
+            </div>
+            <div class="plan-sidebar" id="plan-sidebar"></div>
+          </div>
+
+          <div class="plan-main-wrap" id="plan-main-wrap">
+            <div class="plan-main"><div class="plan-grid" id="plan-grid"></div></div>
+          </div>
+        </div>
+
+        <div class="plan-legend">
+          <span><span class="sw" style="background:#4c7a34"></span>Planted, on schedule</span>
+          <span><span class="dash-sw"></span>Outside the typical sowing window &mdash; still allowed</span>
+          <span><span class="sw rotation"></span>Grown here last year &mdash; shown while dragging, flagged if you replant it there</span>
+        </div>
+
+        <div class="card companion-card" id="companion-panel">
+          <h3><span class="eyebrow">Companion suggestions</span></h3>
+          <p class="companion-empty">Click a planting in the grid above to see what grows well alongside it.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Plan</b> &mdash; capacity and companion suggestions update automatically as you plant.</p>
+  </section>
+
+  <!-- ============================= VEG PATCH ============================= -->
+  <section id="page-patch" class="page">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-3"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="patch"></nav>
+      <div class="app-body">
+        <div class="card">
+          <h3><span class="eyebrow">Bed &mdash; live status</span></h3>
+          <div class="bed-diagram"><div class="bed-grid" id="bed-grid"></div></div>
+          <div class="legend">
+            <span><span class="sw" style="background:var(--m-soil)"></span>Empty</span>
+            <span><span class="sw" style="background:#4c7a34"></span>Growing</span>
+            <span><span class="sw" style="background:#d18a2b"></span>Ready to harvest</span>
+            <span>Checkbox = action logged this week</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3><span class="eyebrow">Pots, containers &amp; greenhouse trays</span></h3>
+          <div class="bed-diagram"><div class="bed-grid" id="pot-grid" style="grid-template-columns:26px 1fr"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Veg patch</b> &mdash; section IDs (A1, B7, Pot 1&hellip;) match the row labels used on the Plan page and in Overview tasks.</p>
+  </section>
+
+  <!-- ============================= STATS ============================= -->
+  <section id="page-stats" class="page">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-5"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="stats"></nav>
+      <div class="app-body">
+        <div class="year-tabs">
+          <span class="seg">
+            <button class="active" data-year="2026" onclick="setStatsYear(2026)">2026</button>
+            <button data-year="2027" onclick="setStatsYear(2027)">2027</button>
+          </span>
+          <span class="plan-hint" id="stats-compost-note"></span>
+          <button class="add-btn export-btn" style="margin-left:auto;" onclick="exportStatsCSV()" title="Downloads this year's harvest log, issue log and notes as a CSV file">Export CSV</button>
+        </div>
+
+        <div class="card">
+          <h3>Sowings vs harvests by month</h3>
+          <div class="stats-chart" id="stats-month-chart"></div>
+          <div class="stats-legend">
+            <span><span class="sw sown"></span>Sown (confirmed)</span>
+            <span><span class="sw harvested"></span>Harvest occasions</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="list-toolbar">
+            <h3 style="margin:0;">Harvest log</h3>
+            <button class="add-btn" onclick="openStatsHarvestForm(this)">+ Log a harvest</button>
+          </div>
+          <div id="stats-harvest-log"></div>
+        </div>
+
+        <div class="card">
+          <h3>Most-grown crops</h3>
+          <div class="stats-rank" id="stats-rank"></div>
+        </div>
+
+        <div class="card">
+          <div class="list-toolbar">
+            <h3 style="margin:0;">Late, failed &amp; missed</h3>
+            <button class="add-btn" onclick="openStatsEventForm(this)">+ Log an issue</button>
+          </div>
+          <div class="events" id="stats-event-log"></div>
+        </div>
+
+        <div class="card">
+          <h3>Notes</h3>
+          <textarea class="stats-notes-input" id="stats-notes-input" rows="3" placeholder="Anything worth remembering about this year — weather, pests, what you'd do differently..."></textarea>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Stats</b> &mdash; a manual record, not live figures. The monthly chart plots confirmed sow dates and logged harvests; crop ranking reads from that year's Plan.</p>
+  </section>
+</div>
+
+<script>
+/* ---------- theme settings (Style + light/dark Mode) ----------
+   These used to live in a dev-only control bar above the app. They're
+   now a real in-app setting: a gear button in every page header opens
+   a small floating menu (same anchored-popover pattern as the other
+   floating forms in this file) with the same two choices, and the
+   choice is remembered between visits via localStorage. */
+let currentStyle = 'mixed';
+let currentMode = 'light';
+function loadSavedTheme(){
+  try{
+    return {
+      style: localStorage.getItem('vegpatch-style') || 'mixed',
+      mode: localStorage.getItem('vegpatch-mode') || 'light',
+    };
+  }catch(e){ return {style:'mixed', mode:'light'}; }
+}
+function saveTheme(){
+  try{
+    localStorage.setItem('vegpatch-style', currentStyle);
+    localStorage.setItem('vegpatch-mode', currentMode);
+  }catch(e){ /* private-browsing / storage blocked -- theme just won't persist */ }
+}
+function setStyle(s){
+  currentStyle = s;
+  document.body.setAttribute('data-style', s);
+  document.querySelectorAll('.theme-menu [data-style-btn]').forEach(b=>b.classList.toggle('active', b.dataset.styleBtn===s));
+  saveTheme();
+}
+function setMode(m){
+  currentMode = m;
+  document.documentElement.setAttribute('data-mode', m);
+  document.querySelectorAll('.theme-menu [data-mode-btn]').forEach(b=>b.classList.toggle('active', b.dataset.modeBtn===m));
+  saveTheme();
+}
+function toggleThemeMenu(anchorBtn){
+  const existing = document.querySelector('.theme-menu');
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  if(existing) return; // click toggled it closed
+  const rect = anchorBtn.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.className = 'volunteer-form theme-menu';
+  menu.style.position = 'fixed';
+  menu.style.left = Math.min(rect.left-170, window.innerWidth-230)+'px';
+  menu.style.top = (rect.bottom+6)+'px';
+  menu.innerHTML =
+    '<span class="tm-label">Style</span>'+
+    '<span class="seg">'+
+      '<button type="button" data-style-btn="pixel">Pixel farm</button>'+
+      '<button type="button" data-style-btn="mixed">Mixed</button>'+
+      '<button type="button" data-style-btn="modern">Modern</button>'+
+    '</span>'+
+    '<span class="tm-label">Mode</span>'+
+    '<span class="seg">'+
+      '<button type="button" data-mode-btn="light">Light</button>'+
+      '<button type="button" data-mode-btn="dark">Dark</button>'+
+    '</span>'+
+    (sb && syncUserId ? '<button type="button" class="cancel" id="tm-signout" style="margin-top:.2rem;">Sign out</button>' : '');
+  document.body.appendChild(menu);
+  menu.querySelectorAll('[data-style-btn]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.styleBtn===currentStyle);
+    b.addEventListener('click', ()=> setStyle(b.dataset.styleBtn));
+  });
+  menu.querySelectorAll('[data-mode-btn]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.modeBtn===currentMode);
+    b.addEventListener('click', ()=> setMode(b.dataset.modeBtn));
+  });
+  const signOutBtn = menu.querySelector('#tm-signout');
+  if(signOutBtn) signOutBtn.addEventListener('click', ()=> sb.auth.signOut());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!menu.contains(e.target) && e.target!==anchorBtn){ menu.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+const SPRITE_GRID = 18;
+function setPage(p){
+  ['overview','inventory','plan','patch','stats'].forEach(id=>{
+    document.getElementById('page-'+id).classList.toggle('active', id===p);
+  });
+  renderAppNav(p);
+  if(p === 'stats') renderStats(); // recompute in case inventory/plan changed since last visit
+  // The seed bank's height is pegged to the calendar's rendered height (see
+  // syncPlanSidebarHeight below). While the Plan page sits under display:none
+  // (i.e. any time it isn't the active page), the calendar measures 0px tall,
+  // so the sync that ran at load time -- or on any other page -- is stale.
+  // Re-run it now that Plan is actually visible and has real layout.
+  if(p === 'plan') syncPlanSidebarHeight();
+}
+
+/* The in-page nav at the top of every page (Overview / Inventory / Plan /
+   Veg Patch / Stats) is built here rather than hand-written per page, so
+   all five copies stay in sync and share one set of click handlers. */
+const NAV_PAGES = [
+  {id:'overview', label:'Overview'},
+  {id:'inventory', label:'Inventory'},
+  {id:'plan', label:'Plan'},
+  {id:'patch', label:'Veg Patch'},
+  {id:'stats', label:'Stats'},
+];
+function renderAppNav(current){
+  document.querySelectorAll('.app-nav[data-navfor]').forEach(nav=>{
+    nav.innerHTML = '';
+    NAV_PAGES.forEach(p=>{
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = p.label;
+      if(p.id === current) a.className = 'current';
+      a.addEventListener('click', (e)=>{ e.preventDefault(); setPage(p.id); });
+      nav.appendChild(a);
+    });
+  });
+}
+
+/* Overview tasks behave like shortcuts: jump to the page the task is
+   actually about, then find and pulse the specific thing(s) it refers to
+   (a bed section, a pot, a plan row, or an in-page card/tray) so the link
+   between "here's a task" and "here's where it lives in the app" is obvious.
+   `targets` are matched, in order of likelihood, against: a plain element
+   id, a bed/pot section's data-sec (set in sectionEl()), and a Plan
+   row's data-row (already used by the crop-rotation/carry-over logic). */
+function taskGoto(page, targets){
+  setPage(page);
+  requestAnimationFrame(()=>{
+    let firstEl = null;
+    (targets||[]).forEach(t=>{
+      const sel = '#'+CSS.escape(t)+', [data-sec="'+CSS.escape(t)+'"], [data-row="'+CSS.escape(t)+'"]';
+      document.querySelectorAll(sel).forEach(el=>{
+        if(!firstEl) firstEl = el;
+        el.classList.remove('goto-flash'); void el.offsetWidth; // restart animation if clicked twice
+        el.classList.add('goto-flash');
+        setTimeout(()=>el.classList.remove('goto-flash'), 2900);
+      });
+    });
+    if(firstEl) firstEl.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+const savedTheme = loadSavedTheme();
+setStyle(savedTheme.style); setMode(savedTheme.mode);
+
+const today = new Date(2026,8,15);
+const label = today.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+['today-label','today-label-2','today-label-3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
+
+/* ============================================================
+   SPRITES: shapes defined in normalized 0..1 coords, rasterized
+   to any N x N grid, so the SAME artwork can be shown at 12x12
+   or 18x18 -- exactly what a resolution comparison needs.
+   ============================================================ */
+const PAL = {
+  g1:'#7cb95a', g2:'#4c7a34', br:'#6b4a34', r1:'#d1453b', r2:'#a52f28',
+  y1:'#f4c542', o1:'#e08a2b', o2:'#8a5a1f', pu:'#9b6bb5', wh:'#eef2e6',
+  be:'#8a2f4a', cb:'#a8c98a', cb2:'#6f9450', ls:'#c9dba0', cl:'#cfc6a8'
+};
+function rect(x0,y0,x1,y1,color){ return {test:(x,y)=> x>=x0&&x<=x1&&y>=y0&&y<=y1, color}; }
+function circle(cx,cy,r,color){ return {test:(x,y)=> (Math.pow(x-cx,2)+Math.pow(y-cy,2)) <= r*r, color}; }
+function ellipse(cx,cy,rx,ry,color){ return {test:(x,y)=> (Math.pow(x-cx,2)/(rx*rx)) + (Math.pow(y-cy,2)/(ry*ry)) <= 1, color}; }
+
+const SPECIES = {
+  tomato: [
+    rect(0.44,0.04,0.56,0.22,PAL.br),
+    ellipse(0.27,0.13,0.16,0.075,PAL.g1),
+    ellipse(0.73,0.13,0.16,0.075,PAL.g2),
+    circle(0.36,0.56,0.27,PAL.r1),
+    circle(0.68,0.62,0.23,PAL.r2),
+  ],
+  courgette: [
+    ellipse(0.3,0.12,0.17,0.08,PAL.g1),
+    ellipse(0.7,0.12,0.17,0.08,PAL.g2),
+    circle(0.5,0.22,0.08,PAL.y1),
+    ellipse(0.5,0.66,0.24,0.32,PAL.o2),
+    ellipse(0.43,0.62,0.15,0.26,PAL.o1),
+  ],
+  beetroot: [
+    ellipse(0.3,0.14,0.15,0.11,PAL.g1),
+    ellipse(0.7,0.11,0.13,0.1,PAL.g2),
+    ellipse(0.5,0.07,0.11,0.09,PAL.g1),
+    circle(0.5,0.62,0.29,PAL.be),
+    rect(0.46,0.88,0.54,1.0,PAL.be),
+  ],
+  leek: [
+    ellipse(0.39,0.16,0.11,0.17,PAL.g1),
+    ellipse(0.61,0.16,0.11,0.17,PAL.g2),
+    rect(0.38,0.34,0.62,1.0,PAL.wh),
+  ],
+  cabbage: [
+    circle(0.5,0.56,0.38,PAL.cb2),
+    circle(0.5,0.56,0.27,PAL.cb),
+    circle(0.5,0.5,0.09,PAL.g1),
+  ],
+  onion: [
+    rect(0.46,0.0,0.54,0.3,PAL.g2),
+    ellipse(0.5,0.03,0.045,0.14,PAL.g1),
+    circle(0.5,0.63,0.27,PAL.pu),
+    ellipse(0.5,0.84,0.21,0.09,PAL.wh),
+  ],
+  squash: [
+    ellipse(0.28,0.13,0.15,0.08,PAL.g1),
+    ellipse(0.72,0.13,0.15,0.08,PAL.g2),
+    circle(0.5,0.22,0.08,PAL.y1),
+    circle(0.5,0.62,0.31,PAL.o1),
+    circle(0.4,0.55,0.11,PAL.o2),
+  ],
+  brusselsprout: [
+    rect(0.46,0.0,0.54,1.0,PAL.br),
+    ellipse(0.5,0.04,0.17,0.07,PAL.g1),
+    circle(0.3,0.24,0.13,PAL.cb),
+    circle(0.7,0.4,0.13,PAL.cb2),
+    circle(0.3,0.56,0.13,PAL.cb),
+    circle(0.7,0.72,0.13,PAL.cb2),
+    circle(0.3,0.86,0.11,PAL.cb),
+  ],
+  sorrel: [
+    ellipse(0.3,0.5,0.19,0.34,PAL.g1),
+    ellipse(0.7,0.45,0.19,0.34,PAL.g2),
+    ellipse(0.5,0.3,0.19,0.28,PAL.g1),
+    rect(0.47,0.6,0.53,1.0,PAL.br),
+  ],
+  cucumber: [
+    ellipse(0.24,0.13,0.15,0.09,PAL.g1),
+    rect(0.46,0.0,0.54,0.24,PAL.g2),
+    ellipse(0.5,0.6,0.17,0.37,PAL.g2),
+    ellipse(0.43,0.6,0.055,0.33,PAL.ls),
+  ],
+  frenchbean: [
+    ellipse(0.3,0.14,0.14,0.11,PAL.g1),
+    ellipse(0.7,0.19,0.14,0.11,PAL.g2),
+    rect(0.47,0.0,0.53,0.14,PAL.br),
+    ellipse(0.38,0.56,0.075,0.27,PAL.ls),
+    ellipse(0.62,0.65,0.075,0.27,PAL.g2),
+  ],
+  garlic: [
+    rect(0.47,0.02,0.53,0.42,PAL.g2),
+    ellipse(0.38,0.1,0.06,0.16,PAL.g1),
+    ellipse(0.62,0.12,0.06,0.16,PAL.g2),
+    circle(0.5,0.68,0.27,PAL.wh),
+    rect(0.49,0.5,0.51,0.9,PAL.cl),
+    rect(0.36,0.56,0.38,0.86,PAL.cl),
+    rect(0.62,0.56,0.64,0.86,PAL.cl),
+  ],
+  broadbean: [
+    ellipse(0.5,0.08,0.15,0.09,PAL.g1),
+    ellipse(0.26,0.18,0.14,0.11,PAL.g2),
+    ellipse(0.74,0.22,0.14,0.11,PAL.g1),
+    rect(0.47,0.0,0.53,0.2,PAL.br),
+    ellipse(0.36,0.58,0.08,0.29,PAL.ls),
+    ellipse(0.64,0.68,0.08,0.29,PAL.g2),
+  ],
+  carrot: [
+    ellipse(0.3,0.08,0.05,0.14,PAL.g1),
+    ellipse(0.5,0.04,0.05,0.17,PAL.g2),
+    ellipse(0.7,0.08,0.05,0.14,PAL.g1),
+    ellipse(0.5,0.56,0.17,0.22,PAL.o1),
+    ellipse(0.5,0.86,0.08,0.16,PAL.o2),
+  ],
+  radish: [
+    ellipse(0.4,0.14,0.14,0.1,PAL.g1),
+    ellipse(0.62,0.12,0.13,0.1,PAL.g2),
+    circle(0.5,0.58,0.22,PAL.r1),
+    rect(0.47,0.78,0.53,0.94,PAL.wh),
+  ],
+  spinach: [
+    ellipse(0.28,0.52,0.2,0.28,PAL.g1),
+    ellipse(0.72,0.46,0.2,0.28,PAL.g2),
+    ellipse(0.5,0.28,0.2,0.25,PAL.g1),
+    ellipse(0.5,0.68,0.2,0.22,PAL.g2),
+  ],
+  peas: [
+    ellipse(0.3,0.14,0.13,0.1,PAL.g1),
+    ellipse(0.7,0.18,0.13,0.1,PAL.g2),
+    ellipse(0.5,0.58,0.14,0.32,PAL.g1),
+    circle(0.46,0.46,0.045,PAL.g2),
+    circle(0.52,0.58,0.045,PAL.g2),
+    circle(0.46,0.7,0.045,PAL.g2),
+  ],
+  sweetcorn: [
+    rect(0.46,0.0,0.54,0.62,PAL.g2),
+    ellipse(0.24,0.28,0.19,0.07,PAL.g1),
+    ellipse(0.76,0.4,0.19,0.07,PAL.g2),
+    ellipse(0.5,0.78,0.15,0.24,PAL.g1),
+    ellipse(0.5,0.75,0.11,0.22,PAL.y1),
+  ],
+};
+
+function rasterize(species, N, revealFrac){
+  const shapes = SPECIES[species] || SPECIES.tomato;
+  const grid = [];
+  for(let r=0;r<N;r++){
+    for(let c=0;c<N;c++){
+      const x=(c+0.5)/N, y=(r+0.5)/N;
+      let color = null;
+      if(y >= (1-revealFrac)){
+        for(const s of shapes){ if(s.test(x,y)) color = s.color; }
+      }
+      grid.push(color);
+    }
+  }
+  return grid;
+}
+const STAGE_REVEAL = {seedling:0.4, growing:0.72, mature:1.0};
+
+function buildSpriteEl(species, stage, px){
+  const N = SPRITE_GRID;
+  const revealFrac = STAGE_REVEAL[stage] || 1.0;
+  const cells = rasterize(species, N, revealFrac);
+  const wrap = document.createElement('div');
+  wrap.className = 'sprite';
+  wrap.style.display = 'grid';
+  wrap.style.gridTemplateColumns = 'repeat('+N+', 1fr)';
+  wrap.style.gridTemplateRows = 'repeat('+N+', 1fr)';
+  wrap.style.width = (px||36)+'px';
+  wrap.style.height = (px||36)+'px';
+  wrap.style.flex = 'none';
+  cells.forEach(color=>{
+    const i = document.createElement('i');
+    i.style.display='block';
+    i.style.background = color || 'transparent';
+    wrap.appendChild(i);
+  });
+  return wrap;
+}
+function renderAllSprites(){
+  document.querySelectorAll('[data-sprite]').forEach(el=>{
+    el.innerHTML='';
+    const isBig = el.classList.contains('sprite-wrap') && el.closest('.inv-top, .prop-item');
+    el.appendChild(buildSpriteEl(el.dataset.sprite, el.dataset.stage, isBig ? 52 : 34));
+  });
+  renderBed('bed-grid', A, B, true);
+  renderPots('pot-grid', POTS);
+}
+
+/* ============================================================
+   BED LAYOUT: A (left, top-to-bottom) / walkway / B (right)
+   ============================================================ */
+const A = [
+  {n:'A1', species:'frenchbean', stage:'growing', label:'French Beans'},
+  {n:'A2', species:'frenchbean', stage:'growing', label:'French Beans'},
+  {n:'A3', species:'frenchbean', stage:'ready', label:'French Beans'},
+  {n:'A4', species:'frenchbean', stage:'ready', label:'French Beans'},
+  {n:'A5', species:null, stage:'empty', label:''},
+  {n:'A6', species:null, stage:'empty', label:''},
+  {n:'A7', species:'courgette', stage:'ready', label:'Courgette'},
+  {n:'A8', species:'courgette', stage:'growing', label:'Courgette'},
+  {n:'A9', species:null, stage:'empty', label:''},
+  {n:'A10', species:null, stage:'empty', label:''},
+];
+const B = [
+  {n:'B1', species:'sorrel', stage:'growing', label:'Sorrel'},
+  {n:'B2', species:'sorrel', stage:'growing', label:'Sorrel'},
+  {n:'B3', species:null, stage:'empty', label:''},
+  {n:'B4', species:null, stage:'empty', label:''},
+  {n:'B5', species:null, stage:'empty', label:''},
+  {n:'B6', species:null, stage:'empty', label:''},
+  {n:'B7', species:'brusselsprout', stage:'growing', label:'Brussel Sprout'},
+  {n:'B8', species:'brusselsprout', stage:'growing', label:'Brussel Sprout'},
+  {n:'B9', species:'leek', stage:'growing', label:'Leek'},
+  {n:'B10', species:'leek', stage:'growing', label:'Leek'},
+];
+const POTS = [
+  {n:'Pot 1', species:'cucumber', stage:'ready', label:'Cucumber (Wisconsin)'},
+  {n:'Pot 2', species:null, stage:'empty', label:''},
+  {n:'Pot 3', species:null, stage:'empty', label:''},
+  {n:'Pot 4', species:null, stage:'empty', label:''},
+];
+
+/* ---------- volunteer potatoes: tubers that sprout on their own ---------- */
+let volunteer_log = {
+  A5: {qty:2, date:'10 Jun 2026'}, // example: spotted after last year's potato patch there
+};
+function openVolunteerForm(anchorBtn, sectionId){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const existing = volunteer_log[sectionId];
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.style.left = Math.min(rect.left, window.innerWidth-200)+'px';
+  form.style.top = (rect.bottom+6)+'px';
+  form.innerHTML =
+    '<strong>Volunteer potato &mdash; '+sectionId+'</strong>'+
+    '<label>Quantity spotted<input type="number" min="1" id="vf-qty" value="'+(existing?existing.qty:1)+'"></label>'+
+    '<label>Date first seen<input type="text" id="vf-date" placeholder="e.g. 12 Jun 2026" value="'+(existing?existing.date:'')+'"></label>'+
+    '<div class="row"><button class="save">Save</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const qty = parseInt(form.querySelector('#vf-qty').value,10) || 1;
+    const date = form.querySelector('#vf-date').value.trim() || 'date not set';
+    volunteer_log[sectionId] = {qty, date};
+    form.remove();
+    renderAllSprites();
+    refreshVolunteerAlert();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+function refreshVolunteerAlert(){
+  const el = document.getElementById('volunteer-alert');
+  if(!el) return;
+  const entries = Object.keys(volunteer_log);
+  if(entries.length){
+    const parts = entries.map(k=>volunteer_log[k].qty+' in '+k+' ('+volunteer_log[k].date+')').join('; ');
+    el.hidden = false;
+    el.querySelector('.msg').textContent = 'Volunteer potatoes spotted: '+parts+'. Dig up before they take over the bed.';
+  } else {
+    el.hidden = true;
+  }
+}
+
+/* ============================================================
+   RECORD-KEEPING: harvest log, issue log, per-year notes, compost day.
+   Everything here is keyed by year (like plan_data) and, other than the
+   pre-seeded examples below, only ever gets written to via a tick or a
+   form -- never silently invented -- so what's on the Stats page is
+   always something you actually logged.
+   ============================================================ */
+function todayDateString(){ return today.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); }
+
+// harvest_log[year][itemId] = [{date, weight(g)|null, qty|null}, ...] -- one
+// entry per occasion, matching "if I harvest tomatoes on three occasions..."
+let harvest_log = {
+  2026: {
+    tomato_cherry: [
+      {date:'28 Jul 2026', weight:155, qty:22},
+      {date:'11 Aug 2026', weight:250, qty:34},
+      {date:'25 Aug 2026', weight:100, qty:15},
+    ],
+    courgette: [
+      {date:'2 Jul 2026', weight:1200, qty:4},
+      {date:'16 Jul 2026', weight:1450, qty:5},
+    ],
+  },
+  2027: {},
+};
+function getHarvestYearLog(y){ if(!harvest_log[y]) harvest_log[y] = {}; return harvest_log[y]; }
+
+// event_log[year] = [{type:'late'|'failed'|'missed', itemId, note, date}]
+let event_log = {
+  2026: [
+    {type:'failed', itemId:'radish', note:'Slugs took the whole first sowing in April.', date:'30 Apr 2026'},
+  ],
+  2027: [],
+};
+function getEventYearLog(y){ if(!event_log[y]) event_log[y] = []; return event_log[y]; }
+
+let stats_notes = { 2026:'', 2027:'' };
+
+// compost_log[year] = {date} once that year's Compost Day is ticked off
+let compost_log = {};
+
+function markPlanted(rowId, year){
+  const yd = getYearData(year);
+  const planting = yd.plantings[rowId];
+  if(!planting) return;
+  planting.plantedOn = todayDateString();
+  renderPlanGrid();
+  showToast(rowId+' logged as sown today ('+planting.plantedOn+').');
+}
+
+/* ---------- Overview task checkboxes ---------- */
+function wireOverviewTaskChecks(){
+  document.querySelectorAll('#overview-tasks .chk').forEach(chk=>{
+    if(chk.dataset.wired) return;
+    chk.dataset.wired = '1';
+    chk.addEventListener('click', (e)=>{ e.stopPropagation(); onTaskCheckClick(chk); });
+  });
+}
+function markTaskDone(li){
+  li.classList.add('done');
+  const chk = li.querySelector('.chk');
+  if(chk) chk.disabled = true;
+}
+function onTaskCheckClick(chk){
+  const li = chk.closest('li');
+  if(li.classList.contains('done')) return;
+  const kind = chk.dataset.taskKind;
+  if(kind === 'sow'){
+    const rows = (chk.dataset.taskRows||'').split(',').filter(Boolean);
+    const year = parseInt(chk.dataset.taskYear,10);
+    rows.forEach(r=> markPlanted(r, year));
+    markTaskDone(li);
+  } else if(kind === 'harvest'){
+    const itemId = chk.dataset.taskItem;
+    const year = parseInt(chk.dataset.taskYear,10);
+    openHarvestLogForm(chk, itemId, year, ()=> markTaskDone(li));
+  } else if(kind === 'compost'){
+    const year = parseInt(chk.dataset.taskYear,10);
+    compost_log[year] = {date: todayDateString()};
+    showToast('Compost Day logged for '+year+' — nice work.');
+    markTaskDone(li);
+    if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+  } else {
+    markTaskDone(li);
+  }
+}
+
+/* ---------- Harvest logging (weight and/or count, per occasion) ---------- */
+function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const item = getItem(itemId);
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.style.left = Math.min(rect.left, window.innerWidth-220)+'px';
+  form.style.top = (rect.bottom+6)+'px';
+  form.innerHTML =
+    '<strong>Log harvest &mdash; '+item.name+'</strong>'+
+    '<label>Weight (g)<input type="number" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
+    '<label>Count<input type="number" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
+    '<label>Date<input type="text" id="hlf-date" value="'+todayDateString()+'"></label>'+
+    '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const weight = parseFloat(form.querySelector('#hlf-weight').value);
+    const qty = parseFloat(form.querySelector('#hlf-qty').value);
+    const date = form.querySelector('#hlf-date').value.trim() || todayDateString();
+    if(!weight && !qty){ form.querySelector('#hlf-weight').focus(); return; }
+    const yLog = getHarvestYearLog(year);
+    if(!yLog[itemId]) yLog[itemId] = [];
+    yLog[itemId].push({date, weight: weight||null, qty: qty||null});
+    form.remove();
+    showToast('Logged harvest: '+item.name+' on '+date+'.');
+    if(onLogged) onLogged();
+    if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+/* ---------- Compost Day: a recurring, date-driven Overview task ---------- */
+// February -- start of season, shortly before the first spring sowings
+// (onion, leek, tomato/courgette-under-cover all begin Feb in this app's own
+// inventory). Digging in then does double duty: works the compost in AND
+// knocks back whatever weeds got a head start over winter, right before
+// they'd otherwise compete with what you're about to sow.
+const COMPOST_TARGET_MONTH = 1;
+function getSaturdaysInMonth(year, monthIndex, count){
+  const dates = [];
+  const d = new Date(year, monthIndex, 1);
+  while(d.getDay() !== 6){ d.setDate(d.getDate()+1); }
+  while(dates.length < count && d.getMonth() === monthIndex){
+    dates.push(new Date(d));
+    d.setDate(d.getDate()+7);
+  }
+  return dates;
+}
+function formatShortDate(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}); }
+function getCompostDayState(){
+  // Find the next occurrence of the target month: this year's, unless
+  // that window has already passed or was already logged, in which case
+  // roll forward to next year's. (Written to work for any target month,
+  // including one early in the year that wraps the 3-month warning back
+  // into the previous calendar year.)
+  const monthEnd = (y)=> new Date(y, COMPOST_TARGET_MONTH+1, 0);
+  let year = today.getFullYear();
+  if(today > monthEnd(year)) year += 1;
+  if(compost_log[year]) year += 1;
+  const warnStart = new Date(year, COMPOST_TARGET_MONTH-3, 1); // 3 months' warning
+  return {
+    year,
+    visible: today >= warnStart,
+    overdue: today > monthEnd(year),
+    weekends: getSaturdaysInMonth(year, COMPOST_TARGET_MONTH, 3),
+  };
+}
+function renderCompostDayTask(){
+  const ul = document.getElementById('overview-tasks');
+  if(!ul) return;
+  const existing = document.getElementById('task-compost-day');
+  if(existing) existing.remove();
+  const st = getCompostDayState();
+  if(!st.visible) return;
+  const li = document.createElement('li');
+  li.id = 'task-compost-day';
+  li.className = 'task-link';
+  li.title = 'Go to the Veg Patch page';
+  li.addEventListener('click', ()=> taskGoto('patch', []));
+  const chk = document.createElement('button');
+  chk.type = 'button'; chk.className = 'chk';
+  chk.dataset.taskKind = 'compost'; chk.dataset.taskYear = String(st.year);
+  chk.title = 'Log Compost Day as done';
+  const txt = document.createElement('span'); txt.className = 'task-text';
+  const datesStr = st.weekends.map(formatShortDate).join(', ');
+  txt.innerHTML = 'Compost Day &mdash; '+
+    '<span class="due">'+(st.overdue?'overdue &mdash; ':'')+'suggested weekends: '+datesStr+' '+st.year+'</span>';
+  const arrow = document.createElement('span'); arrow.className='goto-arrow'; arrow.textContent='→';
+  li.appendChild(chk); li.appendChild(txt); li.appendChild(arrow);
+  ul.insertBefore(li, ul.firstChild);
+  wireOverviewTaskChecks();
+}
+
+/* ---------- User-added tasks & events (Overview page) ----------
+   One shared form (Title / Description / target Date / Location) feeds
+   either list depending on which "+ Add" button opened it. Location is
+   genuinely optional for a task (most won't need it) but kept in the
+   same form either way, per spec. */
+let custom_tasks = [];
+let custom_events = [];
+
+function openAddTaskEventForm(anchorBtn, kind){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.style.left = Math.min(rect.left, window.innerWidth-240)+'px';
+  form.style.top = (rect.bottom+6)+'px';
+  const noun = kind === 'event' ? 'event' : 'task';
+  form.innerHTML =
+    '<strong>Add '+noun+'</strong>'+
+    '<label>Title<input type="text" id="atf-title" placeholder="e.g. Order seed potatoes"></label>'+
+    '<label>Description<input type="text" id="atf-desc" placeholder="Optional detail"></label>'+
+    '<label>Target date<input type="text" id="atf-date" placeholder="e.g. 12 Oct 2026" value="'+todayDateString()+'"></label>'+
+    '<label>Location (if applicable)<input type="text" id="atf-loc" placeholder="Optional"></label>'+
+    '<div class="row"><button class="save">Add '+noun+'</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  form.querySelector('#atf-title').focus();
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const title = form.querySelector('#atf-title').value.trim();
+    if(!title){ form.querySelector('#atf-title').focus(); return; }
+    const entry = {
+      id: 'custom-'+Date.now().toString(36),
+      title,
+      description: form.querySelector('#atf-desc').value.trim(),
+      date: form.querySelector('#atf-date').value.trim() || todayDateString(),
+      location: form.querySelector('#atf-loc').value.trim(),
+    };
+    if(kind === 'event'){ custom_events.push(entry); renderCustomEvents(); }
+    else { custom_tasks.push(entry); renderCustomTasks(); }
+    form.remove();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+function renderCustomTasks(){
+  const ul = document.getElementById('overview-tasks');
+  if(!ul) return;
+  ul.querySelectorAll('.custom-task-item').forEach(el=>el.remove());
+  custom_tasks.forEach(t=>{
+    const li = document.createElement('li');
+    li.className = 'custom-task-item';
+    const chk = document.createElement('button');
+    chk.type = 'button'; chk.className = 'chk'; chk.dataset.taskKind = 'done'; chk.title = 'Mark done';
+    const txt = document.createElement('span'); txt.className = 'task-text';
+    txt.appendChild(document.createTextNode(t.title + (t.description ? ' — '+t.description+' ' : ' ')));
+    const due = document.createElement('span'); due.className = 'due';
+    due.textContent = t.location ? (t.date+' · '+t.location) : t.date;
+    txt.appendChild(due);
+    const rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this task';
+    rm.textContent = '✕';
+    rm.addEventListener('click', ()=>{ custom_tasks = custom_tasks.filter(x=>x.id!==t.id); renderCustomTasks(); });
+    li.appendChild(chk); li.appendChild(txt); li.appendChild(rm);
+    ul.appendChild(li);
+  });
+  wireOverviewTaskChecks();
+}
+
+function renderCustomEvents(){
+  const el = document.getElementById('upcoming-events-list');
+  if(!el) return;
+  el.querySelectorAll('.custom-event-item').forEach(e=>e.remove());
+  custom_events.forEach(ev=>{
+    const row = document.createElement('div'); row.className = 'event custom-event-item';
+    const left = document.createElement('span');
+    const b = document.createElement('b'); b.textContent = ev.title;
+    left.appendChild(b);
+    if(ev.description) left.appendChild(document.createTextNode(' — '+ev.description));
+    const right = document.createElement('span'); right.className = 'd';
+    right.appendChild(document.createTextNode(ev.location ? (ev.date+' · '+ev.location+' ') : (ev.date+' ')));
+    const rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this event';
+    rm.textContent = '✕';
+    rm.addEventListener('click', ()=>{ custom_events = custom_events.filter(x=>x.id!==ev.id); renderCustomEvents(); });
+    right.appendChild(rm);
+    row.appendChild(left); row.appendChild(right);
+    el.appendChild(row);
+  });
+}
+
+function sectionEl(sec, col){
+  const div = document.createElement('div');
+  div.className = 'section' + (sec.stage === 'empty' ? ' empty' : '') + (sec.stage === 'ready' ? ' ready-tile' : '');
+  div.style.gridColumn = String(col);
+  div.dataset.sec = sec.n; // lets Overview task "shortcuts" find and highlight this exact section/pot
+  const lab = document.createElement('span'); lab.className='label'; lab.textContent = sec.n;
+  div.appendChild(lab);
+  if(sec.species){
+    div.appendChild(buildSpriteEl(sec.species, sec.stage === 'ready' ? 'mature' : sec.stage, 26));
+    const nm = document.createElement('span'); nm.className='crop-name'; nm.textContent = sec.label;
+    div.appendChild(nm);
+    if(sec.stage === 'ready'){
+      const ring = document.createElement('span'); ring.className='ready-ring'; div.appendChild(ring);
+      const flag = document.createElement('span'); flag.className='ready-flag'; flag.textContent='Ready!'; div.appendChild(flag);
+      const chk = document.createElement('span'); chk.className='check'; chk.title='Mark harvested'; div.appendChild(chk);
+    }
+  }
+  const vbtn = document.createElement('button');
+  vbtn.className = 'volunteer-btn' + (volunteer_log[sec.n] ? ' logged' : '');
+  vbtn.textContent = 'P'; // plain monogram for "volunteer potato" -- full meaning is in the tooltip/form
+  vbtn.title = volunteer_log[sec.n]
+    ? 'Volunteer potato logged: '+volunteer_log[sec.n].qty+' on '+volunteer_log[sec.n].date+' — click to edit'
+    : 'Log a volunteer potato spotted here';
+  vbtn.addEventListener('click', (e)=>{ e.stopPropagation(); openVolunteerForm(vbtn, sec.n); });
+  div.appendChild(vbtn);
+  return div;
+}
+
+function gridRow(el, cells){
+  cells.forEach((cell, i)=>{ cell.style.gridColumn = String(i+1); el.appendChild(cell); });
+}
+
+function renderBed(containerId, colA, colB){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  el.style.gridTemplateColumns = '24px 1fr 14px 1fr';
+
+  const blank = document.createElement('div');
+  const labA = document.createElement('div'); labA.className='lab'; labA.textContent='A';
+  const labW = document.createElement('div'); labW.className='lab'; labW.textContent='W';
+  const labB = document.createElement('div'); labB.className='lab'; labB.textContent='B';
+  [blank, labA, labW, labB].forEach((x, i)=>{ x.style.gridColumn = String(i+1); el.appendChild(x); });
+
+  for(let i=0;i<10;i++){
+    const rn = document.createElement('div'); rn.className='bed-rownum'; rn.style.gridColumn='1'; rn.textContent = i+1;
+    const secA = sectionEl(colA[i], 2);
+    const walk = document.createElement('div'); walk.className='bed-walk'; walk.style.gridColumn='3';
+    const secB = sectionEl(colB[i], 4);
+    el.appendChild(rn); el.appendChild(secA); el.appendChild(walk); el.appendChild(secB);
+  }
+
+  const hr = document.createElement('hr'); hr.className='bed-hr';
+  el.appendChild(hr);
+  const foot = document.createElement('div'); foot.className='bed-foot'; foot.textContent = 'House';
+  el.appendChild(foot);
+
+  el.parentElement.querySelectorAll('.bed-caption').forEach(n=>n.remove());
+  const cap = document.createElement('div'); cap.className='bed-caption'; cap.textContent = 'Each section: 35cm × 105cm';
+  el.parentElement.appendChild(cap);
+}
+
+function renderPots(containerId, pots){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  el.style.gridTemplateColumns = '24px 1fr';
+  pots.forEach((sec,i)=>{
+    const rn = document.createElement('div'); rn.className='bed-rownum'; rn.style.gridColumn='1'; rn.textContent = i+1;
+    const s = sectionEl(sec, 2);
+    el.appendChild(rn); el.appendChild(s);
+  });
+}
+
+renderAllSprites();
+refreshVolunteerAlert();
+
+/* ============================================================
+   PLAN PAGE: sidebar drag-and-drop onto a section/month grid
+   ============================================================ */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PLAN_ROWS = ['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10'];
+
+/* ============================================================
+   INVENTORY: every seed the user owns is one item in this array.
+   Several varieties of the same species share a `species` value
+   (used for the sprite art and for companion/rotation matching).
+   ============================================================ */
+let INVENTORY = [
+  {id:'frenchbean',      species:'frenchbean',   name:'French Beans', variety:'',                    sow:[5,6],  harvest:[7,9],  spacing:15, sun:'Full sun',            good:['tomato','courgette','cabbage'],  bad:['onion'],   stock:'open',   comments:'Climbing variety — needs canes by early June.'},
+  {id:'beetroot',        species:'beetroot',     name:'Beetroot',     variety:'Cylindra',            sow:[3,7],  harvest:[7,9],  spacing:10, sun:'Full sun',            good:['onion','cabbage','leek'],        bad:['frenchbean'], stock:'sealed', comments:'Bolted in the 2025 heatwave — try a slightly later sowing this year.'},
+  {id:'courgette',       species:'courgette',    name:'Courgette',    variety:'Marrow',              sow:[4,6],  harvest:[7,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'open',   comments:''},
+  {id:'cabbage',         species:'cabbage',      name:'Cabbage',      variety:'',                    sow:[3,5],  harvest:[6,8],  spacing:45, sun:'Full sun',            good:['beetroot','onion','frenchbean'], bad:['tomato'],  stock:'none',   comments:''},
+  {id:'onion',           species:'onion',        name:'Onion',        variety:'',                    sow:[2,4],  harvest:[7,8],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage','leek'],     bad:['frenchbean'], stock:'sealed', comments:''},
+  {id:'squash',          species:'squash',       name:'Squash',       variety:'',                    sow:[4,6],  harvest:[8,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'sealed', comments:''},
+  {id:'brusselsprout',   species:'brusselsprout',name:'Brussel Sprout',variety:'',                   sow:[3,5],  harvest:[10,12],spacing:60, sun:'Full sun',            good:['onion','beetroot'],              bad:[],          stock:'open',   comments:''},
+  {id:'sorrel',          species:'sorrel',       name:'Sorrel',       variety:'',                    sow:[4,6],  harvest:[6,10], spacing:30, sun:'Part shade',          good:['cabbage','leek'],                bad:[],          stock:'sealed', comments:''},
+  {id:'leek',            species:'leek',         name:'Leek',         variety:'Musselburgh',         sow:[2,4],  harvest:[9,11], spacing:15, sun:'Full sun',            good:['beetroot','carrot','onion'],     bad:[],          stock:'open',   comments:''},
+  {id:'tomato_cherry',   species:'tomato',       name:'Tomato',       variety:'Red Cherry',          sow:[2,4],  harvest:[7,9],  spacing:45, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'open',   comments:'Reliable, heavy cropper — the one to bulk-sow.'},
+  {id:'tomato_beefsteak',species:'tomato',       name:'Tomato',       variety:'Beefsteak',           sow:[2,4],  harvest:[8,10], spacing:60, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'sealed', comments:'First time growing this one — needs sturdier stakes than the cherry.'},
+  {id:'cucumber',        species:'cucumber',     name:'Cucumber',     variety:'Wisconsin',           sow:[4,6],  harvest:[8,9],  spacing:60, sun:'Full sun, sheltered', good:['frenchbean','onion'],            bad:[],          stock:'open',   comments:''},
+  {id:'garlic',          species:'garlic',       name:'Garlic',       variety:'',                    sow:[9,11], harvest:[6,7],  spacing:15, sun:'Full sun',            good:['beetroot','sorrel'],             bad:['frenchbean'], stock:'sealed', comments:'', overwinters:true},
+  {id:'broadbean',       species:'broadbean',    name:'Broad Beans',  variety:'Aquadulce Claudia',   sow:[10,11],harvest:[5,6],  spacing:20, sun:'Full sun',            good:['cabbage','potato'],              bad:[],          stock:'none',   comments:'', overwinters:true},
+  {id:'onionsets',       species:'onion',        name:'Onion',        variety:'Overwintering sets',  sow:[9,10], harvest:[6,7],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage'],            bad:['frenchbean'], stock:'sealed', comments:'', overwinters:true, sprite:'onion'},
+  {id:'carrot',          species:'carrot',       name:'Carrot',       variety:'',                    sow:[3,7],  harvest:[7,10], spacing:5,  sun:'Full sun',            good:['onion','leek'],                  bad:[],          stock:'sealed', comments:''},
+  {id:'radish',          species:'radish',       name:'Radish',       variety:'',                    sow:[3,8],  harvest:[4,9],  spacing:5,  sun:'Full sun',            good:['cucumber','peas'],               bad:[],          stock:'open',   comments:''},
+  {id:'spinach',         species:'spinach',      name:'Spinach',      variety:'',                    sow:[3,9],  harvest:[5,10], spacing:15, sun:'Part shade',          good:['brusselsprout','onion'],         bad:[],          stock:'none',   comments:''},
+  {id:'peas',            species:'peas',         name:'Peas',         variety:'',                    sow:[3,6],  harvest:[6,9],  spacing:5,  sun:'Full sun',            good:['carrot','radish'],               bad:['onion'],   stock:'sealed', comments:''},
+  {id:'sweetcorn',       species:'sweetcorn',    name:'Sweetcorn',    variety:'',                    sow:[4,5],  harvest:[8,9],  spacing:35, sun:'Full sun',            good:['courgette','squash'],            bad:[],          stock:'none',   comments:''},
+];
+let INV = {};
+function rebuildInvIndex(){ INV = {}; INVENTORY.forEach(it=>{ INV[it.id]=it; }); }
+rebuildInvIndex();
+function getItem(id){
+  return INV[id] || {id, name:'(removed seed)', variety:'', species:'tomato', sow:[1,1], harvest:[1,1], spacing:30, sun:'', good:[], bad:[]};
+}
+const NOT_OWNED_NAMES = {basil:'Basil', potato:'Potato'};
+
+function spriteFor(id){ const it=getItem(id); return it.sprite || it.species; }
+function spanFor(id){
+  const m = getItem(id);
+  return m.overwinters ? (m.harvest[1]+12-m.sow[0]) : (m.harvest[1]-m.sow[0]);
+}
+function capacityFor(id){
+  const m = getItem(id);
+  return Math.max(1, Math.round((105*35)/(m.spacing*m.spacing)));
+}
+function isOutOfWindow(id, startMonth){
+  const m = getItem(id);
+  return !(startMonth >= m.sow[0] && startMonth <= m.sow[1]);
+}
+function ownsSpecies(speciesFamily){ return INVENTORY.some(it=>it.species===speciesFamily); }
+
+/* ---------- sorting, shared by Inventory and the Plan sidebar ---------- */
+function sortItems(list, mode){
+  const arr = list.slice();
+  const cmp = {
+    'name':         (a,b)=> a.name.localeCompare(b.name) || a.variety.localeCompare(b.variety),
+    'sow-early':    (a,b)=> a.sow[0]-b.sow[0],
+    'sow-late':     (a,b)=> b.sow[1]-a.sow[1],
+    'harvest-early':(a,b)=> a.harvest[0]-b.harvest[0],
+    'harvest-late': (a,b)=> b.harvest[1]-a.harvest[1],
+    'duration':     (a,b)=> spanFor(b.id)-spanFor(a.id),
+  }[mode] || null;
+  if(cmp) arr.sort(cmp);
+  return arr;
+}
+let inv_sort = 'name';
+let plan_sort = 'name';
+function setInvSort(mode){ inv_sort = mode; renderInventory(); }
+function setPlanSort(mode){ plan_sort = mode; renderPlanSidebar(); }
+
+/* ============================================================
+   INVENTORY PAGE
+   ============================================================ */
+function renderInventory(){
+  const el = document.getElementById('inv-grid');
+  if(!el) return;
+  el.innerHTML = '';
+  sortItems(INVENTORY, inv_sort).forEach(item=>{
+    const outer = document.createElement('div'); outer.className = 'inv-card-outer';
+    const inner = document.createElement('div'); inner.className = 'inv-card-inner';
+
+    const front = document.createElement('div'); front.className = 'inv-card inv-card-face front';
+    const sowLabel = 'Sow '+MONTHS[item.sow[0]-1]+(item.sow[0]!==item.sow[1] ? '–'+MONTHS[item.sow[1]-1] : '')+(item.overwinters?' (overwinters)':'');
+    const harvestLabel = MONTHS[item.harvest[0]-1]+(item.harvest[0]!==item.harvest[1] ? '–'+MONTHS[item.harvest[1]-1] : '');
+    front.innerHTML =
+      '<button class="inv-delete-btn" title="'+(item.stock==='none'?'Delete this seed':'Set stock to None before deleting')+'" '+(item.stock!=='none'?'disabled':'')+' data-delete-for="'+item.id+'">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+          '<polyline points="3 6 5 6 21 6"></polyline>'+
+          '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>'+
+          '<path d="M10 11v6"></path><path d="M14 11v6"></path>'+
+          '<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>'+
+        '</svg>'+
+      '</button>'+
+      '<div class="inv-top"><div class="sprite-wrap'+(item.stock==='none'?' out-of-stock':'')+'" data-inv-sprite="'+item.id+'"></div>'+
+        '<div><div class="inv-name">'+item.name+'</div><div class="inv-variety">'+(item.variety||'—')+'</div></div></div>'+
+      '<div class="inv-meta">'+
+        '<div><b>Sow</b>'+sowLabel+'</div><div><b>Harvest</b>'+harvestLabel+'</div>'+
+        '<div><b>Spacing</b>'+item.spacing+'cm</div><div><b>Sun</b>'+(item.sun||'—')+'</div>'+
+      '</div>'+
+      '<div class="inv-actions">'+
+        '<span class="inv-stock">Stock <select data-stock-for="'+item.id+'">'+
+          '<option value="sealed"'+(item.stock==='sealed'?' selected':'')+'>Sealed packet</option>'+
+          '<option value="open"'+(item.stock==='open'?' selected':'')+'>Open packet</option>'+
+          '<option value="none"'+(item.stock==='none'?' selected':'')+'>None</option>'+
+        '</select></span>'+
+        '<button class="inv-icon-btn" title="Notes" data-flip-for="'+item.id+'">Notes'+(item.comments?' ●':'')+'</button>'+
+      '</div>';
+
+    const back = document.createElement('div'); back.className = 'inv-card inv-card-face back';
+    back.innerHTML =
+      '<div class="inv-back-head"><b>'+item.name+(item.variety?' — '+item.variety:'')+'</b>'+
+        '<button class="inv-icon-btn" title="Back to card" data-flip-for="'+item.id+'">Done</button></div>'+
+      '<textarea placeholder="Notes on this variety — sowing quirks, pests, how it did last year…" data-comment-for="'+item.id+'">'+item.comments+'</textarea>';
+
+    inner.appendChild(front); inner.appendChild(back);
+    outer.appendChild(inner);
+    el.appendChild(outer);
+  });
+
+  el.querySelectorAll('[data-inv-sprite]').forEach(w=>{
+    w.appendChild(buildSpriteEl(spriteFor(w.dataset.invSprite), 'mature', 40));
+  });
+  el.querySelectorAll('[data-stock-for]').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const item = getItem(sel.dataset.stockFor);
+      item.stock = sel.value;
+      renderInventory();
+    });
+  });
+  el.querySelectorAll('[data-flip-for]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const outer = e.target.closest('.inv-card-outer');
+      outer.classList.toggle('flipped');
+    });
+  });
+  el.querySelectorAll('[data-comment-for]').forEach(ta=>{
+    ta.addEventListener('input', ()=>{ getItem(ta.dataset.commentFor).comments = ta.value; });
+    ta.addEventListener('blur', renderInventory);
+  });
+  el.querySelectorAll('[data-delete-for]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const item = getItem(btn.dataset.deleteFor);
+      if(item.comments && !confirm('"'+item.name+(item.variety?' ('+item.variety+')':'')+'" has notes saved on it. Delete it anyway?')) return;
+      INVENTORY = INVENTORY.filter(it=>it.id!==item.id);
+      rebuildInvIndex();
+      renderInventory();
+      renderPlanSidebar();
+    });
+  });
+}
+
+function toggleAddForm(show){
+  const form = document.getElementById('inv-add-form');
+  const willShow = show===undefined ? form.hidden : !!show;
+  form.hidden = !willShow;
+  if(willShow){
+    const spriteSel = document.getElementById('af-sprite');
+    if(!spriteSel.options.length){
+      Object.keys(SPECIES).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; spriteSel.appendChild(o); });
+    }
+    [['af-sow0','af-sow1'],['af-harv0','af-harv1']].flat().forEach(id=>{
+      const sel = document.getElementById(id);
+      if(!sel.options.length) MONTHS.forEach((mo,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=mo; sel.appendChild(o); });
+    });
+  }
+}
+function submitAddForm(ev){
+  ev.preventDefault();
+  const name = document.getElementById('af-name').value.trim();
+  if(!name) return false;
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Date.now().toString(36);
+  const sprite = document.getElementById('af-sprite').value;
+  INVENTORY.push({
+    id, species: sprite, name, variety: document.getElementById('af-variety').value.trim(),
+    sow: [parseInt(document.getElementById('af-sow0').value,10), parseInt(document.getElementById('af-sow1').value,10)],
+    harvest: [parseInt(document.getElementById('af-harv0').value,10), parseInt(document.getElementById('af-harv1').value,10)],
+    spacing: parseInt(document.getElementById('af-spacing').value,10) || 30,
+    sun: document.getElementById('af-sun').value.trim(),
+    good: [], bad: [], stock: document.getElementById('af-stock').value, comments: '',
+  });
+  rebuildInvIndex();
+  toggleAddForm(false);
+  ev.target.reset();
+  renderInventory();
+  renderPlanSidebar();
+  return false;
+}
+
+/* ============================================================
+   PLAN PAGE
+   ============================================================ */
+// plantedOn is the real, timestamped "I actually did this" date -- set only
+// via markPlanted() when a sow tick (Overview task or the Plan block's own
+// ○/✓ control) is clicked. start/end are still the *planned* month window;
+// plantedOn (when present) is what the record actually happened on.
+const plan_data = {
+  2026: {
+    pots: ['Pot 1'],
+    plantings: {
+      A1:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'}, A2:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'},
+      A3:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'}, A4:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'},
+      A5:{itemId:'beetroot', start:4, end:8, plantedOn:'22 Apr 2026'},   A6:{itemId:'beetroot', start:4, end:8, plantedOn:'22 Apr 2026'},
+      A7:{itemId:'courgette', start:5, end:10, plantedOn:'9 May 2026'}, A8:{itemId:'courgette', start:5, end:10, plantedOn:'9 May 2026'},
+      A9:{itemId:'onion', start:2, end:8},      A10:{itemId:'onion', start:2, end:8}, // not yet ticked -- matches the pending Overview task
+      B1:{itemId:'sorrel', start:5, end:10, plantedOn:'14 May 2026'},    B2:{itemId:'sorrel', start:5, end:10, plantedOn:'14 May 2026'},
+      B4:{itemId:'garlic', start:10, end:20},   // Oct 2026 -> Aug 2027: carries into next year's plan
+      B7:{itemId:'brusselsprout', start:3, end:12, plantedOn:'2 Mar 2026'}, B8:{itemId:'brusselsprout', start:3, end:12, plantedOn:'2 Mar 2026'},
+      B9:{itemId:'leek', start:2, end:11, plantedOn:'25 Feb 2026'},      B10:{itemId:'leek', start:2, end:11, plantedOn:'25 Feb 2026'},
+      'Pot 1':{itemId:'cucumber', start:6, end:9, plantedOn:'30 Jun 2026'}, // planted a month late on purpose -- shows the warning
+    },
+    clearedCarry: {},
+  },
+  2027: { pots: [], plantings: {}, clearedCarry: {} },
+};
+let plan_year = 2026;
+function getYearData(y){
+  if(!plan_data[y]) plan_data[y] = {pots:[], plantings:{}, clearedCarry:{}};
+  return plan_data[y];
+}
+function setPlanYear(y){
+  plan_year = y;
+  document.querySelectorAll('.year-tabs .seg button[data-year]').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.year,10)===y);
+  });
+  renderPlanGrid();
+  resetCompanionPanel();
+}
+
+function renderPlanSidebar(){
+  const el = document.getElementById('plan-sidebar');
+  if(!el) return;
+  el.innerHTML = '';
+  sortItems(INVENTORY, plan_sort).forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'plan-seed';
+    card.dataset.item = item.id;
+    const sw = document.createElement('div'); sw.className='sprite-wrap';
+    sw.appendChild(buildSpriteEl(spriteFor(item.id), 'mature', 34));
+    const sowLabel = 'Sow '+MONTHS[item.sow[0]-1]+(item.sow[0]!==item.sow[1] ? '–'+MONTHS[item.sow[1]-1] : '')+(item.overwinters?' (overwinters)':'');
+    const txt = document.createElement('div'); txt.className='txt';
+    txt.innerHTML = '<div class="nm">'+item.name+'</div>'+
+      (item.variety ? '<div class="sub">'+item.variety+'</div>' : '')+
+      '<div class="sub">'+sowLabel+'</div>';
+    card.appendChild(sw); card.appendChild(txt);
+    card.addEventListener('pointerdown', (e)=>startPlanDrag(e, item.id));
+    el.appendChild(card);
+  });
+}
+
+function rowsWithSpeciesLastYear(speciesFamily){
+  const prevYd = plan_data[plan_year-1];
+  if(!prevYd) return [];
+  return PLAN_ROWS.filter(rowId=>{
+    const p = prevYd.plantings[rowId];
+    return p && getItem(p.itemId).species === speciesFamily;
+  });
+}
+function setRotationFlag(speciesFamily, on){
+  rowsWithSpeciesLastYear(speciesFamily).forEach(rowId=>{
+    document.querySelectorAll('.plan-cell[data-row="'+CSS.escape(rowId)+'"]').forEach(c=>c.classList.toggle('rotation-flag', on));
+  });
+}
+function isCarryBlocked(rowId){
+  const yd = getYearData(plan_year);
+  if(yd.plantings[rowId]) return false;
+  const prevYd = plan_data[plan_year-1];
+  const p = prevYd && prevYd.plantings[rowId];
+  if(!p || p.end <= 12) return false;
+  return !yd.clearedCarry[rowId];
+}
+function showToast(msg){
+  let t = document.getElementById('plan-toast');
+  if(!t){ t = document.createElement('div'); t.id='plan-toast'; t.className='plan-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 2800);
+}
+
+function renderPlanGrid(){
+  const el = document.getElementById('plan-grid');
+  if(!el) return;
+  el.innerHTML = '';
+  el.style.gridTemplateColumns = '76px repeat(12, minmax(56px,1fr))';
+
+  const corner = document.createElement('div'); corner.className='plan-head corner';
+  corner.style.gridColumn='1'; corner.style.gridRow='1';
+  el.appendChild(corner);
+  MONTHS.forEach((mo,i)=>{
+    const h = document.createElement('div'); h.className='plan-head'; h.textContent = mo;
+    h.style.gridColumn = String(i+2); h.style.gridRow='1';
+    el.appendChild(h);
+  });
+
+  const yd = getYearData(plan_year);
+  const prevYd = plan_data[plan_year-1];
+  const rows = PLAN_ROWS.concat(yd.pots);
+  rows.forEach((rowId, idx)=>{
+    const rowNum = idx+2;
+    const label = document.createElement('div'); label.className='plan-rowlabel'; label.textContent = rowId;
+    label.style.gridColumn='1'; label.style.gridRow=String(rowNum);
+    label.dataset.row = rowId;
+    el.appendChild(label);
+    for(let m=1;m<=12;m++){
+      const cell = document.createElement('div'); cell.className='plan-cell';
+      cell.style.gridColumn = String(m+1); cell.style.gridRow = String(rowNum);
+      cell.dataset.row = rowId; cell.dataset.month = String(m);
+      cell.addEventListener('click', resetCompanionPanel);
+      el.appendChild(cell);
+    }
+
+    const planting = yd.plantings[rowId];
+    const prevPlanting = prevYd && prevYd.plantings[rowId];
+    const showsCarryIn = prevPlanting && prevPlanting.end > 12 && !planting && !yd.clearedCarry[rowId];
+    const rotated = planting && getItem(planting.itemId).species && rowsWithSpeciesLastYear(getItem(planting.itemId).species).includes(rowId);
+
+    if(planting){
+      const block = makePlanBlock(planting.itemId, planting.start, Math.min(12, planting.end), rowId, rowNum, {
+        warn: isOutOfWindow(planting.itemId, planting.start),
+        continuesOut: planting.end > 12,
+        rotationWarn: rotated,
+        movable: true,
+        plantedOn: planting.plantedOn,
+      });
+      el.appendChild(block);
+    } else if(showsCarryIn){
+      const block = makePlanBlock(prevPlanting.itemId, 1, prevPlanting.end-12, rowId, rowNum, {
+        continuesIn: true, movable: false,
+      });
+      block.title = getItem(prevPlanting.itemId).name+' carries over from '+(plan_year-1)+'. Harvest it early to free this section, or drag a seed here to replace it.';
+      const clearBtn = document.createElement('button'); clearBtn.className='clear-carry'; clearBtn.textContent='Harvest early';
+      clearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); yd.clearedCarry[rowId]=true; renderPlanGrid(); });
+      block.appendChild(clearBtn);
+      el.appendChild(block);
+    }
+  });
+
+  const addRowNum = rows.length+2;
+  const addRow = document.createElement('div'); addRow.className='plan-addrow';
+  addRow.style.gridColumn='1 / -1'; addRow.style.gridRow=String(addRowNum);
+  const addBtn = document.createElement('button'); addBtn.textContent = '+ Add pot or container';
+  addBtn.addEventListener('click', ()=>{ yd.pots.push('Pot '+(yd.pots.length+1)); renderPlanGrid(); });
+  addRow.appendChild(addBtn);
+  el.appendChild(addRow);
+
+  syncPlanSidebarHeight();
+}
+
+/* The seed bank (left) and the calendar (right) have independent content --
+   pots get added, years get switched, rows carry over -- so a plain CSS
+   percentage/stretch can't reliably keep them the same height: whichever
+   side's content is naturally taller "wins" the auto-size and the other is
+   left with dead space (or, worse, spills past its own box). Instead we
+   measure the calendar's actual rendered height and pin the seed bank to
+   match it exactly, letting the seed list scroll internally for the rest. */
+function syncPlanSidebarHeight(){
+  const col = document.getElementById('plan-sidebar-col');
+  const mainWrap = document.getElementById('plan-main-wrap');
+  if(!col || !mainWrap) return;
+  if(window.matchMedia('(max-width: 680px)').matches){
+    col.style.height = '';
+    return;
+  }
+  requestAnimationFrame(()=>{ col.style.height = mainWrap.offsetHeight + 'px'; });
+}
+let _planSidebarResizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_planSidebarResizeTimer);
+  _planSidebarResizeTimer = setTimeout(syncPlanSidebarHeight, 120);
+});
+
+function makePlanBlock(itemId, start, end, rowId, rowNum, opts){
+  opts = opts || {};
+  const item = getItem(itemId);
+  const block = document.createElement('div');
+  block.className = 'plan-block'
+    + (opts.warn ? ' warn' : '')
+    + (opts.continuesOut ? ' continues-out' : '')
+    + (opts.continuesIn ? ' continues-in' : '')
+    + (opts.rotationWarn ? ' rotation-warn' : '');
+  block.style.gridColumn = (start+1)+' / '+Math.min(13, end+2);
+  block.style.gridRow = String(rowNum);
+  block.dataset.row = rowId;
+  const titleBits = [];
+  if(opts.warn) titleBits.push(item.name+' is usually sown in '+MONTHS[item.sow[0]-1]+' — this is outside that window, but still allowed.');
+  if(opts.rotationWarn) titleBits.push(item.name+' (or another '+item.species+') grew here last year — rotating crops helps avoid soil-borne problems, but this is still allowed.');
+  if(titleBits.length) block.title = titleBits.join(' ');
+  block.appendChild(buildSpriteEl(spriteFor(itemId), 'growing', 20));
+  const nm = document.createElement('span'); nm.className='nm';
+  nm.textContent = item.name + (opts.continuesIn ? ' (from last year)' : '');
+  block.appendChild(nm);
+  const badge = document.createElement('span'); badge.className='badge'; badge.textContent = '×'+capacityFor(itemId);
+  block.appendChild(badge);
+  if(opts.movable){
+    const sowTick = document.createElement('button'); sowTick.type='button';
+    sowTick.className = 'sow-tick' + (opts.plantedOn ? ' done' : '');
+    if(opts.plantedOn){
+      sowTick.textContent = '✓'; sowTick.disabled = true;
+      sowTick.title = 'Sown on '+opts.plantedOn;
+    } else {
+      sowTick.textContent = '○';
+      sowTick.title = 'Not yet confirmed — click to log today as the sowing date';
+      sowTick.addEventListener('click', (e)=>{ e.stopPropagation(); markPlanted(rowId, plan_year); });
+    }
+    block.appendChild(sowTick);
+
+    const rm = document.createElement('span'); rm.className='rm'; rm.textContent = '✕';
+    rm.addEventListener('click', (e)=>{ e.stopPropagation(); delete getYearData(plan_year).plantings[rowId]; renderPlanGrid(); });
+    block.appendChild(rm);
+    block.addEventListener('pointerdown', (e)=> armBlockDrag(e, itemId, rowId));
+  } else {
+    block.addEventListener('click', ()=> showCompanionPanel(itemId));
+  }
+  return block;
+}
+
+function resetCompanionPanel(){
+  const el = document.getElementById('companion-panel');
+  if(!el) return;
+  el.innerHTML = '<h3><span class="eyebrow">Companion suggestions</span></h3>'+
+    '<p class="companion-empty">Click a planting in the grid above to see what grows well alongside it.</p>';
+}
+function showCompanionPanel(itemId){
+  const el = document.getElementById('companion-panel');
+  if(!el) return;
+  const m = getItem(itemId);
+  const owned = m.good.filter(k=>ownsSpecies(k));
+  const notOwned = m.good.filter(k=>!ownsSpecies(k));
+  const label = k=> INVENTORY.find(it=>it.species===k) ? (INVENTORY.find(it=>it.species===k).name) : (NOT_OWNED_NAMES[k]||k);
+  el.innerHTML =
+    '<h3><span class="eyebrow">Companion suggestions — '+m.name+(m.variety?' ('+m.variety+')':'')+'</span></h3>'+
+    '<div class="companion-grid">'+
+      '<div><h4>You already grow</h4><ul class="companion-list">'+
+        (owned.length ? owned.map(k=>'<li><span class="dot"></span>'+label(k)+'</li>').join('') : '<li style="color:var(--m-text-dim)">None from your current inventory</li>')+
+      '</ul></div>'+
+      '<div><h4>Worth adding to your seed store</h4><ul class="companion-list not-owned">'+
+        (notOwned.length ? notOwned.map(k=>'<li><span class="dot"></span>'+(NOT_OWNED_NAMES[k]||k)+'</li>').join('') : '<li>Nothing extra suggested</li>')+
+      '</ul></div>'+
+    '</div>';
+}
+
+/* pointer-based drag: works with both mouse and touch, which matters since
+   this needs to run on a phone as well as a desktop browser. Sidebar seed
+   cards always start a drag; existing plan blocks disambiguate a click
+   (open companion info) from a drag (move the planting) by movement. */
+let planDrag = null;
+function startPlanDrag(e, itemId, sourceRow){
+  e.preventDefault();
+  const meta = getItem(itemId);
+  const monthsNeeded = spanFor(itemId)+1;
+  const ghost = document.createElement('div'); ghost.className='ghost-drag';
+  ghost.appendChild(buildSpriteEl(spriteFor(itemId), 'mature', 22));
+  const gtxt = document.createElement('div'); gtxt.className='ghost-txt';
+  gtxt.innerHTML = '<span>'+meta.name+'</span><span class="ghost-span">'+monthsNeeded+' month'+(monthsNeeded===1?'':'s')+' in the ground</span>';
+  ghost.appendChild(gtxt);
+  document.body.appendChild(ghost);
+  planDrag = {itemId, sourceRow: sourceRow || null, ghost, lastCell:null};
+  setRotationFlag(meta.species, true);
+  moveGhost(e.clientX, e.clientY);
+  window.addEventListener('pointermove', onPlanDragMove);
+  window.addEventListener('pointerup', onPlanDragEnd, {once:true});
+}
+function armBlockDrag(e, itemId, rowId){
+  if(e.target.closest('.rm')) return; // pressing delete shouldn't start a drag
+  const startX = e.clientX, startY = e.clientY;
+  let dragging = false;
+  function onMove(ev){
+    if(Math.abs(ev.clientX-startX) > 6 || Math.abs(ev.clientY-startY) > 6){
+      dragging = true;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      startPlanDrag(ev, itemId, rowId);
+    }
+  }
+  function onUp(){
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if(!dragging) showCompanionPanel(itemId);
+  }
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+}
+function moveGhost(x,y){
+  if(!planDrag) return;
+  planDrag.ghost.style.left = x+'px';
+  planDrag.ghost.style.top = y+'px';
+}
+function onPlanDragMove(e){
+  if(!planDrag) return;
+  moveGhost(e.clientX, e.clientY);
+  if(planDrag.lastCell) planDrag.lastCell.classList.remove('drop-hover');
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const cell = el && el.closest ? el.closest('.plan-cell') : null;
+  if(cell){ cell.classList.add('drop-hover'); planDrag.lastCell = cell; } else { planDrag.lastCell = null; }
+}
+function onPlanDragEnd(e){
+  window.removeEventListener('pointermove', onPlanDragMove);
+  if(!planDrag) return;
+  const meta = getItem(planDrag.itemId);
+  setRotationFlag(meta.species, false);
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const target = el && el.closest ? el.closest('[data-row][data-month], .plan-block[data-row]') : null;
+  const yd = getYearData(plan_year);
+  let rowId=null, month=null;
+  if(target){
+    if(target.dataset.month){ rowId = target.dataset.row; month = parseInt(target.dataset.month,10); }
+    else if(target.classList.contains('plan-block')){ rowId = target.dataset.row; month = (yd.plantings[rowId] && yd.plantings[rowId].start) || 1; }
+  }
+  if(rowId && month){
+    if(isCarryBlocked(rowId)){
+      const prevYd = plan_data[plan_year-1];
+      const prevName = getItem(prevYd.plantings[rowId].itemId).name;
+      showToast(rowId+' still has last year’s '+prevName+' in it — harvest it early (button on the block) before replanting.');
+    } else {
+      if(planDrag.sourceRow && planDrag.sourceRow !== rowId) delete yd.plantings[planDrag.sourceRow];
+      const span = spanFor(planDrag.itemId);
+      yd.plantings[rowId] = {itemId: planDrag.itemId, start: month, end: month+span};
+      renderPlanGrid();
+      showCompanionPanel(planDrag.itemId);
+    }
+  }
+  if(planDrag.lastCell) planDrag.lastCell.classList.remove('drop-hover');
+  planDrag.ghost.remove();
+  planDrag = null;
+}
+
+/* ============================================================
+   STATS PAGE
+   Tabbed by year, like Plan (stats_year mirrors plan_year). The "Right
+   now" tiles are live/current status (not year-scoped, since "ready to
+   harvest now" only means anything for the actual present). Everything
+   else -- harvest log, crop ranking, issue log, notes, compost badge --
+   is scoped to whichever year tab is selected, and is either read
+   straight from real app state (crop ranking) or is data you logged
+   yourself (harvest log, issue log, notes, compost) -- nothing here is
+   an invented placeholder.
+   ============================================================ */
+let stats_year = 2026;
+function setStatsYear(y){
+  stats_year = y;
+  document.querySelectorAll('#page-stats .year-tabs .seg button[data-year]').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.year,10)===y);
+  });
+  renderStats();
+}
+
+function renderStats(){
+  // No live/current-status figures here on purpose -- this page is pure
+  // data collection, so everything below is either a logged record or a
+  // year-scoped summary of that year's plan, never "right now" state.
+  renderStatsMonthChart();
+  renderStatsHarvestLog();
+  renderStatsCropRank();
+  renderStatsEventLog();
+  renderStatsCompostNote();
+  renderStatsNotes();
+}
+
+/* ---------- Sowings vs harvests by month -- built from real logged data:
+   "sown" = plantings with a confirmed plantedOn date that year, bucketed by
+   the month they were confirmed; "harvested" = harvest-log occasions that
+   year, bucketed by the month logged. Nothing here is invented. ---------- */
+function monthIndexFromDateStr(str){
+  if(!str) return null;
+  const d = new Date(str);
+  return isNaN(d) ? null : d.getMonth();
+}
+function computeStatsMonthly(year){
+  const sown = new Array(12).fill(0);
+  const harvested = new Array(12).fill(0);
+  Object.values(getYearData(year).plantings).forEach(p=>{
+    const mi = monthIndexFromDateStr(p.plantedOn);
+    if(mi !== null) sown[mi]++;
+  });
+  const yLog = getHarvestYearLog(year);
+  Object.values(yLog).forEach(entries=>{
+    (entries||[]).forEach(e=>{
+      const mi = monthIndexFromDateStr(e.date);
+      if(mi !== null) harvested[mi]++;
+    });
+  });
+  return {sown, harvested};
+}
+function renderStatsMonthChart(){
+  const el = document.getElementById('stats-month-chart');
+  if(!el) return;
+  el.innerHTML = '';
+  const {sown, harvested} = computeStatsMonthly(stats_year);
+  const max = Math.max(1, ...sown, ...harvested);
+  MONTHS.forEach((mo, i)=>{
+    const s = sown[i], h = harvested[i];
+    const group = document.createElement('div'); group.className='stats-month-group';
+    const bars = document.createElement('div'); bars.className='stats-bars';
+    const bSown = document.createElement('div'); bSown.className='stats-bar sown';
+    bSown.style.height = (s/max*100)+'%'; bSown.tabIndex = 0;
+    const bHarv = document.createElement('div'); bHarv.className='stats-bar harvested';
+    bHarv.style.height = (h/max*100)+'%'; bHarv.tabIndex = 0;
+    [bSown, bHarv].forEach(b=>{
+      b.addEventListener('pointerenter', ()=>showStatsTooltip(group, b, mo, s, h));
+      b.addEventListener('focus', ()=>showStatsTooltip(group, b, mo, s, h));
+      b.addEventListener('pointerleave', hideStatsTooltip);
+      b.addEventListener('blur', hideStatsTooltip);
+    });
+    bars.appendChild(bSown); bars.appendChild(bHarv);
+    group.appendChild(bars);
+    const lab = document.createElement('span'); lab.className='stats-month-label'; lab.textContent = mo;
+    group.appendChild(lab);
+    el.appendChild(group);
+  });
+}
+function showStatsTooltip(group, anchor, mo, sown, harv){
+  let tip = document.getElementById('stats-tooltip');
+  if(!tip){ tip = document.createElement('div'); tip.id='stats-tooltip'; tip.className='stats-tooltip'; document.body.appendChild(tip); }
+  tip.innerHTML = '';
+  const hd = document.createElement('b'); hd.className='hd'; hd.textContent = mo+' '+stats_year;
+  const r1 = document.createElement('span'); r1.className='row'; r1.textContent = 'Sown (confirmed): '+sown;
+  const r2 = document.createElement('span'); r2.className='row'; r2.textContent = 'Harvest occasions: '+harv;
+  tip.appendChild(hd); tip.appendChild(r1); tip.appendChild(r2);
+  const r = anchor.getBoundingClientRect();
+  tip.style.left = (r.left + r.width/2)+'px';
+  tip.style.top = (r.top - 10)+'px';
+  tip.classList.add('show');
+  document.querySelectorAll('.stats-bar.hover').forEach(b=>b.classList.remove('hover'));
+  group.querySelectorAll('.stats-bar').forEach(b=>b.classList.add('hover'));
+}
+function hideStatsTooltip(){
+  const tip = document.getElementById('stats-tooltip');
+  if(tip) tip.classList.remove('show');
+  document.querySelectorAll('.stats-bar.hover').forEach(b=>b.classList.remove('hover'));
+}
+
+/* ---------- Harvest log: cumulative occasions per crop, with totals ---------- */
+function renderStatsHarvestLog(){
+  const el = document.getElementById('stats-harvest-log');
+  if(!el) return;
+  el.innerHTML = '';
+  const yLog = getHarvestYearLog(stats_year);
+  const itemIds = Object.keys(yLog).filter(id=> yLog[id] && yLog[id].length);
+  if(!itemIds.length){
+    const p = document.createElement('p'); p.className='companion-empty';
+    p.textContent = 'No harvests logged for '+stats_year+' yet.';
+    el.appendChild(p);
+    return;
+  }
+  itemIds.forEach(itemId=>{
+    const entries = yLog[itemId].slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+    const item = getItem(itemId);
+    const totalWeight = entries.reduce((s,e)=> s + (e.weight||0), 0);
+    const totalQty = entries.reduce((s,e)=> s + (e.qty||0), 0);
+    const hasWeight = entries.some(e=>e.weight);
+    const hasQty = entries.some(e=>e.qty);
+    const totalsParts = [];
+    if(hasWeight) totalsParts.push(totalWeight+'g total');
+    if(hasQty) totalsParts.push(totalQty+' harvested');
+    if(hasWeight && hasQty && totalQty>0) totalsParts.push('avg '+Math.round(totalWeight/totalQty)+'g each');
+
+    const box = document.createElement('div'); box.className='stats-harvest-item';
+    const head = document.createElement('div'); head.className='stats-harvest-head';
+    const sw = document.createElement('div'); sw.className='sprite-wrap';
+    sw.appendChild(buildSpriteEl(spriteFor(itemId), 'mature', 26));
+    const nm = document.createElement('b'); nm.textContent = item.name + (item.variety ? ' — '+item.variety : '');
+    const tot = document.createElement('span'); tot.className='stats-harvest-total'; tot.textContent = totalsParts.join(' · ');
+    head.appendChild(sw); head.appendChild(nm); head.appendChild(tot);
+    box.appendChild(head);
+
+    const ul = document.createElement('ul'); ul.className='stats-harvest-occasions';
+    entries.forEach(e=>{
+      const li = document.createElement('li');
+      const bits = [];
+      if(e.weight) bits.push(e.weight+'g');
+      if(e.qty) bits.push(e.qty+(e.qty===1?' item':' items'));
+      li.textContent = e.date+' — '+bits.join(', ');
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    el.appendChild(box);
+  });
+}
+function openStatsHarvestForm(anchorBtn){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.style.left = Math.min(rect.left, window.innerWidth-230)+'px';
+  form.style.top = (rect.bottom+6)+'px';
+  const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  form.innerHTML =
+    '<strong>Log a harvest &mdash; '+stats_year+'</strong>'+
+    '<label>Crop<select id="shf-item">'+options+'</select></label>'+
+    '<label>Weight (g)<input type="number" min="0" step="1" id="shf-weight" placeholder="e.g. 220"></label>'+
+    '<label>Count<input type="number" min="0" step="1" id="shf-qty" placeholder="e.g. 4"></label>'+
+    '<label>Date<input type="text" id="shf-date" value="'+todayDateString()+'"></label>'+
+    '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const itemId = form.querySelector('#shf-item').value;
+    const weight = parseFloat(form.querySelector('#shf-weight').value);
+    const qty = parseFloat(form.querySelector('#shf-qty').value);
+    const date = form.querySelector('#shf-date').value.trim() || todayDateString();
+    if(!weight && !qty){ form.querySelector('#shf-weight').focus(); return; }
+    const yLog = getHarvestYearLog(stats_year);
+    if(!yLog[itemId]) yLog[itemId] = [];
+    yLog[itemId].push({date, weight: weight||null, qty: qty||null});
+    form.remove();
+    renderStats();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+/* ---------- Most-grown crops (scoped to the selected year) ---------- */
+function renderStatsCropRank(){
+  const el = document.getElementById('stats-rank');
+  if(!el) return;
+  el.innerHTML = '';
+  const counts = {};
+  Object.values(getYearData(stats_year).plantings).forEach(p=>{
+    const it = getItem(p.itemId);
+    if(!it.species) return;
+    counts[it.species] = (counts[it.species]||0) + 1;
+  });
+  const rows = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(!rows.length){
+    const empty = document.createElement('p'); empty.className='companion-empty';
+    empty.textContent = 'Nothing planted in '+stats_year+' yet.';
+    el.appendChild(empty);
+    return;
+  }
+  const max = rows[0][1];
+  rows.forEach(([species, count])=>{
+    const repItem = INVENTORY.find(it=>it.species===species);
+    const name = repItem ? repItem.name : species;
+    const spriteKey = (repItem && (repItem.sprite||repItem.species)) || species;
+    const row = document.createElement('div'); row.className='stats-rank-row';
+    const sw = document.createElement('div'); sw.className='sprite-wrap';
+    sw.appendChild(buildSpriteEl(spriteKey, 'mature', 22));
+    const nm = document.createElement('span'); nm.className='stats-rank-name'; nm.textContent = name;
+    const barWrap = document.createElement('div'); barWrap.className='stats-rank-bar-wrap';
+    const bar = document.createElement('div'); bar.className='stats-rank-bar'; bar.style.width=(count/max*100)+'%';
+    barWrap.appendChild(bar);
+    const val = document.createElement('span'); val.className='stats-rank-val'; val.textContent = count+'× planted';
+    row.appendChild(sw); row.appendChild(nm); row.appendChild(barWrap); row.appendChild(val);
+    el.appendChild(row);
+  });
+}
+
+/* ---------- Late / failed / missed log ---------- */
+function renderStatsEventLog(){
+  const el = document.getElementById('stats-event-log');
+  if(!el) return;
+  el.innerHTML = '';
+  const entries = getEventYearLog(stats_year).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+  if(!entries.length){
+    const p = document.createElement('p'); p.className='companion-empty';
+    p.textContent = 'Nothing logged for '+stats_year+'.';
+    el.appendChild(p);
+    return;
+  }
+  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
+  const typePill = {late:'info', failed:'warn', missed:'warn'};
+  entries.forEach(e=>{
+    const item = getItem(e.itemId);
+    const row = document.createElement('div'); row.className='event';
+    const left = document.createElement('span');
+    const pill = document.createElement('span'); pill.className = 'pill '+(typePill[e.type]||'info'); pill.textContent = typeLabel[e.type]||e.type;
+    left.appendChild(pill);
+    left.appendChild(document.createTextNode(' '+item.name+(e.note?' — '+e.note:'')));
+    const right = document.createElement('span'); right.className='d'; right.textContent = e.date;
+    row.appendChild(left); row.appendChild(right);
+    el.appendChild(row);
+  });
+}
+function openStatsEventForm(anchorBtn){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.style.left = Math.min(rect.left, window.innerWidth-230)+'px';
+  form.style.top = (rect.bottom+6)+'px';
+  const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  form.innerHTML =
+    '<strong>Log an issue &mdash; '+stats_year+'</strong>'+
+    '<label>Type<select id="sef-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
+    '<label>Crop<select id="sef-item">'+options+'</select></label>'+
+    '<label>Note<input type="text" id="sef-note" placeholder="What happened?"></label>'+
+    '<label>Date<input type="text" id="sef-date" value="'+todayDateString()+'"></label>'+
+    '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const type = form.querySelector('#sef-type').value;
+    const itemId = form.querySelector('#sef-item').value;
+    const note = form.querySelector('#sef-note').value.trim();
+    const date = form.querySelector('#sef-date').value.trim() || todayDateString();
+    getEventYearLog(stats_year).push({type, itemId, note, date});
+    form.remove();
+    renderStats();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+/* ---------- Compost Day status + per-year notes ---------- */
+function renderStatsCompostNote(){
+  const el = document.getElementById('stats-compost-note');
+  if(!el) return;
+  const c = compost_log[stats_year];
+  el.textContent = c ? ('Compost Day completed '+c.date+'.') : ('Compost Day not yet logged for '+stats_year+'.');
+}
+function renderStatsNotes(){
+  const ta = document.getElementById('stats-notes-input');
+  if(!ta) return;
+  ta.value = stats_notes[stats_year] || '';
+}
+
+/* ---------- Export: Stats -> CSV ----------
+   Published artifact pages can't trigger a plain <a download> or blob-URL
+   save -- the viewer never grants that. The `downloads` capability is the
+   real mechanism: it shows the viewer a confirmation and only saves the
+   file if they accept. */
+async function downloadTextFile(filename, content, mime){
+  try{
+    const downloads = await claude.use('downloads');
+    if(!downloads){ showToast('File downloads aren’t available in this preview.'); return; }
+    await downloads.save({filename, data: content});
+  }catch(err){
+    if(err && err.code === 'declined') return;
+    showToast('Could not save the file — please try again.');
+  }
+}
+function csvCell(v){
+  v = (v===null || v===undefined) ? '' : String(v);
+  if(/[",\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function exportStatsCSV(){
+  const rows = [['Section','Crop','Variety','Date','Weight (g)','Count','Type','Note']];
+  const yLog = getHarvestYearLog(stats_year);
+  Object.keys(yLog).forEach(itemId=>{
+    const item = getItem(itemId);
+    (yLog[itemId]||[]).forEach(e=>{
+      rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', '']);
+    });
+  });
+  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
+  getEventYearLog(stats_year).forEach(e=>{
+    const item = getItem(e.itemId);
+    rows.push(['Issue', item.name, item.variety||'', e.date, '', '', typeLabel[e.type]||e.type, e.note||'']);
+  });
+  const notes = stats_notes[stats_year];
+  if(notes && notes.trim()) rows.push(['Notes','','','','','','', notes]);
+  if(rows.length === 1){
+    showToast('Nothing logged for '+stats_year+' yet — nothing to export.');
+    return;
+  }
+  const csv = rows.map(r=> r.map(csvCell).join(',')).join('\r\n');
+  downloadTextFile('veg-patch-stats-'+stats_year+'.csv', csv, 'text/csv;charset=utf-8;');
+}
+
+/* ---------- Export: Plan -> PDF (via the browser's own print-to-PDF) ----------
+   No PDF library is loaded (a published Artifact can't pull in external
+   scripts), so this uses window.print() with a dedicated @media print
+   stylesheet that hides everything except the calendar grid and switches
+   it to landscape, letter/A4-friendly columns. Choosing "Save as PDF" in
+   the print dialog is what actually produces the PDF file. */
+function exportPlanPDF(){
+  const title = document.getElementById('plan-print-title');
+  if(title) title.textContent = 'Veg Plot Planner — Plan for '+plan_year;
+  window.print();
+}
+
+renderAppNav('overview');
+renderInventory();
+renderPlanSidebar();
+setPlanYear(2026);
+renderStats();
+wireOverviewTaskChecks();
+renderCompostDayTask();
+const statsNotesEl = document.getElementById('stats-notes-input');
+if(statsNotesEl) statsNotesEl.addEventListener('input', (e)=>{ stats_notes[stats_year] = e.target.value; });
+['today-label-4','today-label-5'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
+
+/* ============================================================
+   CROSS-DEVICE SYNC (Supabase)
+   Reuses the same Supabase project as the Tri & Half Plan app
+   (thk570/Tri-Training) -- same project URL/anon key, own table
+   (veg_plot_data), so the two apps share auth but not data.
+   ============================================================ */
+const SUPABASE_URL = 'https://wdbmghwhgpgsvqgryywn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYm1naHdoZ3Bnc3ZxZ3J5eXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NTg2MDEsImV4cCI6MjEwNTEzNDYwMX0.VSRz8mKzRbsEuttSwF5br_oq5kl2hHiYL2qg7ZoZ8oE';
+const SYNC_TABLE = 'veg_plot_data';
+const sb = (SUPABASE_URL.indexOf('supabase.co') !== -1 && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let syncUserId = null;
+let syncChannel = null;
+let lastSyncedJSON = null;
+
+/* Every piece of state a user actually edits, gathered into one blob that
+   maps straight onto the table's single jsonb `data` column. Deliberately
+   NOT included: the Veg Patch page's bed/pot layout (A/B/POTS) -- that's
+   still fixed demo content rather than something an action in the app
+   writes to (see the "Veg patch" note on that page), sort preferences and
+   theme/mode (per-device, not worth round-tripping), and the mock mostly-
+   readonly "today" date. */
+function getSyncState(){
+  return {
+    inventory: INVENTORY,
+    plan_data: plan_data,
+    volunteer_log: volunteer_log,
+    harvest_log: harvest_log,
+    event_log: event_log,
+    stats_notes: stats_notes,
+    compost_log: compost_log,
+    custom_tasks: custom_tasks,
+    custom_events: custom_events,
+  };
+}
+function applySyncState(s){
+  if(!s || typeof s !== 'object') return;
+  if(Array.isArray(s.inventory)){ INVENTORY = s.inventory; rebuildInvIndex(); }
+  if(s.plan_data && typeof s.plan_data === 'object'){
+    Object.keys(plan_data).forEach(k=>delete plan_data[k]);
+    Object.assign(plan_data, s.plan_data);
+  }
+  if(s.volunteer_log) volunteer_log = s.volunteer_log;
+  if(s.harvest_log) harvest_log = s.harvest_log;
+  if(s.event_log) event_log = s.event_log;
+  if(s.stats_notes) stats_notes = s.stats_notes;
+  if(s.compost_log) compost_log = s.compost_log;
+  if(Array.isArray(s.custom_tasks)) custom_tasks = s.custom_tasks;
+  if(Array.isArray(s.custom_events)) custom_events = s.custom_events;
+  lastSyncedJSON = JSON.stringify(getSyncState());
+  renderEverything();
+}
+function renderEverything(){
+  renderAllSprites();
+  renderInventory();
+  renderPlanSidebar();
+  setPlanYear(plan_year);
+  renderStats();
+  wireOverviewTaskChecks();
+  renderCompostDayTask();
+  renderCustomTasks();
+  renderCustomEvents();
+  refreshVolunteerAlert();
+  if(statsNotesEl) statsNotesEl.value = stats_notes[stats_year] || '';
+}
+
+function setSyncStatus(state){
+  const label = {saving:'Saving…', saved:'Synced', error:'Not synced — offline?'}[state] || '';
+  document.querySelectorAll('.sync-status').forEach(el=>{
+    el.textContent = label;
+    el.className = 'sync-status' + (state === 'error' ? ' error' : '');
+  });
+}
+
+async function pushIfChanged(){
+  if(!sb || !syncUserId) return;
+  const json = JSON.stringify(getSyncState());
+  if(json === lastSyncedJSON) return;
+  lastSyncedJSON = json;
+  setSyncStatus('saving');
+  const { error } = await sb.from(SYNC_TABLE).upsert({
+    user_id: syncUserId, data: JSON.parse(json), updated_at: new Date().toISOString(),
+  });
+  setSyncStatus(error ? 'error' : 'saved');
+}
+// Rather than threading a "save now" call through every single button
+// handler that touches inventory, plantings, logs or custom tasks (a long
+// list, and easy to miss one), poll for changes on an interval and let the
+// JSON-equality check above make a no-op save cheap. A bit more latency
+// (up to ~2s) than saving on every keystroke, but far less likely to
+// silently drop an edit because one call site got missed.
+setInterval(pushIfChanged, 2000);
+
+async function startApp(session){
+  syncUserId = session.user.id;
+  document.getElementById('auth-overlay').hidden = true;
+  setSyncStatus('saving');
+  const { data, error } = await sb.from(SYNC_TABLE).select('data').eq('user_id', syncUserId).maybeSingle();
+  if(error){ setSyncStatus('error'); }
+  else { if(data && data.data) applySyncState(data.data); setSyncStatus('saved'); }
+  lastSyncedJSON = JSON.stringify(getSyncState());
+  if(syncChannel){ sb.removeChannel(syncChannel); syncChannel = null; }
+  syncChannel = sb.channel('sync:'+syncUserId)
+    .on('postgres_changes', {event:'*', schema:'public', table:SYNC_TABLE, filter:'user_id=eq.'+syncUserId}, payload=>{
+      if(payload.new && payload.new.data) applySyncState(payload.new.data);
+    })
+    .subscribe();
+}
+function stopApp(){
+  syncUserId = null;
+  if(syncChannel){ sb.removeChannel(syncChannel); syncChannel = null; }
+  document.getElementById('auth-overlay').hidden = false;
+}
+
+/* ---------- sign-in / sign-up / forgot-password overlay ---------- */
+let authMode = 'signin'; // 'signin' | 'signup' | 'forgot' | 'reset'
+function setAuthMode(mode){
+  authMode = mode;
+  const sub = document.getElementById('auth-sub');
+  const pwField = document.getElementById('auth-password-field');
+  const submit = document.getElementById('auth-submit');
+  const toggle = document.getElementById('auth-toggle-mode');
+  const forgot = document.getElementById('auth-forgot');
+  const emailLabel = document.getElementById('auth-email').closest('label');
+  document.getElementById('auth-msg').textContent = '';
+  emailLabel.hidden = false; // reset -- only the 'reset' branch below hides it
+  if(mode === 'signin'){
+    sub.textContent = 'Sign in to sync your plot across devices.';
+    pwField.hidden = false; pwField.querySelector('input').required = true;
+    submit.textContent = 'Sign in';
+    toggle.textContent = 'Need an account? Sign up'; toggle.hidden = false;
+    forgot.textContent = 'Forgot password?'; forgot.hidden = false;
+  } else if(mode === 'signup'){
+    sub.textContent = 'Create an account to start syncing.';
+    pwField.hidden = false; pwField.querySelector('input').required = true;
+    submit.textContent = 'Sign up';
+    toggle.textContent = 'Already have an account? Sign in'; toggle.hidden = false;
+    forgot.hidden = true;
+  } else if(mode === 'forgot'){
+    sub.textContent = 'Enter your email and we’ll send a reset link.';
+    pwField.hidden = true; pwField.querySelector('input').required = false;
+    submit.textContent = 'Send reset link';
+    toggle.textContent = 'Back to sign in'; toggle.hidden = false;
+    forgot.hidden = true;
+  } else if(mode === 'reset'){
+    sub.textContent = 'Choose a new password.';
+    document.getElementById('auth-email').closest('label').hidden = true;
+    pwField.hidden = false; pwField.querySelector('input').required = true;
+    submit.textContent = 'Set new password';
+    toggle.hidden = true; forgot.hidden = true;
+  }
+}
+function showAuthMsg(text, kind){
+  const el = document.getElementById('auth-msg');
+  el.textContent = text;
+  el.className = 'auth-msg' + (kind ? ' '+kind : '');
+}
+document.getElementById('auth-toggle-mode').addEventListener('click', (e)=>{
+  e.preventDefault();
+  setAuthMode(authMode === 'signup' ? 'signin' : (authMode === 'forgot' ? 'signin' : 'signup'));
+});
+document.getElementById('auth-forgot').addEventListener('click', (e)=>{
+  e.preventDefault();
+  setAuthMode('forgot');
+});
+document.getElementById('auth-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(!sb){ showAuthMsg('Sync isn’t configured yet.', 'error'); return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const submitBtn = document.getElementById('auth-submit');
+  submitBtn.disabled = true;
+  try{
+    if(authMode === 'signin'){
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error) showAuthMsg(error.message, 'error');
+    } else if(authMode === 'signup'){
+      const { error } = await sb.auth.signUp({ email, password });
+      if(error) showAuthMsg(error.message, 'error');
+    } else if(authMode === 'forgot'){
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+      if(error) showAuthMsg(error.message, 'error');
+      else showAuthMsg('Check your email for a reset link.', 'ok');
+    } else if(authMode === 'reset'){
+      const { error } = await sb.auth.updateUser({ password });
+      if(error) showAuthMsg(error.message, 'error');
+      else { showAuthMsg('Password updated.', 'ok'); setAuthMode('signin'); }
+    }
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+if(sb){
+  let appStarted = false;
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === 'PASSWORD_RECOVERY'){
+      setAuthMode('reset');
+      document.getElementById('auth-overlay').hidden = false;
+      return;
+    }
+    if(session){
+      if(appStarted) return; // guard set synchronously -- see the re-entrancy
+      appStarted = true;     // pitfall this project hit before: set it BEFORE
+      startApp(session);     // the await inside startApp, not after.
+    } else {
+      appStarted = false;
+      stopApp();
+    }
+  });
+} else {
+  // Supabase isn't configured (placeholders still in place) -- skip the
+  // sign-in gate entirely so the file still works for local testing.
+  document.getElementById('auth-overlay').hidden = true;
+}
+</script>
+</body>
+</html>
