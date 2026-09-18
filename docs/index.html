@@ -106,6 +106,13 @@ body[data-style="modern"] .app-nav a, body[data-style="mixed"] .app-nav a{
 }
 body[data-style="modern"] .app-nav a.current, body[data-style="mixed"] .app-nav a.current{ color:var(--m-accent); border-color:var(--m-accent); }
 body[data-style="modern"] .app-body, body[data-style="mixed"] .app-body{ padding:1.3rem; display:grid; gap:1.05rem; }
+/* Grid items default to min-width:auto, not 0 -- so a single long, unwrappable
+   line anywhere inside .app-body (a long compost-day note, a stat label, ...)
+   forces that whole grid track wider than the viewport, and every sibling row
+   (every card) gets stretched to match it, even though each one individually
+   would happily fit. This is the same class of bug .plan-layout > * already
+   works around below; .app-body needs the identical fix. */
+.app-body > *{ min-width:0; }
 
 body[data-style="modern"] .grid-2, body[data-style="mixed"] .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:1.05rem; align-items:stretch; }
 body[data-style="modern"] .grid-2 > .card, body[data-style="mixed"] .grid-2 > .card{ margin-top:0; display:flex; flex-direction:column; }
@@ -229,23 +236,32 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
 .section .ready-ring{ position:absolute; inset:-2px; border-radius:8px; border:2px solid var(--m-accent-2); animation:pulse 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion:reduce){ .section .ready-ring{ animation:none; } }
 @keyframes pulse{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
-.section .check{ position:absolute; bottom:3px; right:4px; width:14px; height:14px; border-radius:4px; background:rgba(255,255,255,.85); border:1px solid rgba(0,0,0,.2); }
+.section .check{ position:absolute; bottom:3px; right:4px; width:14px; height:14px; border-radius:4px; background:rgba(255,255,255,.85); border:1px solid rgba(0,0,0,.2); padding:0; cursor:pointer; }
 .section .sprite{ flex:none; }
 .section.ready-tile{ box-shadow: inset 0 0 0 1px rgba(0,0,0,.12), inset 0 0 0 3px var(--m-accent-2); }
 .section .ready-flag{
-  position:absolute; top:2px; right:2px; background:var(--m-accent-2); color:#241a06; font-size:.56rem; font-weight:800;
+  position:absolute; top:2px; right:20px; background:var(--m-accent-2); color:#241a06; font-size:.56rem; font-weight:800;
   text-transform:uppercase; letter-spacing:.03em; padding:.06rem .32rem; border-radius:4px; z-index:2;
+}
+.section .discard-btn{
+  position:absolute; top:2px; right:2px; width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.6);
+  background:rgba(0,0,0,.28); color:#fff; font-size:.5rem; line-height:12px; text-align:center; cursor:pointer; z-index:3; padding:0;
 }
 .section .volunteer-btn{
   position:absolute; bottom:2px; left:4px; width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(255,255,255,.85);
   background:rgba(0,0,0,.18); font-size:.6rem; line-height:13px; text-align:center; color:#fff; cursor:pointer; z-index:3; padding:0;
 }
 .section .volunteer-btn.logged{ background:var(--m-accent-2); border-color:rgba(0,0,0,.35); color:#241a06; }
+.section .issue-btn{
+  position:absolute; bottom:2px; left:22px; width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.7);
+  background:#b3453a; color:#fff; font-size:.62rem; font-weight:800; line-height:12px; text-align:center; cursor:pointer; z-index:3; padding:0;
+}
 .volunteer-form{
   position:absolute; z-index:20; background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:.6rem;
   box-shadow:0 6px 18px rgba(0,0,0,.22); display:grid; gap:.4rem; font-size:.72rem; min-width:180px; color:var(--m-text);
 }
 .volunteer-form label{ display:grid; gap:.15rem; }
+.volunteer-form .confirm-msg{ margin:0; max-width:220px; line-height:1.35; color:var(--m-text-dim); }
 .volunteer-form input{ font-size:.75rem; padding:.3rem; border-radius:5px; border:1px solid var(--m-border); font-family:var(--font-body); }
 .volunteer-form .row{ display:flex; gap:.4rem; }
 .volunteer-form .row button{ flex:1; font-family:var(--font-mono); font-size:.68rem; padding:.3rem .4rem; border-radius:5px; border:none; cursor:pointer; }
@@ -384,7 +400,17 @@ body[data-style="pixel"] .section .crop-name{ font-family:var(--font-body); font
    "winning" the auto-size contest and the other is left with dead space. */
 .plan-sidebar-col{ display:flex; flex-direction:column; min-height:0; overflow:hidden; }
 .plan-sidebar{ display:grid; align-content:start; gap:.5rem; flex:1; min-height:0; overflow-y:auto; padding:.15rem; }
-@media (max-width:680px){ .plan-sidebar-col{ height:auto !important; } .plan-sidebar{ grid-auto-flow:column; grid-auto-columns:150px; overflow-x:auto; overflow-y:visible; } }
+@media (max-width:680px){
+  .plan-sidebar-col{ height:auto !important; }
+  .plan-sidebar{ grid-auto-flow:column; grid-auto-columns:150px; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; }
+  /* .plan-seed sets touch-action:none year-round so desktop pointer-drag onto
+     the calendar works without the browser also trying to scroll/select --
+     but that same rule silently ate the swipe gesture needed to scroll this
+     strip sideways on a phone. Drag-to-plant isn't a realistic touch
+     interaction anyway, so on mobile we hand touch panning back to the
+     browser and let horizontal swipe scroll normally. */
+  .plan-seed{ touch-action:pan-x; }
+}
 .plan-seed{
   display:flex; gap:.55rem; align-items:center; padding:.45rem .55rem; border:1px solid var(--m-border); border-radius:8px;
   background:var(--m-surface); cursor:grab; touch-action:none; user-select:none;
@@ -503,7 +529,16 @@ body[data-style="pixel"] .inv-delete-btn:hover{ background:var(--p-surface-2); }
 .inv-add-form .full{ grid-column:1/-1; display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
 .inv-add-form button{ font-family:var(--font-mono); font-size:.76rem; padding:.5rem 1rem; border-radius:6px; border:none; background:var(--m-accent); color:var(--m-accent-ink); cursor:pointer; }
 .inv-add-form .cancel-add{ background:var(--m-surface-2); color:var(--m-text-dim); }
-@media (max-width:680px){ .inv-add-form{ grid-template-columns:1fr 1fr; } }
+@media (max-width:680px){
+  /* Same min-width:auto grid-item default that blew out .plan-layout and
+     .app-body earlier: on a phone this form's own two columns were forced
+     wider than the screen by their select/input contents, running the
+     right-hand column off the edge entirely rather than wrapping. */
+  .inv-add-form{ grid-template-columns:1fr 1fr; }
+  .inv-add-form label{ min-width:0; }
+  .inv-add-form input, .inv-add-form select{ width:100%; box-sizing:border-box; min-width:0; }
+}
+@media (max-width:420px){ .inv-add-form{ grid-template-columns:1fr; } }
 
 body[data-style="pixel"] .year-tabs .seg{ border:2px solid var(--p-text); border-radius:0; }
 body[data-style="pixel"] .year-tabs .seg button{ background:var(--p-surface-2); color:var(--p-text); }
@@ -531,6 +566,21 @@ body[data-style="pixel"] .prop-item{ border:2px solid var(--p-text); border-radi
 .prop-item .txt b{ display:block; font-size:.82rem; }
 .prop-item .txt span{ font-size:.72rem; color:var(--m-text-dim); }
 body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
+
+/* ---------- mobile fixes ----------
+   The in-page nav (5 links, one of them two words) is wider than a phone
+   screen. It was overflowing .app-shell's own overflow:hidden, so instead
+   of scrolling, the last tab or two were simply clipped off invisibly --
+   exactly the "renders half off the screen" symptom. Made it a proper
+   horizontally-scrollable strip instead, like a mobile tab bar. */
+.mobile-scroll-hint{ display:none; font-size:.68rem; color:var(--m-text-dim); text-align:center; margin:-.4rem 0 .2rem; }
+body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
+@media (max-width:680px){
+  .app-nav{ overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .app-nav::-webkit-scrollbar{ display:none; }
+  .app-nav a{ white-space:nowrap; flex:none; }
+  .mobile-scroll-hint{ display:block; }
+}
 
 /* ---------- Export: Plan page "print to PDF" ---------- */
 .print-only{ display:none; }
@@ -655,7 +705,7 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
         <div class="card">
           <h3>Current Status</h3>
           <div class="stat-row">
-            <div class="stat"><div class="n">14 / 24</div><div class="l">sections planted</div></div>
+            <div class="stat"><div class="n">14</div><div class="l">sections planted</div></div>
             <div class="stat"><div class="n">3</div><div class="l">ready to harvest</div></div>
             <div class="stat"><div class="n">2</div><div class="l">trays propagating</div></div>
           </div>
@@ -667,13 +717,7 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
               <h3 style="margin:0;">Upcoming tasks</h3>
               <button class="add-btn" onclick="openAddTaskEventForm(this, 'task')">+ Add task</button>
             </div>
-            <ul class="tasks" id="overview-tasks">
-              <li class="task-link" onclick="taskGoto('patch', ['A7','A8'])" title="Go to A7&ndash;A8 on the Veg Patch page"><button type="button" class="chk" data-task-kind="harvest" data-task-item="courgette" data-task-year="2026" title="Log this harvest"></button><span class="task-text">Harvest courgette/marrow before they get woody &mdash; <span class="due">A7&ndash;A8, due now</span></span><span class="goto-arrow">&rarr;</span></li>
-              <li class="task-link" onclick="taskGoto('patch', ['B9','B10'])" title="Go to B9&ndash;B10 on the Veg Patch page"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Earth up leeks as they thicken &mdash; <span class="due">B9&ndash;B10, this week</span></span><span class="goto-arrow">&rarr;</span></li>
-              <li class="task-link" onclick="taskGoto('overview', ['tray-indoor-1'])" title="Go to the Windowsill tray"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Pot on Brussels sprout seedlings from the windowsill tray &mdash; <span class="due">Indoor tray 1, next few days</span></span><span class="goto-arrow">&rarr;</span></li>
-              <li class="task-link" onclick="taskGoto('plan', ['A9','A10'])" title="Go to A9&ndash;A10 on the Plan page"><button type="button" class="chk" data-task-kind="sow" data-task-rows="A9,A10" data-task-year="2026" title="Log as sown today"></button><span class="task-text">Sow overwintering onion sets &mdash; <span class="due">A9&ndash;A10, from 28 Sep</span></span><span class="goto-arrow">&rarr;</span></li>
-              <li class="task-link" onclick="taskGoto('patch', ['Pot 1'])" title="Go to Pot 1 on the Veg Patch page"><button type="button" class="chk" data-task-kind="done" title="Mark done"></button><span class="task-text">Bring the cucumber pot into the greenhouse before first chill &mdash; <span class="due">Pot 1, by 10 Oct</span></span><span class="goto-arrow">&rarr;</span></li>
-            </ul>
+            <ul class="tasks" id="overview-tasks"></ul>
           </div>
           <div class="card">
             <h3>Look out for</h3>
@@ -751,7 +795,12 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
           <label>Harvest from<select id="af-harv0"></select></label>
           <label>Harvest to<select id="af-harv1"></select></label>
           <label>Spacing (cm)<input id="af-spacing" type="number" min="2" value="30"></label>
-          <label>Sun<input id="af-sun" value="Full sun"></label>
+          <label>Sun<select id="af-sun">
+            <option value="Full sun" selected>Full sun</option>
+            <option value="Full sun, sheltered">Full sun, sheltered</option>
+            <option value="Part shade">Part shade</option>
+            <option value="Full shade">Full shade</option>
+          </select></label>
           <div class="full">
             <button type="submit">Add to inventory</button>
             <button type="button" class="cancel-add" onclick="toggleAddForm(false)">Cancel</button>
@@ -775,13 +824,12 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
       <div class="app-body">
         <div class="print-only" id="plan-print-title"></div>
         <div class="year-tabs">
-          <span class="seg">
-            <button class="active" data-year="2026" onclick="setPlanYear(2026)">2026</button>
-            <button data-year="2027" onclick="setPlanYear(2027)">2027</button>
-          </span>
+          <span class="seg" id="plan-year-seg"></span>
+          <button class="add-btn" id="plan-add-year-btn" hidden onclick="addPlanYear()">+ Add year</button>
           <span class="plan-hint">Drag a seed onto a month to plant it, or drag an existing planting to move it. Winter crops that run past December carry through into next year's plan.</span>
           <button class="add-btn export-btn" style="margin-left:auto;" onclick="exportPlanPDF()" title="Prints just the calendar grid — choose &quot;Save as PDF&quot; in the print dialog">Export PDF</button>
         </div>
+        <p class="mobile-scroll-hint">&larr; the calendar scrolls sideways to reach later months &rarr;</p>
 
         <div class="plan-layout">
           <div class="plan-sidebar-col" id="plan-sidebar-col">
@@ -837,8 +885,13 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
           </div>
         </div>
         <div class="card">
-          <h3><span class="eyebrow">Pots, containers &amp; greenhouse trays</span></h3>
+          <h3><span class="eyebrow">Pots &amp; containers</span></h3>
           <div class="bed-diagram"><div class="bed-grid" id="pot-grid" style="grid-template-columns:26px 1fr"></div></div>
+          <p class="companion-empty" id="pot-grid-empty" hidden>No pots in use yet.</p>
+        </div>
+        <div class="card">
+          <h3><span class="eyebrow">Greenhouse</span></h3>
+          <div class="prop-strip" id="patch-greenhouse"></div>
         </div>
       </div>
     </div>
@@ -852,10 +905,7 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
       <nav class="app-nav" data-navfor="stats"></nav>
       <div class="app-body">
         <div class="year-tabs">
-          <span class="seg">
-            <button class="active" data-year="2026" onclick="setStatsYear(2026)">2026</button>
-            <button data-year="2027" onclick="setStatsYear(2027)">2027</button>
-          </span>
+          <span class="seg" id="stats-year-seg"></span>
           <span class="plan-hint" id="stats-compost-note"></span>
           <button class="add-btn export-btn" style="margin-left:auto;" onclick="exportStatsCSV()" title="Downloads this year's harvest log, issue log and notes as a CSV file">Export CSV</button>
         </div>
@@ -884,7 +934,7 @@ body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
 
         <div class="card">
           <div class="list-toolbar">
-            <h3 style="margin:0;">Late, failed &amp; missed</h3>
+            <h3 style="margin:0;">Issues</h3>
             <button class="add-btn" onclick="openStatsEventForm(this)">+ Log an issue</button>
           </div>
           <div class="events" id="stats-event-log"></div>
@@ -1149,9 +1199,12 @@ const SPECIES = {
     ellipse(0.64,0.68,0.08,0.29,PAL.g2),
   ],
   carrot: [
-    ellipse(0.3,0.08,0.05,0.14,PAL.g1),
-    ellipse(0.5,0.04,0.05,0.17,PAL.g2),
-    ellipse(0.7,0.08,0.05,0.14,PAL.g1),
+    // Leaf fronds are drawn tall enough to reach down to the root's top
+    // edge (root top = 0.56 - 0.22 = 0.34) -- they used to stop around
+    // 0.22, leaving a visible gap of bare canvas above the carrot.
+    ellipse(0.3,0.15,0.05,0.21,PAL.g1),
+    ellipse(0.5,0.11,0.05,0.25,PAL.g2),
+    ellipse(0.7,0.15,0.05,0.21,PAL.g1),
     ellipse(0.5,0.56,0.17,0.22,PAL.o1),
     ellipse(0.5,0.86,0.08,0.16,PAL.o2),
   ],
@@ -1222,6 +1275,7 @@ function buildSpriteEl(species, stage, px){
   return wrap;
 }
 function renderAllSprites(){
+  renderGreenhouseTrays('patch-greenhouse', GREENHOUSE_TRAYS); // builds its own [data-sprite] elements -- must run before the sweep below
   document.querySelectorAll('[data-sprite]').forEach(el=>{
     el.innerHTML='';
     const isBig = el.classList.contains('sprite-wrap') && el.closest('.inv-top, .prop-item');
@@ -1258,17 +1312,74 @@ const B = [
   {n:'B9', species:'leek', stage:'growing', label:'Leek'},
   {n:'B10', species:'leek', stage:'growing', label:'Leek'},
 ];
+// Only occupied pots are ever rendered (see renderPots) -- empty
+// placeholder rows used to pad this out to a fixed count of 4 regardless
+// of how many pots were actually in use. Add a row here per pot that's
+// genuinely in service; there's nothing to add for an unused one.
 const POTS = [
   {n:'Pot 1', species:'cucumber', stage:'ready', label:'Cucumber (Wisconsin)'},
-  {n:'Pot 2', species:null, stage:'empty', label:''},
-  {n:'Pot 3', species:null, stage:'empty', label:''},
-  {n:'Pot 4', species:null, stage:'empty', label:''},
+];
+// Distinct from POTS: greenhouse/propagation trays, shown in their own
+// card on the Veg Patch page. Mirrors the same trays described on the
+// Overview page's "Greenhouse" card so the two stay consistent.
+const GREENHOUSE_TRAYS = [
+  {species:'tomato',   stage:'seedling', name:'Tomato (Red Cherry)',   note:'Sown 4 Mar · ready to pot on'},
+  {species:'cucumber', stage:'seedling', name:'Cucumber (Wisconsin)',  note:'Sown 12 May · hardening off'},
 ];
 
 /* ---------- volunteer potatoes: tubers that sprout on their own ---------- */
 let volunteer_log = {
   A5: {qty:2, date:'10 Jun 2026'}, // example: spotted after last year's potato patch there
 };
+/* ---------- shared popover-form helpers ----------
+   Every "mini-form" popover (volunteer potato, harvest log, add task/event,
+   stats harvest/issue) is position:fixed and anchored under the button
+   that opened it via a hardcoded width guess made BEFORE the form's real
+   content existed. Near the bottom of a long page (the Overview page's
+   "+ Add event", worst of all -- four fields, right at the page foot) that
+   guess is wrong enough that most of the form lands below the bottom of
+   the viewport with no way to reach it. Once the form is actually in the
+   DOM we know its real size, so flip it to open upward instead of down
+   when there isn't room below, and clamp both axes to stay on-screen. */
+function positionPopoverForm(form, rect){
+  const margin = 8;
+  const h = form.offsetHeight, w = form.offsetWidth;
+  let top = rect.bottom + 6;
+  if(top + h > window.innerHeight - margin){
+    top = Math.max(margin, rect.top - h - 6);
+  }
+  let left = Math.min(rect.left, window.innerWidth - w - margin);
+  left = Math.max(margin, left);
+  form.style.top = top + 'px';
+  form.style.left = left + 'px';
+}
+
+/* Every date in this app is stored/displayed as "12 Jun 2026" (see
+   todayDateString()), but a native <input type="date"> -- the thing that
+   gets you a real calendar picker and a numeric keypad on mobile instead
+   of the general keyboard -- only accepts/emits ISO "yyyy-mm-dd". These
+   convert at the form boundary so nothing downstream has to change. */
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function todayISODate(){
+  return today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+}
+function displayDateToISO(s){
+  if(!s) return '';
+  const m = s.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})$/);
+  if(!m) return '';
+  const mo = MONTH_ABBR.findIndex(x=> x.toLowerCase() === m[2].slice(0,3).toLowerCase());
+  if(mo < 0) return '';
+  return m[3]+'-'+String(mo+1).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+}
+function isoDateToDisplay(s){
+  if(!s) return '';
+  const parts = s.split('-');
+  if(parts.length !== 3) return s;
+  const mi = parseInt(parts[1],10) - 1;
+  if(mi < 0 || mi > 11) return s;
+  return parseInt(parts[2],10)+' '+MONTH_ABBR[mi]+' '+parts[0];
+}
+
 function openVolunteerForm(anchorBtn, sectionId){
   document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const existing = volunteer_log[sectionId];
@@ -1276,17 +1387,16 @@ function openVolunteerForm(anchorBtn, sectionId){
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  form.style.left = Math.min(rect.left, window.innerWidth-200)+'px';
-  form.style.top = (rect.bottom+6)+'px';
   form.innerHTML =
     '<strong>Volunteer potato &mdash; '+sectionId+'</strong>'+
-    '<label>Quantity spotted<input type="number" min="1" id="vf-qty" value="'+(existing?existing.qty:1)+'"></label>'+
-    '<label>Date first seen<input type="text" id="vf-date" placeholder="e.g. 12 Jun 2026" value="'+(existing?existing.date:'')+'"></label>'+
+    '<label>Quantity spotted<input type="number" inputmode="numeric" min="1" id="vf-qty" value="'+(existing?existing.qty:1)+'"></label>'+
+    '<label>Date first seen<input type="date" id="vf-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
     '<div class="row"><button class="save">Save</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
+  positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
     const qty = parseInt(form.querySelector('#vf-qty').value,10) || 1;
-    const date = form.querySelector('#vf-date').value.trim() || 'date not set';
+    const date = isoDateToDisplay(form.querySelector('#vf-date').value) || 'date not set';
     volunteer_log[sectionId] = {qty, date};
     form.remove();
     renderAllSprites();
@@ -1407,19 +1517,18 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  form.style.left = Math.min(rect.left, window.innerWidth-220)+'px';
-  form.style.top = (rect.bottom+6)+'px';
   form.innerHTML =
     '<strong>Log harvest &mdash; '+item.name+'</strong>'+
-    '<label>Weight (g)<input type="number" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
-    '<label>Count<input type="number" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
-    '<label>Date<input type="text" id="hlf-date" value="'+todayDateString()+'"></label>'+
+    '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
+    '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
+    '<label>Date<input type="date" id="hlf-date" value="'+todayISODate()+'"></label>'+
     '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
+  positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
     const weight = parseFloat(form.querySelector('#hlf-weight').value);
     const qty = parseFloat(form.querySelector('#hlf-qty').value);
-    const date = form.querySelector('#hlf-date').value.trim() || todayDateString();
+    const date = isoDateToDisplay(form.querySelector('#hlf-date').value) || todayDateString();
     if(!weight && !qty){ form.querySelector('#hlf-weight').focus(); return; }
     const yLog = getHarvestYearLog(year);
     if(!yLog[itemId]) yLog[itemId] = [];
@@ -1427,6 +1536,123 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
     form.remove();
     showToast('Logged harvest: '+item.name+' on '+date+'.');
     if(onLogged) onLogged();
+    if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+function findBedSection(sectionId){
+  return A.find(s=>s.n===sectionId) || B.find(s=>s.n===sectionId) || POTS.find(s=>s.n===sectionId);
+}
+// Used only by discard (the X control): caps a planting's end month at the
+// given date rather than deleting the plan record outright, so the Plan
+// calendar keeps an honest note of when something actually stopped
+// growing there instead of erasing it. Then frees up the Veg Patch tile
+// so it's ready for whatever gets planted there next -- which happens the
+// normal way, by dragging a new seed onto that row on the Plan page;
+// nothing special has to happen there first. "Mark harvested" and "log an
+// issue" deliberately do NOT call this -- neither one ends the planting,
+// since a single crop is often harvested (or flagged) more than once
+// before it's actually done.
+function endPlantingAt(sectionId, dateStr){
+  const yd = getYearData(plan_year);
+  const planting = yd.plantings[sectionId];
+  if(planting){
+    const mi = monthIndexFromDateStr(dateStr);
+    if(mi !== null) planting.end = Math.min(planting.end, mi);
+  }
+  const sec = findBedSection(sectionId);
+  if(sec){ sec.stage = 'empty'; sec.species = null; sec.label = ''; }
+}
+
+function markHarvested(anchorBtn, sectionId){
+  const sec = findBedSection(sectionId);
+  if(!sec || !sec.species) return;
+  const itemId = sec.species;
+  // Logging a harvest never ends the planting or clears the tile -- lots
+  // of crops (tomatoes, courgettes) get picked repeatedly over weeks, and
+  // there might be more still to come. The only way the tile goes away
+  // is the explicit, confirmed "discard" (the X control) below.
+  openHarvestLogForm(anchorBtn, itemId, plan_year);
+}
+
+/* ---------- Discard: the only thing that clears a tile ----------
+   Deliberately a confirm-first, log-nothing action: it's for "this is
+   done/dead, remove it," not for recording why. Log any remaining
+   harvests via the harvest button and any issues via the "!" button
+   BEFORE discarding -- once the tile is cleared there's no going back
+   to attach that history to it. */
+function openDiscardForm(anchorBtn, sectionId){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const sec = findBedSection(sectionId);
+  if(!sec || !sec.species) return;
+  const itemId = sec.species;
+  const item = getItem(itemId);
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.innerHTML =
+    '<strong>Discard '+sectionId+' ('+item.name+')?</strong>'+
+    '<p class="confirm-msg">Are you sure? Please log any harvests or issues separately first.</p>'+
+    '<label>Date removed<input type="date" id="df-date" value="'+todayISODate()+'"></label>'+
+    '<div class="row"><button class="save" style="background:#b3453a;">Yes, discard</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const date = isoDateToDisplay(form.querySelector('#df-date').value) || todayDateString();
+    endPlantingAt(sectionId, date);
+    form.remove();
+    showToast(sectionId+' cleared — '+item.name+' discarded.');
+    renderAllSprites();
+    renderPlanGrid();
+    if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+/* ---------- Log a non-critical issue directly from the bed ----------
+   Unlike discard, this never touches the planting or the Veg Patch tile
+   -- the plant is still there and still growing. It's purely a note in
+   the same Issues log the Stats page already shows (late, failed or
+   missed), for anything worth flagging that doesn't warrant pulling the
+   crop out. */
+function openIssueForm(anchorBtn, sectionId){
+  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+  const sec = findBedSection(sectionId);
+  if(!sec || !sec.species) return;
+  const itemId = sec.species;
+  const item = getItem(itemId);
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.innerHTML =
+    '<strong>Log an issue &mdash; '+sectionId+' ('+item.name+')</strong>'+
+    '<label>Type<select id="ivf-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
+    '<label>Note<input type="text" id="ivf-note" placeholder="e.g. Slug nibbling on lower leaves"></label>'+
+    '<label>Date<input type="date" id="ivf-date" value="'+todayISODate()+'"></label>'+
+    '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelector('#ivf-note').focus();
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const type = form.querySelector('#ivf-type').value;
+    const note = form.querySelector('#ivf-note').value.trim();
+    const date = isoDateToDisplay(form.querySelector('#ivf-date').value) || todayDateString();
+    getEventYearLog(plan_year).push({type, itemId, note, date});
+    form.remove();
+    showToast('Issue logged for '+sectionId+' ('+item.name+').');
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
   });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
@@ -1507,23 +1733,86 @@ function renderCompostDayTask(){
 let custom_tasks = [];
 let custom_events = [];
 
+/* ---------- Overview "Upcoming tasks" ----------
+   These used to be five hand-authored <li> elements, always shown in a
+   fixed order regardless of the date -- adding a 6th made the list grow
+   forever, and nothing ever dropped off. Now every task (these built-in
+   ones, plus anything added via "+ Add task") carries a real date, and
+   the list shows only what falls within the coming month, soonest first,
+   capped at 10 -- rather than a hand-picked priority ranking by task
+   type (harvest vs. sow vs. general), which would need real usage to
+   tune sensibly. Chronological-within-the-month is simple, predictable,
+   and never needs tuning. */
+const DEMO_TASKS = [
+  {date:'2026-09-15', kind:'harvest', itemId:'courgette', year:2026, targets:['A7','A8'], gotoPage:'patch', title:'Harvest courgette/marrow before they get woody', due:'A7–A8, due now'},
+  {date:'2026-09-20', kind:'done', targets:['B9','B10'], gotoPage:'patch', title:'Earth up leeks as they thicken', due:'B9–B10, this week'},
+  {date:'2026-09-22', kind:'done', targets:['tray-indoor-1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Indoor tray 1, next few days'},
+  {date:'2026-09-28', kind:'sow', rows:['A9','A10'], year:2026, targets:['A9','A10'], gotoPage:'plan', title:'Sow overwintering onion sets', due:'A9–A10, from 28 Sep'},
+  {date:'2026-10-10', kind:'done', targets:['Pot 1'], gotoPage:'patch', title:'Bring the cucumber pot into the greenhouse before first chill', due:'Pot 1, by 10 Oct'},
+];
+const GOTO_PAGE_NAMES = {patch:'Veg Patch', plan:'Plan', overview:'Overview'};
+function renderOverviewTasks(){
+  const ul = document.getElementById('overview-tasks');
+  if(!ul) return;
+  const horizon = new Date(today.getFullYear(), today.getMonth()+1, today.getDate());
+  const custom = custom_tasks.map(t=>({
+    date: displayDateToISO(t.date) || '9999-12-31', // unparseable dates sort last rather than crashing the comparison
+    kind:'custom', id:t.id, title:t.title, description:t.description,
+    due: t.location ? (t.date+' · '+t.location) : t.date,
+  }));
+  const pool = DEMO_TASKS.concat(custom)
+    .filter(t=>{ const d = new Date(t.date); return !isNaN(d) && d >= today && d <= horizon; })
+    .sort((a,b)=> new Date(a.date) - new Date(b.date))
+    .slice(0, 10);
+  ul.querySelectorAll('li').forEach(li=>{ if(li.id !== 'task-compost-day') li.remove(); });
+  pool.forEach(t=>{
+    const li = document.createElement('li');
+    li.className = 'task-link';
+    const chk = document.createElement('button');
+    chk.type = 'button'; chk.className = 'chk';
+    const txt = document.createElement('span'); txt.className = 'task-text';
+    const due = document.createElement('span'); due.className = 'due'; due.textContent = t.due;
+    if(t.kind === 'custom'){
+      chk.dataset.taskKind = 'done'; chk.title = 'Mark done';
+      txt.appendChild(document.createTextNode(t.title + (t.description ? ' — '+t.description+' ' : ' ')));
+      txt.appendChild(due);
+      const rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this task'; rm.textContent = '✕';
+      rm.addEventListener('click', (e)=>{ e.stopPropagation(); custom_tasks = custom_tasks.filter(x=>x.id!==t.id); renderOverviewTasks(); });
+      li.appendChild(chk); li.appendChild(txt); li.appendChild(rm);
+    } else {
+      chk.dataset.taskKind = t.kind;
+      if(t.kind === 'sow'){ chk.dataset.taskRows = t.rows.join(','); chk.dataset.taskYear = String(t.year); chk.title = 'Log as sown today'; }
+      else if(t.kind === 'harvest'){ chk.dataset.taskItem = t.itemId; chk.dataset.taskYear = String(t.year); chk.title = 'Log this harvest'; }
+      else { chk.title = 'Mark done'; }
+      txt.appendChild(document.createTextNode(t.title + ' — '));
+      txt.appendChild(due);
+      const arrow = document.createElement('span'); arrow.className = 'goto-arrow'; arrow.textContent = '→';
+      li.title = 'Go to '+t.targets.join('–')+' on the '+(GOTO_PAGE_NAMES[t.gotoPage]||'')+' page';
+      li.addEventListener('click', ()=> taskGoto(t.gotoPage, t.targets));
+      li.appendChild(chk); li.appendChild(txt); li.appendChild(arrow);
+    }
+    ul.appendChild(li);
+  });
+  wireOverviewTaskChecks();
+}
+
 function openAddTaskEventForm(anchorBtn, kind){
   document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  form.style.left = Math.min(rect.left, window.innerWidth-240)+'px';
-  form.style.top = (rect.bottom+6)+'px';
   const noun = kind === 'event' ? 'event' : 'task';
   form.innerHTML =
     '<strong>Add '+noun+'</strong>'+
     '<label>Title<input type="text" id="atf-title" placeholder="e.g. Order seed potatoes"></label>'+
     '<label>Description<input type="text" id="atf-desc" placeholder="Optional detail"></label>'+
-    '<label>Target date<input type="text" id="atf-date" placeholder="e.g. 12 Oct 2026" value="'+todayDateString()+'"></label>'+
+    '<label>Target date<input type="date" id="atf-date" value="'+todayISODate()+'"></label>'+
     '<label>Location (if applicable)<input type="text" id="atf-loc" placeholder="Optional"></label>'+
     '<div class="row"><button class="save">Add '+noun+'</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
+  positionPopoverForm(form, rect);
   form.querySelector('#atf-title').focus();
   form.querySelector('.save').addEventListener('click', ()=>{
     const title = form.querySelector('#atf-title').value.trim();
@@ -1532,11 +1821,11 @@ function openAddTaskEventForm(anchorBtn, kind){
       id: 'custom-'+Date.now().toString(36),
       title,
       description: form.querySelector('#atf-desc').value.trim(),
-      date: form.querySelector('#atf-date').value.trim() || todayDateString(),
+      date: isoDateToDisplay(form.querySelector('#atf-date').value) || todayDateString(),
       location: form.querySelector('#atf-loc').value.trim(),
     };
     if(kind === 'event'){ custom_events.push(entry); renderCustomEvents(); }
-    else { custom_tasks.push(entry); renderCustomTasks(); }
+    else { custom_tasks.push(entry); renderOverviewTasks(); }
     form.remove();
   });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
@@ -1545,30 +1834,6 @@ function openAddTaskEventForm(anchorBtn, kind){
       if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
     });
   },0);
-}
-
-function renderCustomTasks(){
-  const ul = document.getElementById('overview-tasks');
-  if(!ul) return;
-  ul.querySelectorAll('.custom-task-item').forEach(el=>el.remove());
-  custom_tasks.forEach(t=>{
-    const li = document.createElement('li');
-    li.className = 'custom-task-item';
-    const chk = document.createElement('button');
-    chk.type = 'button'; chk.className = 'chk'; chk.dataset.taskKind = 'done'; chk.title = 'Mark done';
-    const txt = document.createElement('span'); txt.className = 'task-text';
-    txt.appendChild(document.createTextNode(t.title + (t.description ? ' — '+t.description+' ' : ' ')));
-    const due = document.createElement('span'); due.className = 'due';
-    due.textContent = t.location ? (t.date+' · '+t.location) : t.date;
-    txt.appendChild(due);
-    const rm = document.createElement('button');
-    rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this task';
-    rm.textContent = '✕';
-    rm.addEventListener('click', ()=>{ custom_tasks = custom_tasks.filter(x=>x.id!==t.id); renderCustomTasks(); });
-    li.appendChild(chk); li.appendChild(txt); li.appendChild(rm);
-    ul.appendChild(li);
-  });
-  wireOverviewTaskChecks();
 }
 
 function renderCustomEvents(){
@@ -1607,8 +1872,24 @@ function sectionEl(sec, col){
     if(sec.stage === 'ready'){
       const ring = document.createElement('span'); ring.className='ready-ring'; div.appendChild(ring);
       const flag = document.createElement('span'); flag.className='ready-flag'; flag.textContent='Ready!'; div.appendChild(flag);
-      const chk = document.createElement('span'); chk.className='check'; chk.title='Mark harvested'; div.appendChild(chk);
+      const chk = document.createElement('button'); chk.type='button'; chk.className='check'; chk.title='Mark harvested';
+      chk.addEventListener('click', (e)=>{ e.stopPropagation(); markHarvested(chk, sec.n); });
+      div.appendChild(chk);
     }
+    // Discard is offered for anything currently growing OR ready -- dead,
+    // diseased or drought-lost plants aren't only ever "ready" ones.
+    const disc = document.createElement('button'); disc.type='button'; disc.className='discard-btn'; disc.title='Discard this planting (died, diseased, etc.)';
+    disc.textContent = '✕';
+    disc.addEventListener('click', (e)=>{ e.stopPropagation(); openDiscardForm(disc, sec.n); });
+    div.appendChild(disc);
+    // Distinct from discard: something worth a note (slug nibbling, a
+    // touch of blight, a late start) that doesn't warrant pulling the
+    // plant -- it stays growing, the Plan bar is untouched, only the
+    // Issues log gets an entry.
+    const issue = document.createElement('button'); issue.type='button'; issue.className='issue-btn'; issue.title='Log a non-critical issue (plant stays in the ground)';
+    issue.textContent = '!';
+    issue.addEventListener('click', (e)=>{ e.stopPropagation(); openIssueForm(issue, sec.n); });
+    div.appendChild(issue);
   }
   const vbtn = document.createElement('button');
   vbtn.className = 'volunteer-btn' + (volunteer_log[sec.n] ? ' logged' : '');
@@ -1632,7 +1913,7 @@ function renderBed(containerId, colA, colB){
 
   const blank = document.createElement('div');
   const labA = document.createElement('div'); labA.className='lab'; labA.textContent='A';
-  const labW = document.createElement('div'); labW.className='lab'; labW.textContent='W';
+  const labW = document.createElement('div'); labW.className='lab'; labW.textContent='';
   const labB = document.createElement('div'); labB.className='lab'; labB.textContent='B';
   [blank, labA, labW, labB].forEach((x, i)=>{ x.style.gridColumn = String(i+1); el.appendChild(x); });
 
@@ -1658,10 +1939,33 @@ function renderPots(containerId, pots){
   const el = document.getElementById(containerId);
   el.innerHTML = '';
   el.style.gridTemplateColumns = '24px 1fr';
-  pots.forEach((sec,i)=>{
+  // Show exactly the pots actually in use -- this list used to always
+  // render 4 rows regardless of how many were really planted, padding it
+  // out with empty placeholders that made the count meaningless.
+  const occupied = pots.filter(p=>p.species);
+  occupied.forEach((sec,i)=>{
     const rn = document.createElement('div'); rn.className='bed-rownum'; rn.style.gridColumn='1'; rn.textContent = i+1;
     const s = sectionEl(sec, 2);
     el.appendChild(rn); el.appendChild(s);
+  });
+  const emptyMsg = document.getElementById(containerId+'-empty');
+  if(emptyMsg) emptyMsg.hidden = occupied.length > 0;
+}
+
+function renderGreenhouseTrays(containerId, trays){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = '';
+  trays.forEach(tray=>{
+    const item = document.createElement('div'); item.className = 'prop-item';
+    const sprite = document.createElement('div'); sprite.className = 'sprite-wrap';
+    sprite.dataset.sprite = tray.species; sprite.dataset.stage = 'seedling';
+    const txt = document.createElement('div'); txt.className = 'txt';
+    const b = document.createElement('b'); b.textContent = tray.name;
+    const span = document.createElement('span'); span.innerHTML = tray.note;
+    txt.appendChild(b); txt.appendChild(span);
+    item.appendChild(sprite); item.appendChild(txt);
+    el.appendChild(item);
   });
 }
 
@@ -1892,11 +2196,53 @@ function getYearData(y){
   if(!plan_data[y]) plan_data[y] = {pots:[], plantings:{}, clearedCarry:{}};
   return plan_data[y];
 }
+
+/* ---------- Year tabs: which years exist, and when the next one unlocks ----------
+   Every year with real plan data gets a tab. Beyond that, the "+ Add year"
+   button only appears once the latest year is far enough along that it's
+   worth planning ahead -- 1 September of that year, the same kind of
+   autumn cutoff already used for Compost Day and for the overwintering
+   crops in the inventory (garlic, broad beans, onion sets are all sown
+   Sep-Nov). Before that date there's nothing yet to plan for next year,
+   so the button would just be clutter. */
+function getPlanYears(){ return Object.keys(plan_data).map(Number).sort((a,b)=>a-b); }
+function nextPlanYearUnlocked(){
+  const years = getPlanYears();
+  const maxY = years[years.length-1];
+  return today >= new Date(maxY, 8, 1);
+}
+function renderYearTabs(){
+  const years = getPlanYears();
+  const planSeg = document.getElementById('plan-year-seg');
+  const statsSeg = document.getElementById('stats-year-seg');
+  if(planSeg){
+    planSeg.innerHTML = years.map(y=>
+      '<button class="'+(y===plan_year?'active':'')+'" data-year="'+y+'" onclick="setPlanYear('+y+')">'+y+'</button>'
+    ).join('');
+  }
+  if(statsSeg){
+    statsSeg.innerHTML = years.map(y=>
+      '<button class="'+(y===stats_year?'active':'')+'" data-year="'+y+'" onclick="setStatsYear('+y+')">'+y+'</button>'
+    ).join('');
+  }
+  const addBtn = document.getElementById('plan-add-year-btn');
+  if(addBtn) addBtn.hidden = !nextPlanYearUnlocked();
+}
+function addPlanYear(){
+  const years = getPlanYears();
+  const next = years[years.length-1] + 1;
+  getYearData(next);
+  if(!harvest_log[next]) harvest_log[next] = {};
+  if(!event_log[next]) event_log[next] = [];
+  if(stats_notes[next] === undefined) stats_notes[next] = '';
+  renderYearTabs();
+  setPlanYear(next);
+  setStatsYear(next);
+  showToast(next+' added — now the latest plan year.');
+}
 function setPlanYear(y){
   plan_year = y;
-  document.querySelectorAll('.year-tabs .seg button[data-year]').forEach(b=>{
-    b.classList.toggle('active', parseInt(b.dataset.year,10)===y);
-  });
+  renderYearTabs();
   renderPlanGrid();
   resetCompanionPanel();
 }
@@ -2061,12 +2407,10 @@ function makePlanBlock(itemId, start, end, rowId, rowNum, opts){
   if(opts.rotationWarn) titleBits.push(item.name+' (or another '+item.species+') grew here last year — rotating crops helps avoid soil-borne problems, but this is still allowed.');
   if(titleBits.length) block.title = titleBits.join(' ');
   block.appendChild(buildSpriteEl(spriteFor(itemId), 'growing', 20));
-  const nm = document.createElement('span'); nm.className='nm';
-  nm.textContent = item.name + (opts.continuesIn ? ' (from last year)' : '');
-  block.appendChild(nm);
-  const badge = document.createElement('span'); badge.className='badge'; badge.textContent = '×'+capacityFor(itemId);
-  block.appendChild(badge);
   if(opts.movable){
+    // "Log as sown" sits right next to the plant icon, ahead of the name --
+    // it's the action people reach for most often, so it shouldn't be
+    // buried next to the "remove" control at the far end of the block.
     const sowTick = document.createElement('button'); sowTick.type='button';
     sowTick.className = 'sow-tick' + (opts.plantedOn ? ' done' : '');
     if(opts.plantedOn){
@@ -2078,7 +2422,13 @@ function makePlanBlock(itemId, start, end, rowId, rowNum, opts){
       sowTick.addEventListener('click', (e)=>{ e.stopPropagation(); markPlanted(rowId, plan_year); });
     }
     block.appendChild(sowTick);
-
+  }
+  const nm = document.createElement('span'); nm.className='nm';
+  nm.textContent = item.name + (opts.continuesIn ? ' (from last year)' : '');
+  block.appendChild(nm);
+  const badge = document.createElement('span'); badge.className='badge'; badge.textContent = '×'+capacityFor(itemId);
+  block.appendChild(badge);
+  if(opts.movable){
     const rm = document.createElement('span'); rm.className='rm'; rm.textContent = '✕';
     rm.addEventListener('click', (e)=>{ e.stopPropagation(); delete getYearData(plan_year).plantings[rowId]; renderPlanGrid(); });
     block.appendChild(rm);
@@ -2213,9 +2563,7 @@ function onPlanDragEnd(e){
 let stats_year = 2026;
 function setStatsYear(y){
   stats_year = y;
-  document.querySelectorAll('#page-stats .year-tabs .seg button[data-year]').forEach(b=>{
-    b.classList.toggle('active', parseInt(b.dataset.year,10)===y);
-  });
+  renderYearTabs();
   renderStats();
 }
 
@@ -2357,22 +2705,21 @@ function openStatsHarvestForm(anchorBtn){
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  form.style.left = Math.min(rect.left, window.innerWidth-230)+'px';
-  form.style.top = (rect.bottom+6)+'px';
   const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
   form.innerHTML =
     '<strong>Log a harvest &mdash; '+stats_year+'</strong>'+
     '<label>Crop<select id="shf-item">'+options+'</select></label>'+
-    '<label>Weight (g)<input type="number" min="0" step="1" id="shf-weight" placeholder="e.g. 220"></label>'+
-    '<label>Count<input type="number" min="0" step="1" id="shf-qty" placeholder="e.g. 4"></label>'+
-    '<label>Date<input type="text" id="shf-date" value="'+todayDateString()+'"></label>'+
+    '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="shf-weight" placeholder="e.g. 220"></label>'+
+    '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="shf-qty" placeholder="e.g. 4"></label>'+
+    '<label>Date<input type="date" id="shf-date" value="'+todayISODate()+'"></label>'+
     '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
+  positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
     const itemId = form.querySelector('#shf-item').value;
     const weight = parseFloat(form.querySelector('#shf-weight').value);
     const qty = parseFloat(form.querySelector('#shf-qty').value);
-    const date = form.querySelector('#shf-date').value.trim() || todayDateString();
+    const date = isoDateToDisplay(form.querySelector('#shf-date').value) || todayDateString();
     if(!weight && !qty){ form.querySelector('#shf-weight').focus(); return; }
     const yLog = getHarvestYearLog(stats_year);
     if(!yLog[itemId]) yLog[itemId] = [];
@@ -2456,22 +2803,21 @@ function openStatsEventForm(anchorBtn){
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  form.style.left = Math.min(rect.left, window.innerWidth-230)+'px';
-  form.style.top = (rect.bottom+6)+'px';
   const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
   form.innerHTML =
     '<strong>Log an issue &mdash; '+stats_year+'</strong>'+
     '<label>Type<select id="sef-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
     '<label>Crop<select id="sef-item">'+options+'</select></label>'+
     '<label>Note<input type="text" id="sef-note" placeholder="What happened?"></label>'+
-    '<label>Date<input type="text" id="sef-date" value="'+todayDateString()+'"></label>'+
+    '<label>Date<input type="date" id="sef-date" value="'+todayISODate()+'"></label>'+
     '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
+  positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#sef-type').value;
     const itemId = form.querySelector('#sef-item').value;
     const note = form.querySelector('#sef-note').value.trim();
-    const date = form.querySelector('#sef-date').value.trim() || todayDateString();
+    const date = isoDateToDisplay(form.querySelector('#sef-date').value) || todayDateString();
     getEventYearLog(stats_year).push({type, itemId, note, date});
     form.remove();
     renderStats();
@@ -2558,7 +2904,7 @@ renderInventory();
 renderPlanSidebar();
 setPlanYear(2026);
 renderStats();
-wireOverviewTaskChecks();
+renderOverviewTasks();
 renderCompostDayTask();
 const statsNotesEl = document.getElementById('stats-notes-input');
 if(statsNotesEl) statsNotesEl.addEventListener('input', (e)=>{ stats_notes[stats_year] = e.target.value; });
@@ -2624,9 +2970,8 @@ function renderEverything(){
   renderPlanSidebar();
   setPlanYear(plan_year);
   renderStats();
-  wireOverviewTaskChecks();
+  renderOverviewTasks();
   renderCompostDayTask();
-  renderCustomTasks();
   renderCustomEvents();
   refreshVolunteerAlert();
   if(statsNotesEl) statsNotesEl.value = stats_notes[stats_year] || '';
@@ -2759,7 +3104,17 @@ document.getElementById('auth-form').addEventListener('submit', async (e)=>{
   }
 });
 
-if(sb){
+// The Artifact tool's own preview (this page shown inside a Claude
+// conversation) exposes a `window.claude` runtime object that a real
+// static deployment (GitHub Pages) never has -- see claude.use('downloads')
+// above. That's a reliable, official way to tell "being previewed inside
+// Claude" apart from "actually deployed", without guessing at hostnames.
+// A real Supabase login screen has nothing to sign in to there and would
+// otherwise block every preview during development, so skip the gate
+// whenever this flag is set.
+const isClaudePreview = (typeof window.claude !== 'undefined');
+
+if(sb && !isClaudePreview){
   let appStarted = false;
   sb.auth.onAuthStateChange((event, session)=>{
     if(event === 'PASSWORD_RECOVERY'){
@@ -2777,8 +3132,10 @@ if(sb){
     }
   });
 } else {
-  // Supabase isn't configured (placeholders still in place) -- skip the
-  // sign-in gate entirely so the file still works for local testing.
+  // Either Supabase isn't configured yet (placeholders still in place) or
+  // we're inside the Claude Artifact preview (isClaudePreview, above) --
+  // skip the sign-in gate entirely so the app is directly visible/testable
+  // rather than sitting behind a login screen with nothing to sign in to.
   document.getElementById('auth-overlay').hidden = true;
 }
 </script>
