@@ -263,6 +263,7 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
 .volunteer-form label{ display:grid; gap:.15rem; }
 .volunteer-form .confirm-msg{ margin:0; max-width:220px; line-height:1.35; color:var(--m-text-dim); }
 .volunteer-form input{ font-size:.75rem; padding:.3rem; border-radius:5px; border:1px solid var(--m-border); font-family:var(--font-body); }
+.volunteer-form textarea{ font-size:.75rem; padding:.3rem; border-radius:5px; border:1px solid var(--m-border); font-family:var(--font-body); resize:vertical; min-height:2.2em; }
 .volunteer-form .row{ display:flex; gap:.4rem; }
 .volunteer-form .row button{ flex:1; font-family:var(--font-mono); font-size:.68rem; padding:.3rem .4rem; border-radius:5px; border:none; cursor:pointer; }
 .volunteer-form .save{ background:var(--m-accent); color:var(--m-accent-ink); }
@@ -733,12 +734,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
 
         <div class="card" id="card-greenhouse">
           <h3>Greenhouse</h3>
-          <div class="prop-strip">
-            <div class="prop-item"><div class="sprite-wrap" data-sprite="tomato" data-stage="seedling"></div>
-              <div class="txt"><b>Tomato (Red Cherry)</b><span>Greenhouse tray &middot; sown 4 Mar &middot; ready to pot on</span></div></div>
-            <div class="prop-item"><div class="sprite-wrap" data-sprite="cucumber" data-stage="seedling"></div>
-              <div class="txt"><b>Cucumber (Wisconsin)</b><span>Greenhouse tray &middot; sown 12 May &middot; hardening off</span></div></div>
-          </div>
+          <div class="prop-strip" id="overview-greenhouse"></div>
         </div>
         <div class="card" id="card-windowsill">
           <h3>Windowsill</h3>
@@ -875,7 +871,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
       <nav class="app-nav" data-navfor="patch"></nav>
       <div class="app-body">
         <div class="card">
-          <h3><span class="eyebrow">Bed &mdash; live status</span></h3>
+          <h3><span class="eyebrow">Bed</span></h3>
           <div class="bed-diagram"><div class="bed-grid" id="bed-grid"></div></div>
           <div class="legend">
             <span><span class="sw" style="background:var(--m-soil)"></span>Empty</span>
@@ -1090,7 +1086,7 @@ function taskGoto(page, targets){
 const savedTheme = loadSavedTheme();
 setStyle(savedTheme.style); setMode(savedTheme.mode);
 
-const today = new Date(2026,8,15);
+const today = new Date(); today.setHours(0,0,0,0);
 const label = today.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 ['today-label','today-label-2','today-label-3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
 
@@ -1102,7 +1098,8 @@ const label = today.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', 
 const PAL = {
   g1:'#7cb95a', g2:'#4c7a34', br:'#6b4a34', r1:'#d1453b', r2:'#a52f28',
   y1:'#f4c542', o1:'#e08a2b', o2:'#8a5a1f', pu:'#9b6bb5', wh:'#eef2e6',
-  be:'#8a2f4a', cb:'#a8c98a', cb2:'#6f9450', ls:'#c9dba0', cl:'#cfc6a8'
+  be:'#8a2f4a', cb:'#a8c98a', cb2:'#6f9450', ls:'#c9dba0', cl:'#cfc6a8',
+  au:'#5b3a73', gy:'#8a9a6b', cr:'#f2e8cf'
 };
 function rect(x0,y0,x1,y1,color){ return {test:(x,y)=> x>=x0&&x<=x1&&y>=y0&&y<=y1, color}; }
 function circle(cx,cy,r,color){ return {test:(x,y)=> (Math.pow(x-cx,2)+Math.pow(y-cy,2)) <= r*r, color}; }
@@ -1235,6 +1232,158 @@ const SPECIES = {
     ellipse(0.5,0.78,0.15,0.24,PAL.g1),
     ellipse(0.5,0.75,0.11,0.22,PAL.y1),
   ],
+  /* ---------- added for the seed-box inventory items ---------- */
+  pepper: [
+    ellipse(0.5,0.08,0.09,0.07,PAL.g1),
+    rect(0.46,0.02,0.54,0.14,PAL.g2),
+    ellipse(0.34,0.55,0.16,0.34,PAL.y1),
+    ellipse(0.66,0.5,0.18,0.4,PAL.o1),
+    ellipse(0.5,0.42,0.13,0.22,PAL.y1),
+  ],
+  pumpkin: [
+    rect(0.47,0.0,0.53,0.16,PAL.g2),
+    ellipse(0.5,0.14,0.08,0.06,PAL.g1),
+    circle(0.5,0.6,0.36,PAL.o1),
+    ellipse(0.32,0.6,0.09,0.32,PAL.o2),
+    ellipse(0.68,0.6,0.09,0.32,PAL.o2),
+  ],
+  watermelon: [
+    ellipse(0.28,0.14,0.14,0.08,PAL.g1),
+    ellipse(0.72,0.14,0.14,0.08,PAL.g2),
+    circle(0.5,0.6,0.34,PAL.g2),
+    ellipse(0.5,0.6,0.24,0.24,PAL.g1),
+  ],
+  basil: [
+    ellipse(0.5,0.28,0.22,0.22,PAL.g1),
+    ellipse(0.3,0.55,0.18,0.22,PAL.g2),
+    ellipse(0.7,0.55,0.18,0.22,PAL.g1),
+    ellipse(0.5,0.8,0.16,0.18,PAL.g2),
+  ],
+  coriander: [
+    ellipse(0.5,0.7,0.06,0.26,PAL.g2),
+    ellipse(0.28,0.5,0.14,0.06,PAL.g1),
+    ellipse(0.72,0.5,0.14,0.06,PAL.g1),
+    ellipse(0.5,0.3,0.16,0.16,PAL.g1),
+    ellipse(0.35,0.35,0.1,0.1,PAL.g2),
+    ellipse(0.65,0.35,0.1,0.1,PAL.g2),
+  ],
+  dill: [
+    rect(0.48,0.2,0.52,1.0,PAL.g2),
+    ellipse(0.3,0.28,0.14,0.05,PAL.g1),
+    ellipse(0.7,0.34,0.14,0.05,PAL.g1),
+    ellipse(0.32,0.5,0.14,0.05,PAL.g2),
+    ellipse(0.68,0.56,0.14,0.05,PAL.g2),
+    circle(0.5,0.12,0.14,PAL.y1),
+  ],
+  parsley: [
+    ellipse(0.3,0.42,0.1,0.14,PAL.g1),
+    ellipse(0.46,0.32,0.1,0.14,PAL.g2),
+    ellipse(0.62,0.4,0.1,0.14,PAL.g1),
+    ellipse(0.38,0.6,0.1,0.14,PAL.g2),
+    ellipse(0.56,0.62,0.1,0.14,PAL.g1),
+    ellipse(0.5,0.8,0.06,0.16,PAL.g2),
+  ],
+  rocket: [
+    ellipse(0.5,0.85,0.05,0.15,PAL.g2),
+    ellipse(0.32,0.55,0.09,0.28,PAL.g1),
+    ellipse(0.5,0.42,0.09,0.34,PAL.g2),
+    ellipse(0.68,0.55,0.09,0.28,PAL.g1),
+  ],
+  rosemary: [
+    rect(0.46,0.0,0.54,1.0,PAL.br),
+    rect(0.3,0.1,0.4,0.9,PAL.gy),
+    rect(0.6,0.15,0.7,0.85,PAL.gy),
+  ],
+  thyme: [
+    ellipse(0.5,0.7,0.3,0.24,PAL.gy),
+    ellipse(0.32,0.5,0.18,0.2,PAL.g1),
+    ellipse(0.68,0.5,0.18,0.2,PAL.g1),
+    ellipse(0.5,0.35,0.16,0.18,PAL.gy),
+  ],
+  artichoke: [
+    rect(0.46,0.4,0.54,1.0,PAL.g2),
+    ellipse(0.3,0.34,0.13,0.22,PAL.gy),
+    ellipse(0.7,0.34,0.13,0.22,PAL.gy),
+    circle(0.5,0.32,0.24,PAL.gy),
+    circle(0.5,0.32,0.12,PAL.g1),
+  ],
+  aubergine: [
+    ellipse(0.3,0.12,0.14,0.08,PAL.g1),
+    ellipse(0.7,0.12,0.14,0.08,PAL.g2),
+    rect(0.46,0.16,0.54,0.3,PAL.g2),
+    ellipse(0.5,0.66,0.22,0.34,PAL.au),
+    ellipse(0.42,0.56,0.07,0.16,PAL.pu),
+  ],
+  broccoli: [
+    rect(0.46,0.6,0.54,1.0,PAL.g1),
+    circle(0.36,0.42,0.2,PAL.g2),
+    circle(0.6,0.38,0.2,PAL.g1),
+    circle(0.48,0.28,0.16,PAL.g2),
+  ],
+  cauliflower: [
+    ellipse(0.24,0.62,0.14,0.24,PAL.g1),
+    ellipse(0.76,0.62,0.14,0.24,PAL.g2),
+    circle(0.5,0.48,0.32,PAL.cr),
+    circle(0.5,0.48,0.16,PAL.wh),
+  ],
+  celery: [
+    ellipse(0.5,0.06,0.18,0.06,PAL.g1),
+    rect(0.3,0.1,0.4,1.0,PAL.ls),
+    rect(0.46,0.02,0.56,1.0,PAL.g1),
+    rect(0.62,0.1,0.72,1.0,PAL.ls),
+  ],
+  chicory: [
+    circle(0.5,0.56,0.34,PAL.be),
+    circle(0.5,0.56,0.22,PAL.pu),
+    circle(0.5,0.5,0.08,PAL.wh),
+  ],
+  fennel: [
+    ellipse(0.5,0.14,0.06,0.24,PAL.g2),
+    ellipse(0.3,0.22,0.14,0.06,PAL.g1),
+    ellipse(0.7,0.28,0.14,0.06,PAL.g1),
+    ellipse(0.36,0.38,0.12,0.06,PAL.g2),
+    ellipse(0.64,0.42,0.12,0.06,PAL.g2),
+    circle(0.5,0.72,0.22,PAL.ls),
+  ],
+  kale: [
+    ellipse(0.28,0.42,0.18,0.26,PAL.g2),
+    ellipse(0.5,0.3,0.2,0.26,PAL.g1),
+    ellipse(0.72,0.42,0.18,0.26,PAL.g2),
+    ellipse(0.5,0.66,0.2,0.22,PAL.g1),
+    ellipse(0.5,0.9,0.06,0.12,PAL.br),
+  ],
+  lettuce: [
+    circle(0.5,0.56,0.36,PAL.ls),
+    circle(0.5,0.56,0.24,PAL.g1),
+    circle(0.5,0.52,0.1,PAL.cb),
+  ],
+  parsnip: [
+    ellipse(0.3,0.15,0.05,0.21,PAL.g1),
+    ellipse(0.5,0.11,0.05,0.25,PAL.g2),
+    ellipse(0.7,0.15,0.05,0.21,PAL.g1),
+    ellipse(0.5,0.58,0.18,0.24,PAL.cr),
+    ellipse(0.5,0.88,0.08,0.14,PAL.wh),
+  ],
+  rhubarbchard: [
+    ellipse(0.3,0.4,0.16,0.28,PAL.g1),
+    ellipse(0.5,0.28,0.18,0.26,PAL.g2),
+    ellipse(0.7,0.4,0.16,0.28,PAL.g1),
+    rect(0.44,0.5,0.5,1.0,PAL.r1),
+    rect(0.54,0.55,0.6,1.0,PAL.be),
+  ],
+  runnerbean: [
+    ellipse(0.3,0.1,0.13,0.1,PAL.g1),
+    ellipse(0.7,0.14,0.13,0.1,PAL.g2),
+    circle(0.5,0.22,0.06,PAL.r1),
+    ellipse(0.4,0.6,0.08,0.32,PAL.g2),
+    ellipse(0.6,0.66,0.08,0.32,PAL.g1),
+  ],
+  springonion: [
+    rect(0.4,0.0,0.46,0.7,PAL.g1),
+    rect(0.5,0.0,0.56,0.75,PAL.g2),
+    rect(0.6,0.05,0.66,0.7,PAL.g1),
+    rect(0.38,0.7,0.62,0.95,PAL.wh),
+  ],
 };
 
 function rasterize(species, N, revealFrac){
@@ -1275,7 +1424,9 @@ function buildSpriteEl(species, stage, px){
   return wrap;
 }
 function renderAllSprites(){
-  renderGreenhouseTrays('patch-greenhouse', GREENHOUSE_TRAYS); // builds its own [data-sprite] elements -- must run before the sweep below
+  // Build these own [data-sprite] elements first -- must run before the sweep below
+  renderGreenhouseTrays('patch-greenhouse', GREENHOUSE_TRAYS);
+  renderGreenhouseTrays('overview-greenhouse', GREENHOUSE_TRAYS);
   document.querySelectorAll('[data-sprite]').forEach(el=>{
     el.innerHTML='';
     const isBig = el.classList.contains('sprite-wrap') && el.closest('.inv-top, .prop-item');
@@ -1288,7 +1439,16 @@ function renderAllSprites(){
 /* ============================================================
    BED LAYOUT: A (left, top-to-bottom) / walkway / B (right)
    ============================================================ */
-const A = [
+// These four arrays are the Veg Patch page's "live status": which bed
+// sections, pots and greenhouse trays are in use, with what's growing in
+// them right now. They used to be `const` demo content that reset on every
+// reload and never synced -- any edit (discard, harvest, a task moving a
+// crop) only ever lived in that one tab's memory. They're `let` now so
+// applySyncState() can replace them wholesale with the synced version from
+// Supabase (see getSyncState/applySyncState below), the same way INVENTORY
+// already works. The values here are only the starting point for a brand
+// new user who's never synced anything.
+let A = [
   {n:'A1', species:'frenchbean', stage:'growing', label:'French Beans'},
   {n:'A2', species:'frenchbean', stage:'growing', label:'French Beans'},
   {n:'A3', species:'frenchbean', stage:'ready', label:'French Beans'},
@@ -1300,7 +1460,7 @@ const A = [
   {n:'A9', species:null, stage:'empty', label:''},
   {n:'A10', species:null, stage:'empty', label:''},
 ];
-const B = [
+let B = [
   {n:'B1', species:'sorrel', stage:'growing', label:'Sorrel'},
   {n:'B2', species:'sorrel', stage:'growing', label:'Sorrel'},
   {n:'B3', species:null, stage:'empty', label:''},
@@ -1316,13 +1476,14 @@ const B = [
 // placeholder rows used to pad this out to a fixed count of 4 regardless
 // of how many pots were actually in use. Add a row here per pot that's
 // genuinely in service; there's nothing to add for an unused one.
-const POTS = [
+let POTS = [
   {n:'Pot 1', species:'cucumber', stage:'ready', label:'Cucumber (Wisconsin)'},
 ];
 // Distinct from POTS: greenhouse/propagation trays, shown in their own
-// card on the Veg Patch page. Mirrors the same trays described on the
-// Overview page's "Greenhouse" card so the two stay consistent.
-const GREENHOUSE_TRAYS = [
+// card on the Veg Patch page, and mirrored on the Overview page's
+// "Greenhouse" card (both are rendered from this same array -- see
+// renderAllSprites -- so there's only ever one place to update).
+let GREENHOUSE_TRAYS = [
   {species:'tomato',   stage:'seedling', name:'Tomato (Red Cherry)',   note:'Sown 4 Mar · ready to pot on'},
   {species:'cucumber', stage:'seedling', name:'Cucumber (Wisconsin)',  note:'Sown 12 May · hardening off'},
 ];
@@ -1480,32 +1641,62 @@ function wireOverviewTaskChecks(){
     chk.addEventListener('click', (e)=>{ e.stopPropagation(); onTaskCheckClick(chk); });
   });
 }
-function markTaskDone(li){
-  li.classList.add('done');
-  const chk = li.querySelector('.chk');
-  if(chk) chk.disabled = true;
+// Applies the actual Live Status change for a 'move' task -- so ticking
+// "Bring the cucumber pot into the greenhouse" doesn't just tick a box, it
+// really does move that pot's crop into GREENHOUSE_TRAYS and takes it out
+// of the outdoor pots list, same as if you'd edited the Veg Patch page by
+// hand. Add another `if(moveType === ...)` branch here for future move
+// tasks that need a different kind of relocation.
+function applyMoveEffect(moveType, target){
+  if(moveType === 'potToGreenhouse'){
+    const idx = POTS.findIndex(p=>p.n===target);
+    if(idx === -1) return;
+    const pot = POTS[idx];
+    if(pot.species){
+      GREENHOUSE_TRAYS.push({
+        species: pot.species, stage:'seedling', name: pot.label || pot.species,
+        note: 'Moved from '+target+' into the greenhouse · '+todayDateString(),
+      });
+    }
+    POTS.splice(idx,1); // it's not an outdoor pot any more
+    renderAllSprites();
+  }
 }
 function onTaskCheckClick(chk){
-  const li = chk.closest('li');
-  if(li.classList.contains('done')) return;
+  if(chk.disabled) return;
+  chk.disabled = true; // block double-clicks while an async form (harvest log) may be open
   const kind = chk.dataset.taskKind;
+  const taskId = chk.dataset.taskId;
+  // Removes the task for good: built-in tasks are remembered in
+  // completed_task_ids (synced) so they don't reappear once the date
+  // window recalculates; custom tasks are just deleted outright.
+  const removeAndRerender = ()=>{
+    if(kind === 'custom') custom_tasks = custom_tasks.filter(x=>x.id!==taskId);
+    else if(taskId && !completed_task_ids.includes(taskId)) completed_task_ids.push(taskId);
+    renderOverviewTasks();
+  };
   if(kind === 'sow'){
     const rows = (chk.dataset.taskRows||'').split(',').filter(Boolean);
     const year = parseInt(chk.dataset.taskYear,10);
     rows.forEach(r=> markPlanted(r, year));
-    markTaskDone(li);
+    removeAndRerender();
   } else if(kind === 'harvest'){
     const itemId = chk.dataset.taskItem;
     const year = parseInt(chk.dataset.taskYear,10);
-    openHarvestLogForm(chk, itemId, year, ()=> markTaskDone(li));
+    openHarvestLogForm(chk, itemId, year, removeAndRerender);
+    chk.disabled = false; // the harvest form can be cancelled -- let them retry
   } else if(kind === 'compost'){
     const year = parseInt(chk.dataset.taskYear,10);
     compost_log[year] = {date: todayDateString()};
     showToast('Compost Day logged for '+year+' — nice work.');
-    markTaskDone(li);
+    renderCompostDayTask(); // re-evaluates visibility itself; not part of completed_task_ids
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+  } else if(kind === 'move'){
+    applyMoveEffect(chk.dataset.moveType, chk.dataset.movePot);
+    showToast('Logged — Live Status updated.');
+    removeAndRerender();
   } else {
-    markTaskDone(li);
+    removeAndRerender();
   }
 }
 
@@ -1522,6 +1713,7 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
     '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
     '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
     '<label>Date<input type="date" id="hlf-date" value="'+todayISODate()+'"></label>'+
+    '<label>Comments (optional)<textarea id="hlf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year"></textarea></label>'+
     '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
@@ -1529,10 +1721,11 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
     const weight = parseFloat(form.querySelector('#hlf-weight').value);
     const qty = parseFloat(form.querySelector('#hlf-qty').value);
     const date = isoDateToDisplay(form.querySelector('#hlf-date').value) || todayDateString();
+    const comment = form.querySelector('#hlf-comment').value.trim();
     if(!weight && !qty){ form.querySelector('#hlf-weight').focus(); return; }
     const yLog = getHarvestYearLog(year);
     if(!yLog[itemId]) yLog[itemId] = [];
-    yLog[itemId].push({date, weight: weight||null, qty: qty||null});
+    yLog[itemId].push({date, weight: weight||null, qty: qty||null, comment: comment||''});
     form.remove();
     showToast('Logged harvest: '+item.name+' on '+date+'.');
     if(onLogged) onLogged();
@@ -1732,6 +1925,13 @@ function renderCompostDayTask(){
    same form either way, per spec. */
 let custom_tasks = [];
 let custom_events = [];
+// Ids of built-in DEMO_TASKS (below) that have been ticked off. Custom
+// tasks don't need this -- ticking one just removes it from custom_tasks
+// outright -- but the built-in tasks are a fixed list re-evaluated against
+// today's date on every render, so "ticked" has to be remembered somewhere
+// or it would reappear the moment the date window recalculates. Synced
+// (see getSyncState) so a tick on one device stays ticked on another.
+let completed_task_ids = [];
 
 /* ---------- Overview "Upcoming tasks" ----------
    These used to be five hand-authored <li> elements, always shown in a
@@ -1744,11 +1944,14 @@ let custom_events = [];
    tune sensibly. Chronological-within-the-month is simple, predictable,
    and never needs tuning. */
 const DEMO_TASKS = [
-  {date:'2026-09-15', kind:'harvest', itemId:'courgette', year:2026, targets:['A7','A8'], gotoPage:'patch', title:'Harvest courgette/marrow before they get woody', due:'A7–A8, due now'},
-  {date:'2026-09-20', kind:'done', targets:['B9','B10'], gotoPage:'patch', title:'Earth up leeks as they thicken', due:'B9–B10, this week'},
-  {date:'2026-09-22', kind:'done', targets:['tray-indoor-1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Indoor tray 1, next few days'},
-  {date:'2026-09-28', kind:'sow', rows:['A9','A10'], year:2026, targets:['A9','A10'], gotoPage:'plan', title:'Sow overwintering onion sets', due:'A9–A10, from 28 Sep'},
-  {date:'2026-10-10', kind:'done', targets:['Pot 1'], gotoPage:'patch', title:'Bring the cucumber pot into the greenhouse before first chill', due:'Pot 1, by 10 Oct'},
+  {id:'demo-harvest-courgette', date:'2026-09-15', kind:'harvest', itemId:'courgette', year:2026, targets:['A7','A8'], gotoPage:'patch', title:'Harvest courgette/marrow before they get woody', due:'A7–A8, due now'},
+  {id:'demo-earth-up-leeks', date:'2026-09-20', kind:'done', targets:['B9','B10'], gotoPage:'patch', title:'Earth up leeks as they thicken', due:'B9–B10, this week'},
+  {id:'demo-pot-on-brussels', date:'2026-09-22', kind:'done', targets:['tray-indoor-1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Indoor tray 1, next few days'},
+  {id:'demo-sow-onion-sets', date:'2026-09-28', kind:'sow', rows:['A9','A10'], year:2026, targets:['A9','A10'], gotoPage:'plan', title:'Sow overwintering onion sets', due:'A9–A10, from 28 Sep'},
+  // kind:'move' relocates a crop from one part of the Live Status page to
+  // another (see applyMoveEffect) -- unlike 'done', ticking this one edits
+  // A/B/POTS/GREENHOUSE_TRAYS so the Veg Patch page reflects the move.
+  {id:'demo-move-cucumber-greenhouse', date:'2026-10-10', kind:'move', moveType:'potToGreenhouse', movePot:'Pot 1', targets:['Pot 1'], gotoPage:'patch', title:'Bring the cucumber pot into the greenhouse before first chill', due:'Pot 1, by 10 Oct'},
 ];
 const GOTO_PAGE_NAMES = {patch:'Veg Patch', plan:'Plan', overview:'Overview'};
 function renderOverviewTasks(){
@@ -1760,7 +1963,7 @@ function renderOverviewTasks(){
     kind:'custom', id:t.id, title:t.title, description:t.description,
     due: t.location ? (t.date+' · '+t.location) : t.date,
   }));
-  const pool = DEMO_TASKS.concat(custom)
+  const pool = DEMO_TASKS.filter(t=>!completed_task_ids.includes(t.id)).concat(custom)
     .filter(t=>{ const d = new Date(t.date); return !isNaN(d) && d >= today && d <= horizon; })
     .sort((a,b)=> new Date(a.date) - new Date(b.date))
     .slice(0, 10);
@@ -1770,10 +1973,11 @@ function renderOverviewTasks(){
     li.className = 'task-link';
     const chk = document.createElement('button');
     chk.type = 'button'; chk.className = 'chk';
+    chk.dataset.taskId = t.id;
     const txt = document.createElement('span'); txt.className = 'task-text';
     const due = document.createElement('span'); due.className = 'due'; due.textContent = t.due;
     if(t.kind === 'custom'){
-      chk.dataset.taskKind = 'done'; chk.title = 'Mark done';
+      chk.dataset.taskKind = 'custom'; chk.title = 'Mark done and remove';
       txt.appendChild(document.createTextNode(t.title + (t.description ? ' — '+t.description+' ' : ' ')));
       txt.appendChild(due);
       const rm = document.createElement('button');
@@ -1784,6 +1988,7 @@ function renderOverviewTasks(){
       chk.dataset.taskKind = t.kind;
       if(t.kind === 'sow'){ chk.dataset.taskRows = t.rows.join(','); chk.dataset.taskYear = String(t.year); chk.title = 'Log as sown today'; }
       else if(t.kind === 'harvest'){ chk.dataset.taskItem = t.itemId; chk.dataset.taskYear = String(t.year); chk.title = 'Log this harvest'; }
+      else if(t.kind === 'move'){ chk.dataset.moveType = t.moveType; chk.dataset.movePot = t.movePot; chk.title = 'Log as done — updates the Live Status page'; }
       else { chk.title = 'Mark done'; }
       txt.appendChild(document.createTextNode(t.title + ' — '));
       txt.appendChild(due);
@@ -1984,26 +2189,82 @@ const PLAN_ROWS = ['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','B1','B2',
    (used for the sprite art and for companion/rotation matching).
    ============================================================ */
 let INVENTORY = [
-  {id:'frenchbean',      species:'frenchbean',   name:'French Beans', variety:'',                    sow:[5,6],  harvest:[7,9],  spacing:15, sun:'Full sun',            good:['tomato','courgette','cabbage'],  bad:['onion'],   stock:'open',   comments:'Climbing variety — needs canes by early June.'},
-  {id:'beetroot',        species:'beetroot',     name:'Beetroot',     variety:'Cylindra',            sow:[3,7],  harvest:[7,9],  spacing:10, sun:'Full sun',            good:['onion','cabbage','leek'],        bad:['frenchbean'], stock:'sealed', comments:'Bolted in the 2025 heatwave — try a slightly later sowing this year.'},
-  {id:'courgette',       species:'courgette',    name:'Courgette',    variety:'Marrow',              sow:[4,6],  harvest:[7,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'open',   comments:''},
-  {id:'cabbage',         species:'cabbage',      name:'Cabbage',      variety:'',                    sow:[3,5],  harvest:[6,8],  spacing:45, sun:'Full sun',            good:['beetroot','onion','frenchbean'], bad:['tomato'],  stock:'none',   comments:''},
-  {id:'onion',           species:'onion',        name:'Onion',        variety:'',                    sow:[2,4],  harvest:[7,8],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage','leek'],     bad:['frenchbean'], stock:'sealed', comments:''},
-  {id:'squash',          species:'squash',       name:'Squash',       variety:'',                    sow:[4,6],  harvest:[8,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'sealed', comments:''},
-  {id:'brusselsprout',   species:'brusselsprout',name:'Brussel Sprout',variety:'',                   sow:[3,5],  harvest:[10,12],spacing:60, sun:'Full sun',            good:['onion','beetroot'],              bad:[],          stock:'open',   comments:''},
-  {id:'sorrel',          species:'sorrel',       name:'Sorrel',       variety:'',                    sow:[4,6],  harvest:[6,10], spacing:30, sun:'Part shade',          good:['cabbage','leek'],                bad:[],          stock:'sealed', comments:''},
-  {id:'leek',            species:'leek',         name:'Leek',         variety:'Musselburgh',         sow:[2,4],  harvest:[9,11], spacing:15, sun:'Full sun',            good:['beetroot','carrot','onion'],     bad:[],          stock:'open',   comments:''},
-  {id:'tomato_cherry',   species:'tomato',       name:'Tomato',       variety:'Red Cherry',          sow:[2,4],  harvest:[7,9],  spacing:45, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'open',   comments:'Reliable, heavy cropper — the one to bulk-sow.'},
-  {id:'tomato_beefsteak',species:'tomato',       name:'Tomato',       variety:'Beefsteak',           sow:[2,4],  harvest:[8,10], spacing:60, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'sealed', comments:'First time growing this one — needs sturdier stakes than the cherry.'},
-  {id:'cucumber',        species:'cucumber',     name:'Cucumber',     variety:'Wisconsin',           sow:[4,6],  harvest:[8,9],  spacing:60, sun:'Full sun, sheltered', good:['frenchbean','onion'],            bad:[],          stock:'open',   comments:''},
-  {id:'garlic',          species:'garlic',       name:'Garlic',       variety:'',                    sow:[9,11], harvest:[6,7],  spacing:15, sun:'Full sun',            good:['beetroot','sorrel'],             bad:['frenchbean'], stock:'sealed', comments:'', overwinters:true},
-  {id:'broadbean',       species:'broadbean',    name:'Broad Beans',  variety:'Aquadulce Claudia',   sow:[10,11],harvest:[5,6],  spacing:20, sun:'Full sun',            good:['cabbage','potato'],              bad:[],          stock:'none',   comments:'', overwinters:true},
+  {id:'frenchbean',      species:'frenchbean',   name:'French Beans', variety:'',                    sow:[3,7],  harvest:[7,10], spacing:25, sun:'Full sun',            good:['tomato','courgette','cabbage'],  bad:['onion'],   stock:'open',   comments:'Climbing variety — needs canes by early June. Sow/harvest window and spacing updated from the seed box.'},
+  {id:'beetroot',        species:'beetroot',     name:'Beetroot',     variety:'Cylindra',            sow:[4,6],  harvest:[7,10], spacing:12, sun:'Full sun',            good:['onion','cabbage','leek'],        bad:['frenchbean'], stock:'sealed', comments:'Bolted in the 2025 heatwave — try a slightly later sowing this year. Sow/harvest window and spacing updated from the seed box.'},
+  {id:'courgette',       species:'courgette',    name:'Courgette',    variety:'Marrow',              sow:[3,5],  harvest:[7,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'open',   comments:'Sow window updated from the seed box.'},
+  {id:'cabbage',         species:'cabbage',      name:'Cabbage',      variety:'',                    sow:[3,4],  harvest:[6,7],  spacing:30, sun:'Full sun',            good:['beetroot','onion','frenchbean'], bad:['tomato'],  stock:'none',   comments:'Sow/harvest window and spacing updated from the seed box.'},
+  {id:'onion',           species:'onion',        name:'Onion',        variety:'',                    sow:[2,4],  harvest:[8,9],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage','leek'],     bad:['frenchbean'], stock:'sealed', comments:'Harvest window tuned for Norfolk — maincrop bulb onions are usually still bulking in Jul and ready once the tops fall over in Aug/Sep.'},
+  {id:'squash',          species:'squash',       name:'Squash',       variety:'',                    sow:[3,5],  harvest:[8,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'sealed', comments:'Sow window updated from the seed box.'},
+  {id:'brusselsprout',   species:'brusselsprout',name:'Brussel Sprout',variety:'',                   sow:[2,4],  harvest:[9,12], spacing:60, sun:'Full sun',            good:['onion','beetroot'],              bad:[],          stock:'open',   comments:'Sow/harvest window updated from the seed box.'},
+  {id:'sorrel',          species:'sorrel',       name:'Sorrel',       variety:'',                    sow:[4,5],  harvest:[6,9],  spacing:30, sun:'Part shade',          good:['cabbage','leek'],                bad:[],          stock:'sealed', comments:'Sow/harvest window updated from the seed box.'},
+  {id:'leek',            species:'leek',         name:'Leek',         variety:'Musselburgh',         sow:[2,4],  harvest:[9,12], spacing:15, sun:'Full sun',            good:['beetroot','carrot','onion'],     bad:[],          stock:'open',   comments:'Harvest window tuned for Norfolk — Musselburgh stands well into early winter here.'},
+  {id:'tomato_cherry',   species:'tomato',       name:'Tomato',       variety:'Red Cherry',          sow:[3,4],  harvest:[8,10], spacing:50, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'open',   comments:'Reliable, heavy cropper — the one to bulk-sow. Sow/harvest window and spacing updated from the seed box.'},
+  {id:'tomato_beefsteak',species:'tomato',       name:'Tomato',       variety:'Beefsteak',           sow:[2,3],  harvest:[8,10], spacing:60, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'sealed', comments:'First time growing this one — needs sturdier stakes than the cherry. Sow window tuned for Norfolk — beefsteaks need the longest indoor start to ripen before the first Oct frost.'},
+  {id:'cucumber',        species:'cucumber',     name:'Cucumber',     variety:'Wisconsin',           sow:[5,7],  harvest:[7,10], spacing:20, sun:'Full sun, sheltered', good:['frenchbean','onion'],            bad:[],          stock:'open',   comments:'Sow/harvest window and spacing updated from the seed box.'},
+  {id:'garlic',          species:'garlic',       name:'Garlic',       variety:'',                    sow:[10,11],harvest:[6,7],  spacing:15, sun:'Full sun',            good:['beetroot','sorrel'],             bad:['frenchbean'], stock:'sealed', comments:'Sow window tuned for Norfolk — Oct/Nov planting suits the region\'s well-drained soil better than an early Sep start.', overwinters:true},
+  {id:'broadbean',       species:'broadbean',    name:'Broad Beans',  variety:'Aquadulce Claudia',   sow:[10,11],harvest:[5,6],  spacing:20, sun:'Full sun',            good:['cabbage','potato'],              bad:[],          stock:'none',   comments:'Aquadulce Claudia is bred for autumn sowing — Norfolk\'s drier, well-drained soil suits overwintering it better than damper parts of the UK.', overwinters:true},
   {id:'onionsets',       species:'onion',        name:'Onion',        variety:'Overwintering sets',  sow:[9,10], harvest:[6,7],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage'],            bad:['frenchbean'], stock:'sealed', comments:'', overwinters:true, sprite:'onion'},
-  {id:'carrot',          species:'carrot',       name:'Carrot',       variety:'',                    sow:[3,7],  harvest:[7,10], spacing:5,  sun:'Full sun',            good:['onion','leek'],                  bad:[],          stock:'sealed', comments:''},
+  {id:'carrot',          species:'carrot',       name:'Carrot',       variety:'',                    sow:[3,7],  harvest:[6,10], spacing:5,  sun:'Full sun',            good:['onion','leek'],                  bad:[],          stock:'sealed', comments:'Harvest window tuned for Norfolk — the region\'s light, sandy soils are classic carrot-growing ground and roots size up quickly.'},
   {id:'radish',          species:'radish',       name:'Radish',       variety:'',                    sow:[3,8],  harvest:[4,9],  spacing:5,  sun:'Full sun',            good:['cucumber','peas'],               bad:[],          stock:'open',   comments:''},
-  {id:'spinach',         species:'spinach',      name:'Spinach',      variety:'',                    sow:[3,9],  harvest:[5,10], spacing:15, sun:'Part shade',          good:['brusselsprout','onion'],         bad:[],          stock:'none',   comments:''},
-  {id:'peas',            species:'peas',         name:'Peas',         variety:'',                    sow:[3,6],  harvest:[6,9],  spacing:5,  sun:'Full sun',            good:['carrot','radish'],               bad:['onion'],   stock:'sealed', comments:''},
-  {id:'sweetcorn',       species:'sweetcorn',    name:'Sweetcorn',    variety:'',                    sow:[4,5],  harvest:[8,9],  spacing:35, sun:'Full sun',            good:['courgette','squash'],            bad:[],          stock:'none',   comments:''},
+  {id:'spinach',         species:'spinach',      name:'Spinach',      variety:'',                    sow:[3,8],  harvest:[5,10], spacing:15, sun:'Part shade',          good:['brusselsprout','onion'],         bad:[],          stock:'none',   comments:'Sow window tuned for Norfolk — the region\'s dry, sunny summers push spinach to bolt fast, so it does best sown early and again in late summer rather than mid-summer.'},
+  {id:'peas',            species:'peas',         name:'Peas',         variety:'',                    sow:[2,6],  harvest:[6,9],  spacing:5,  sun:'Full sun',            good:['carrot','radish'],               bad:['onion'],   stock:'sealed', comments:'Sow window tuned for Norfolk — mild springs here often allow an under-cover Feb sowing.'},
+  {id:'sweetcorn',       species:'sweetcorn',    name:'Sweetcorn',    variety:'',                    sow:[4,5],  harvest:[8,9],  spacing:35, sun:'Full sun',            good:['courgette','squash'],            bad:[],          stock:'none',   comments:'Norfolk\'s reliably sunny, dry summers are some of the best sweetcorn-growing conditions in the UK.'},
+
+  /* ---------- added from the seed-box inventory table (flowers excluded; see
+     README/chat note) -- rows that duplicated an item already above (plain
+     "Spinach", plain "Pea") were left out rather than added a second time.
+     Anything below with no min-spacing/planting dates on the packet gets a
+     sow/harvest window estimated and tuned for Norfolk's climate (mild,
+     dry, temperate-maritime East Anglia; last spring frost ~late April,
+     first autumn frost ~mid/late October) rather than being left out of
+     the Plan page entirely -- flagged in its comments as an estimate. ---------- */
+  {id:'pepper_hungarianyellow', species:'pepper', name:'Pepper', variety:'Hungarian Yellow', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'pepper_redcalifornia', species:'pepper', name:'Pepper', variety:'Red California', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'pepper_yellowcalifornia', species:'pepper', name:'Pepper', variety:'Yellow California', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'pumpkin_bigmax', species:'pumpkin', name:'Pumpkin', variety:'Big Max', sow:[4,5], harvest:[9,10], spacing:200, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'tomato_marmande', species:'tomato', name:'Tomato', variety:'Marmande', sow:[2,3], harvest:[8,10], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'tomato_romavf', species:'tomato', name:'Tomato', variety:'Roma VF', sow:[2,3], harvest:[8,9], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'watermelon_sugarbaby', species:'watermelon', name:'Watermelon', variety:'Sugar Baby', sow:[4,5], harvest:[8,9], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'basil', species:'basil', name:'Basil', variety:'', sow:[4,5], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'basil_darkopal', species:'basil', name:'Basil', variety:'Dark Opal', sow:[4,5], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'coriander', species:'coriander', name:'Coriander', variety:'', sow:[3,8], harvest:[5,10], spacing:15, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'dill', species:'dill', name:'Dill', variety:'', sow:[4,7], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'parsley', species:'parsley', name:'Parsley', variety:'', sow:[3,7], harvest:[6,10], spacing:20, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'rocket', species:'rocket', name:'Rocket', variety:'', sow:[3,9], harvest:[5,10], spacing:15, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'rosemary', species:'rosemary', name:'Rosemary', variety:'', sow:[4,5], harvest:[6,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'thyme', species:'thyme', name:'Thyme', variety:'', sow:[4,5], harvest:[6,9], spacing:30, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'artichoke', species:'artichoke', name:'Artichoke', variety:'', sow:[2,3], harvest:[7,9], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'aubergine_longpurple', species:'aubergine', name:'Aubergine', variety:'Long Purple', sow:[2,3], harvest:[7,9], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'beetroot_plain', species:'beetroot', name:'Beetroot', variety:'', sow:[3,7], harvest:[6,10], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:''},
+  {id:'beetroot_bordo237', species:'beetroot', name:'Beetroot', variety:'Bordo 237', sow:[3,7], harvest:[6,10], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'blackradish_spanishround', species:'radish', name:'Black Radish', variety:'Spanish Round', sow:[6,7], harvest:[10,12], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'broccoli_ramoso', species:'broccoli', name:'Broccoli', variety:'Ramoso', sow:[3,6], harvest:[7,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'brusselsprout_redbull', species:'brusselsprout', name:'Brussel Sprout', variety:'Red Bull', sow:[3,4], harvest:[10,12], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'carrot_amsterdam2', species:'carrot', name:'Carrot', variety:'Amsterdam 2', sow:[2,7], harvest:[5,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'carrot_chantenay', species:'carrot', name:'Carrot', variety:'Chantenay', sow:[3,7], harvest:[7,10], spacing:8, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'carrot_flyawayf1', species:'carrot', name:'Carrot', variety:'Flyaway F1', sow:[4,7], harvest:[7,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'carrot_nantes2', species:'carrot', name:'Carrot', variety:'Nantes 2', sow:[3,7], harvest:[6,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'cauliflower_earlysnowball', species:'cauliflower', name:'Cauliflower', variety:'Early Snowball', sow:[2,3], harvest:[6,7], spacing:50, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'celery', species:'celery', name:'Celery', variety:'', sow:[2,3], harvest:[8,10], spacing:25, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'chicory_redballaverto', species:'chicory', name:'Chicory', variety:'Red Ball Averto', sow:[5,7], harvest:[9,11], spacing:25, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'courgette_plain', species:'courgette', name:'Courgette', variety:'', sow:[4,6], harvest:[7,10], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'courgette_goldendelight', species:'courgette', name:'Courgette', variety:'Golden Delight', sow:[4,6], harvest:[7,10], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'cucumber_cornichondeparis', species:'cucumber', name:'Cucumber', variety:'Cornichon de Paris', sow:[5,6], harvest:[7,9], spacing:40, sun:'Full sun, sheltered', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'fennel_romanesco', species:'fennel', name:'Fennel', variety:'Romanesco', sow:[6,7], harvest:[9,10], spacing:25, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'kale', species:'kale', name:'Kale', variety:'', sow:[4,6], harvest:[10,3], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
+  {id:'leek_autumngiant', species:'leek', name:'Leek', variety:'Autumn Giant', sow:[2,4], harvest:[9,12], spacing:15, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'lettuce_grandrapids', species:'lettuce', name:'Lettuce', variety:'Grand Rapids', sow:[3,8], harvest:[5,10], spacing:20, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'lettuce_iceberg3', species:'lettuce', name:'Lettuce', variety:'Iceberg 3', sow:[4,7], harvest:[7,10], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'lettuce_iceberg', species:'lettuce', name:'Lettuce', variety:'Iceberg', sow:[4,7], harvest:[7,10], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'lettuce_lollorosia', species:'lettuce', name:'Lettuce', variety:'Lollo Rosia', sow:[3,8], harvest:[5,10], spacing:25, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'longradish_whiteicicle', species:'radish', name:'Long Radish', variety:'White Icicle', sow:[3,8], harvest:[4,9], spacing:8, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'onion_debrunswick', species:'onion', name:'Onion', variety:'De Brunswick', sow:[3,4], harvest:[8,9], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'parsnip', species:'parsnip', name:'Parsnip', variety:'', sow:[3,4], harvest:[10,3], spacing:12, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
+  {id:'radish_saxa2', species:'radish', name:'Radish', variety:'Saxa 2', sow:[3,8], harvest:[4,9], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'rhubarbchard', species:'rhubarbchard', name:'Rhubarb Chard', variety:'', sow:[4,7], harvest:[6,11], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'runnerbean', species:'runnerbean', name:'Runner Bean', variety:'', sow:[5,6], harvest:[7,10], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'springonion', species:'springonion', name:'Spring Onion', variety:'', sow:[3,8], harvest:[5,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+  {id:'sweetcorn_goldenbantam', species:'sweetcorn', name:'Sweet Corn', variety:'Golden Bantam', sow:[4,5], harvest:[8,9], spacing:35, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
 ];
 let INV = {};
 function rebuildInvIndex(){ INV = {}; INVENTORY.forEach(it=>{ INV[it.id]=it; }); }
@@ -2263,7 +2524,7 @@ function renderPlanSidebar(){
       (item.variety ? '<div class="sub">'+item.variety+'</div>' : '')+
       '<div class="sub">'+sowLabel+'</div>';
     card.appendChild(sw); card.appendChild(txt);
-    card.addEventListener('pointerdown', (e)=>startPlanDrag(e, item.id));
+    card.addEventListener('pointerdown', (e)=>armSeedCardDrag(e, item.id));
     el.appendChild(card);
   });
 }
@@ -2483,7 +2744,46 @@ function startPlanDrag(e, itemId, sourceRow){
   setRotationFlag(meta.species, true);
   moveGhost(e.clientX, e.clientY);
   window.addEventListener('pointermove', onPlanDragMove);
-  window.addEventListener('pointerup', onPlanDragEnd, {once:true});
+  window.addEventListener('pointerup', onPlanDragEnd);
+  window.addEventListener('pointercancel', onPlanDragCancel);
+}
+// The seed bank becomes a horizontally-scrolling strip on mobile (see the
+// .plan-seed touch-action:pan-x rule), so a touch on a card is ambiguous
+// at the moment it starts: it might be a swipe to scroll the strip, or a
+// pick-up-and-drag onto the calendar. Calling startPlanDrag unconditionally
+// on pointerdown -- fine for a mouse, which never scrolls by dragging on
+// the card -- broke that on touch: it grabbed the pointer and put up a
+// ghost card before the browser's native pan gesture ever got a chance to
+// run, and if the browser claimed the touch for scrolling anyway (firing
+// pointercancel instead of pointerup), the ghost and window-level listeners
+// were left stuck since nothing was listening for that event. This mirrors
+// armBlockDrag's "wait for real movement" approach, adds a directional
+// check so a mostly-sideways gesture never counts as a drag even once it
+// clears the distance threshold, and always cleans up its own listeners on
+// pointerup/pointercancel so a browser-claimed scroll can't leave anything
+// behind to break the next touch.
+function armSeedCardDrag(e, itemId){
+  if(e.pointerType === 'mouse'){ startPlanDrag(e, itemId); return; }
+  const startX = e.clientX, startY = e.clientY, pointerId = e.pointerId;
+  function onMove(ev){
+    if(ev.pointerId !== pointerId) return;
+    const dx = ev.clientX-startX, dy = ev.clientY-startY;
+    if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    cleanup();
+    // Only a clearly-vertical lift counts as "pick this card up" -- a
+    // sideways-leaning gesture is left alone as a strip scroll (which,
+    // since we never preventDefault()'d, has been free to run natively
+    // the whole time).
+    if(Math.abs(dy) > Math.abs(dx)) startPlanDrag(ev, itemId);
+  }
+  function cleanup(){
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', cleanup);
+    window.removeEventListener('pointercancel', cleanup);
+  }
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', cleanup);
+  window.addEventListener('pointercancel', cleanup);
 }
 function armBlockDrag(e, itemId, rowId){
   if(e.target.closest('.rm')) return; // pressing delete shouldn't start a drag
@@ -2492,18 +2792,23 @@ function armBlockDrag(e, itemId, rowId){
   function onMove(ev){
     if(Math.abs(ev.clientX-startX) > 6 || Math.abs(ev.clientY-startY) > 6){
       dragging = true;
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      cleanup();
       startPlanDrag(ev, itemId, rowId);
     }
   }
   function onUp(){
+    cleanup();
+    if(!dragging) showCompanionPanel(itemId);
+  }
+  function onCancel(){ cleanup(); }
+  function cleanup(){
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
-    if(!dragging) showCompanionPanel(itemId);
+    window.removeEventListener('pointercancel', onCancel);
   }
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onCancel);
 }
 function moveGhost(x,y){
   if(!planDrag) return;
@@ -2520,6 +2825,8 @@ function onPlanDragMove(e){
 }
 function onPlanDragEnd(e){
   window.removeEventListener('pointermove', onPlanDragMove);
+  window.removeEventListener('pointerup', onPlanDragEnd);
+  window.removeEventListener('pointercancel', onPlanDragCancel);
   if(!planDrag) return;
   const meta = getItem(planDrag.itemId);
   setRotationFlag(meta.species, false);
@@ -2544,6 +2851,21 @@ function onPlanDragEnd(e){
       showCompanionPanel(planDrag.itemId);
     }
   }
+  if(planDrag.lastCell) planDrag.lastCell.classList.remove('drop-hover');
+  planDrag.ghost.remove();
+  planDrag = null;
+}
+// Fires instead of onPlanDragEnd when the browser reclaims the touch mid-
+// drag (e.g. an in-progress drag interrupted by a system gesture) rather
+// than the person releasing it over a target -- there's no meaningful drop
+// point on a cancelled pointer, so this just tidies up the ghost/rotation-
+// flag state without trying to place anything.
+function onPlanDragCancel(){
+  window.removeEventListener('pointermove', onPlanDragMove);
+  window.removeEventListener('pointerup', onPlanDragEnd);
+  window.removeEventListener('pointercancel', onPlanDragCancel);
+  if(!planDrag) return;
+  setRotationFlag(getItem(planDrag.itemId).species, false);
   if(planDrag.lastCell) planDrag.lastCell.classList.remove('drop-hover');
   planDrag.ghost.remove();
   planDrag = null;
@@ -2692,7 +3014,7 @@ function renderStatsHarvestLog(){
       const bits = [];
       if(e.weight) bits.push(e.weight+'g');
       if(e.qty) bits.push(e.qty+(e.qty===1?' item':' items'));
-      li.textContent = e.date+' — '+bits.join(', ');
+      li.textContent = e.date+' — '+bits.join(', ') + (e.comment ? ' — '+e.comment : '');
       ul.appendChild(li);
     });
     box.appendChild(ul);
@@ -2712,6 +3034,7 @@ function openStatsHarvestForm(anchorBtn){
     '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="shf-weight" placeholder="e.g. 220"></label>'+
     '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="shf-qty" placeholder="e.g. 4"></label>'+
     '<label>Date<input type="date" id="shf-date" value="'+todayISODate()+'"></label>'+
+    '<label>Comments (optional)<textarea id="shf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year"></textarea></label>'+
     '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
@@ -2720,10 +3043,11 @@ function openStatsHarvestForm(anchorBtn){
     const weight = parseFloat(form.querySelector('#shf-weight').value);
     const qty = parseFloat(form.querySelector('#shf-qty').value);
     const date = isoDateToDisplay(form.querySelector('#shf-date').value) || todayDateString();
+    const comment = form.querySelector('#shf-comment').value.trim();
     if(!weight && !qty){ form.querySelector('#shf-weight').focus(); return; }
     const yLog = getHarvestYearLog(stats_year);
     if(!yLog[itemId]) yLog[itemId] = [];
-    yLog[itemId].push({date, weight: weight||null, qty: qty||null});
+    yLog[itemId].push({date, weight: weight||null, qty: qty||null, comment: comment||''});
     form.remove();
     renderStats();
   });
@@ -2869,7 +3193,7 @@ function exportStatsCSV(){
   Object.keys(yLog).forEach(itemId=>{
     const item = getItem(itemId);
     (yLog[itemId]||[]).forEach(e=>{
-      rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', '']);
+      rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', e.comment||'']);
     });
   });
   const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
@@ -2928,12 +3252,14 @@ let syncChannel = null;
 let lastSyncedJSON = null;
 
 /* Every piece of state a user actually edits, gathered into one blob that
-   maps straight onto the table's single jsonb `data` column. Deliberately
-   NOT included: the Veg Patch page's bed/pot layout (A/B/POTS) -- that's
-   still fixed demo content rather than something an action in the app
-   writes to (see the "Veg patch" note on that page), sort preferences and
-   theme/mode (per-device, not worth round-tripping), and the mock mostly-
-   readonly "today" date. */
+   maps straight onto the table's single jsonb `data` column. This now
+   includes the Veg Patch page's live status (bed sections, pots and
+   greenhouse trays, via bed_a/bed_b/pots/greenhouse_trays) and which
+   built-in Upcoming Tasks have been ticked off (completed_task_ids) --
+   both used to be per-device only, which is exactly why a change made on
+   one device (or one login) didn't stick and the old data reappeared.
+   Still deliberately NOT included: sort preferences and theme/mode
+   (per-device, not worth round-tripping) and the real "today" date. */
 function getSyncState(){
   return {
     inventory: INVENTORY,
@@ -2945,6 +3271,11 @@ function getSyncState(){
     compost_log: compost_log,
     custom_tasks: custom_tasks,
     custom_events: custom_events,
+    completed_task_ids: completed_task_ids,
+    bed_a: A,
+    bed_b: B,
+    pots: POTS,
+    greenhouse_trays: GREENHOUSE_TRAYS,
   };
 }
 function applySyncState(s){
@@ -2961,6 +3292,11 @@ function applySyncState(s){
   if(s.compost_log) compost_log = s.compost_log;
   if(Array.isArray(s.custom_tasks)) custom_tasks = s.custom_tasks;
   if(Array.isArray(s.custom_events)) custom_events = s.custom_events;
+  if(Array.isArray(s.completed_task_ids)) completed_task_ids = s.completed_task_ids;
+  if(Array.isArray(s.bed_a)) A = s.bed_a;
+  if(Array.isArray(s.bed_b)) B = s.bed_b;
+  if(Array.isArray(s.pots)) POTS = s.pots;
+  if(Array.isArray(s.greenhouse_trays)) GREENHOUSE_TRAYS = s.greenhouse_trays;
   lastSyncedJSON = JSON.stringify(getSyncState());
   renderEverything();
 }
