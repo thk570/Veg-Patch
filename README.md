@@ -33,9 +33,28 @@ step to run first.
 ## What syncs, and what doesn't
 
 Synced across devices once signed in: seed inventory, the planting
-calendar, harvest and issue logs, compost-day history, notes, and custom
-tasks/events added on the Overview page.
+calendar, harvest and issue logs, compost-day history, notes, custom
+tasks/events added on the Overview page, which built-in Upcoming Tasks
+you've ticked off, and the Veg Patch page's live status — the bed
+sections, pots and greenhouse trays, and whatever's currently growing in
+each.
 
-Not synced (stays local to each device, or is still static demo content in
-this version): the Veg Patch page's bed/pot layout, your chosen visual
-theme and light/dark mode, and list sort preferences.
+Not synced (stays local to each device): your chosen visual theme and
+light/dark mode, list sort preferences, and today's date.
+
+## The Veg Patch page
+
+Each planted bed section, pot and greenhouse tray shows what's growing in
+it and a small set of actions:
+
+- **✕ (Discard)** — the only thing that clears a tile for good: the plant
+  died, was pulled, or is otherwise done. Kept as its own control, separate
+  from the menu below, since it's the one irreversible action here.
+- **⋮ (more actions)** — a dropdown with Log harvest (once something's
+  ready), Log issue, and Move. Move relocates a crop between the
+  greenhouse, a pot and a bed section — for hardening off a greenhouse
+  seedling out into a pot or straight into the veg patch, or bringing a
+  pot or bed crop into the greenhouse over winter.
+
+Adding another action anywhere on this page (for a bed/pot tile or a
+greenhouse tray) just means adding one more entry to that same dropdown.
