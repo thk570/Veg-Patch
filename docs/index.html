@@ -236,7 +236,6 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
 .section .ready-ring{ position:absolute; inset:-2px; border-radius:8px; border:2px solid var(--m-accent-2); animation:pulse 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion:reduce){ .section .ready-ring{ animation:none; } }
 @keyframes pulse{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
-.section .check{ position:absolute; bottom:3px; right:4px; width:14px; height:14px; border-radius:4px; background:rgba(255,255,255,.85); border:1px solid rgba(0,0,0,.2); padding:0; cursor:pointer; }
 .section .sprite{ flex:none; }
 .section.ready-tile{ box-shadow: inset 0 0 0 1px rgba(0,0,0,.12), inset 0 0 0 3px var(--m-accent-2); }
 .section .ready-flag{
@@ -252,10 +251,31 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
   background:rgba(0,0,0,.18); font-size:.6rem; line-height:13px; text-align:center; color:#fff; cursor:pointer; z-index:3; padding:0;
 }
 .section .volunteer-btn.logged{ background:var(--m-accent-2); border-color:rgba(0,0,0,.35); color:#241a06; }
-.section .issue-btn{
-  position:absolute; bottom:2px; left:22px; width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.7);
-  background:#b3453a; color:#fff; font-size:.62rem; font-weight:800; line-height:12px; text-align:center; cursor:pointer; z-index:3; padding:0;
+.section .kebab-btn{
+  position:absolute; bottom:2px; right:2px; width:16px; height:16px; border-radius:4px; border:1px solid rgba(255,255,255,.6);
+  background:rgba(0,0,0,.28); color:#fff; font-size:.6rem; font-weight:800; line-height:14px; text-align:center; cursor:pointer; z-index:3; padding:0;
 }
+.prop-item{ position:relative; }
+.prop-item .kebab-btn{
+  position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:4px; border:1px solid var(--m-border);
+  background:var(--m-surface); color:var(--m-text-dim); font-size:.65rem; font-weight:800; line-height:16px; text-align:center; cursor:pointer; z-index:3; padding:0;
+}
+/* One shared dropdown for the "Log harvest / Log issue / Move" actions a
+   planted tile or greenhouse tray can have. Deliberately excludes Discard
+   -- that stays its own separate, harder-to-hit control (see the comment
+   above openDiscardForm): it's the one action here that's irreversible,
+   so it doesn't belong buried a click deeper in a "more actions" menu
+   alongside routine logging. Adding another action anywhere in the app
+   going forward just means one more entry passed to openActionMenu(). */
+.action-menu{
+  position:absolute; z-index:26; background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:.3rem;
+  box-shadow:0 6px 18px rgba(0,0,0,.22); display:grid; gap:.1rem; min-width:150px;
+}
+.action-menu button{
+  font-family:var(--font-mono); font-size:.68rem; padding:.4rem .55rem; border-radius:5px; border:none; background:transparent;
+  color:var(--m-text); text-align:left; cursor:pointer;
+}
+.action-menu button:hover, .action-menu button:focus-visible{ background:var(--m-surface-2); }
 .volunteer-form{
   position:absolute; z-index:20; background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:.6rem;
   box-shadow:0 6px 18px rgba(0,0,0,.22); display:grid; gap:.4rem; font-size:.72rem; min-width:180px; color:var(--m-text);
@@ -349,6 +369,18 @@ body[data-style="pixel"] .stats-rank-bar-wrap, body[data-style="pixel"] .stats-r
 .stats-harvest-head b{ font-size:.86rem; }
 .stats-harvest-total{ margin-left:auto; font-family:var(--font-mono); font-size:.72rem; color:var(--m-text-dim); }
 .stats-harvest-occasions{ list-style:none; margin:.4rem 0 0; padding:0 0 0 2.15rem; display:grid; gap:.2rem; font-size:.78rem; color:var(--m-text-dim); }
+.stats-harvest-occasions li{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+.stats-harvest-occasions li>span{ flex:1; }
+/* Small inline (not tile-overlay) kebab for a single log line -- the
+   Stats page's harvest occasions and issue rows, where "Edit"/"Delete"
+   sit next to the entry rather than pinned to a tile corner. Same
+   openActionMenu() dropdown as everywhere else. */
+.log-kebab{
+  flex:none; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;
+  border-radius:4px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text-dim);
+  font-size:.65rem; font-weight:800; cursor:pointer; padding:0;
+}
+.log-kebab:hover{ background:var(--m-surface-2); }
 body[data-style="pixel"] .stats-harvest-head .sprite-wrap{ background:var(--p-sky); border:2px solid var(--p-text); border-radius:0; }
 body[data-style="pixel"] .stats-harvest-item{ border-bottom:2px dotted var(--p-text); }
 
@@ -485,6 +517,8 @@ body[data-style="pixel"] .section .crop-name{ font-family:var(--font-body); font
 /* ---------- list toolbar: sort + add (Inventory & Plan sidebar) ---------- */
 .list-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
 .list-toolbar .sort-control{ display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:var(--m-text-dim); }
+.list-toolbar .hide-oos-control{ cursor:pointer; user-select:none; }
+.list-toolbar .hide-oos-control input{ margin:0; }
 .list-toolbar select{ font-family:var(--font-body); font-size:.76rem; padding:.3rem .5rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
 .list-toolbar .add-btn{ font-family:var(--font-mono); font-size:.72rem; background:var(--m-accent); color:var(--m-accent-ink); border:none; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
 body[data-style="pixel"] .list-toolbar select{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); color:var(--p-text); }
@@ -778,6 +812,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
               <option value="duration">Time in ground</option>
             </select>
           </span>
+          <label class="sort-control hide-oos-control"><input type="checkbox" id="inv-hide-oos" onchange="setInvHideOOS(this.checked)"> Hide out of stock</label>
           <button class="add-btn" onclick="toggleAddForm()">+ Add seed</button>
         </div>
 
@@ -840,6 +875,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
                   <option value="duration">Time in ground</option>
                 </select>
               </span>
+              <label class="sort-control hide-oos-control"><input type="checkbox" id="plan-hide-oos" onchange="setPlanHideOOS(this.checked)"> Hide out of stock</label>
             </div>
             <div class="plan-sidebar" id="plan-sidebar"></div>
           </div>
@@ -1384,6 +1420,14 @@ const SPECIES = {
     rect(0.6,0.05,0.66,0.7,PAL.g1),
     rect(0.38,0.7,0.62,0.95,PAL.wh),
   ],
+  /* ---------- added for the extra overwintering crops ---------- */
+  swede: [
+    ellipse(0.32,0.12,0.11,0.2,PAL.g1),
+    ellipse(0.5,0.06,0.11,0.24,PAL.g2),
+    ellipse(0.68,0.12,0.11,0.2,PAL.g1),
+    circle(0.5,0.62,0.3,PAL.pu),
+    circle(0.5,0.7,0.24,PAL.wh),
+  ],
 };
 
 function rasterize(species, N, revealFrac){
@@ -1856,6 +1900,114 @@ function openIssueForm(anchorBtn, sectionId){
   },0);
 }
 
+/* ---------- Shared "kebab" action menu ----------
+   One small dropdown used by every planted bed/pot tile and every
+   greenhouse tray for its non-destructive actions (Log harvest, Log
+   issue, Move -- see the .action-menu CSS comment for why Discard is
+   deliberately not one of these). `actions` is [{label, onClick}, ...];
+   adding a new action anywhere just means passing one more entry here. */
+function openActionMenu(anchorBtn, actions){
+  document.querySelectorAll('.action-menu, .volunteer-form').forEach(f=>f.remove());
+  const menu = document.createElement('div');
+  menu.className = 'action-menu';
+  menu.style.position = 'fixed';
+  actions.forEach(a=>{
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = a.label;
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.remove(); a.onClick(); });
+    menu.appendChild(btn);
+  });
+  document.body.appendChild(menu);
+  positionPopoverForm(menu, anchorBtn.getBoundingClientRect());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!menu.contains(e.target) && e.target!==anchorBtn){ menu.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+
+/* ---------- Move: relocate a crop between the greenhouse, a pot and a
+   bed section ----------
+   Generalises applyMoveEffect's pot-to-greenhouse move (used by the
+   built-in "bring it in before first chill" task) into something any
+   tile or tray can trigger by hand, in either direction -- moving a
+   greenhouse seedling out to a pot or straight into the veg patch once
+   it's hardened off, or bringing a potted or bedded plant into the
+   greenhouse for the winter. */
+function getCropAt(sourceKind, sourceId){
+  if(sourceKind === 'greenhouse'){
+    const tray = GREENHOUSE_TRAYS[sourceId];
+    return tray ? {species: tray.species, name: tray.name} : null;
+  }
+  const sec = findBedSection(sourceId);
+  return (sec && sec.species) ? {species: sec.species, name: sec.label} : null;
+}
+function removeCropFromSource(sourceKind, sourceId){
+  if(sourceKind === 'greenhouse'){
+    GREENHOUSE_TRAYS.splice(sourceId, 1);
+  } else if(sourceKind === 'pot'){
+    const idx = POTS.findIndex(p=>p.n===sourceId);
+    if(idx !== -1) POTS.splice(idx, 1);
+  } else {
+    const sec = findBedSection(sourceId);
+    if(sec){ sec.species = null; sec.stage = 'empty'; sec.label = ''; }
+  }
+}
+function nextPotName(){
+  const existing = new Set(POTS.map(p=>p.n));
+  let i = 1;
+  while(existing.has('Pot '+i)) i++;
+  return 'Pot '+i;
+}
+function openMoveForm(anchorBtn, sourceKind, sourceId){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
+  const crop = getCropAt(sourceKind, sourceId);
+  if(!crop) return;
+  const label = crop.name || getItem(crop.species).name;
+  const emptySections = [...A, ...B].filter(s=>s.stage==='empty');
+  const options = [];
+  if(sourceKind !== 'greenhouse') options.push('<option value="greenhouse">The greenhouse</option>');
+  if(sourceKind !== 'pot') options.push('<option value="pot">A new pot</option>');
+  if(emptySections.length) options.push('<optgroup label="An empty bed section">'+emptySections.map(s=>'<option value="bed:'+s.n+'">'+s.n+'</option>').join('')+'</optgroup>');
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.innerHTML =
+    '<strong>Move &mdash; '+label+'</strong>'+
+    (options.length
+      ? '<label>Move to<select id="mvf-dest">'+options.join('')+'</select></label>'
+      : '<p class="confirm-msg">Nowhere to move it to right now -- every bed section is full and there\'s nothing else to offer.</p>')+
+    '<div class="row"><button class="save"'+(options.length?'':' disabled')+'>Move</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const sel = form.querySelector('#mvf-dest');
+    if(!sel) return;
+    performMove(sourceKind, sourceId, sel.value, crop, label);
+    form.remove();
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+function performMove(sourceKind, sourceId, dest, crop, label){
+  removeCropFromSource(sourceKind, sourceId);
+  if(dest === 'greenhouse'){
+    GREENHOUSE_TRAYS.push({species: crop.species, stage:'seedling', name: label, note:'Moved into the greenhouse · '+todayDateString()});
+  } else if(dest === 'pot'){
+    POTS.push({n: nextPotName(), species: crop.species, stage:'growing', label});
+  } else if(dest.indexOf('bed:') === 0){
+    const sec = findBedSection(dest.slice(4));
+    if(sec){ sec.species = crop.species; sec.stage = 'growing'; sec.label = label; }
+  }
+  renderAllSprites();
+  showToast('Moved '+label+'.');
+}
+
 /* ---------- Compost Day: a recurring, date-driven Overview task ---------- */
 // February -- start of season, shortly before the first spring sowings
 // (onion, leek, tomato/courgette-under-cover all begin Feb in this app's own
@@ -2077,24 +2229,29 @@ function sectionEl(sec, col){
     if(sec.stage === 'ready'){
       const ring = document.createElement('span'); ring.className='ready-ring'; div.appendChild(ring);
       const flag = document.createElement('span'); flag.className='ready-flag'; flag.textContent='Ready!'; div.appendChild(flag);
-      const chk = document.createElement('button'); chk.type='button'; chk.className='check'; chk.title='Mark harvested';
-      chk.addEventListener('click', (e)=>{ e.stopPropagation(); markHarvested(chk, sec.n); });
-      div.appendChild(chk);
     }
     // Discard is offered for anything currently growing OR ready -- dead,
-    // diseased or drought-lost plants aren't only ever "ready" ones.
+    // diseased or drought-lost plants aren't only ever "ready" ones. Kept
+    // as its own separate control rather than folded into the kebab menu
+    // below -- see the note on .action-menu above.
     const disc = document.createElement('button'); disc.type='button'; disc.className='discard-btn'; disc.title='Discard this planting (died, diseased, etc.)';
     disc.textContent = '✕';
     disc.addEventListener('click', (e)=>{ e.stopPropagation(); openDiscardForm(disc, sec.n); });
     div.appendChild(disc);
-    // Distinct from discard: something worth a note (slug nibbling, a
-    // touch of blight, a late start) that doesn't warrant pulling the
-    // plant -- it stays growing, the Plan bar is untouched, only the
-    // Issues log gets an entry.
-    const issue = document.createElement('button'); issue.type='button'; issue.className='issue-btn'; issue.title='Log a non-critical issue (plant stays in the ground)';
-    issue.textContent = '!';
-    issue.addEventListener('click', (e)=>{ e.stopPropagation(); openIssueForm(issue, sec.n); });
-    div.appendChild(issue);
+    // Everything else this tile can do lives behind one kebab: "Mark
+    // harvested" only when there's actually something ready to pick,
+    // "Log issue" and "Move" always available for a growing/ready crop.
+    const kebab = document.createElement('button'); kebab.type='button'; kebab.className='kebab-btn'; kebab.title='More actions';
+    kebab.textContent = '⋮';
+    kebab.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const actions = [];
+      if(sec.stage === 'ready') actions.push({label:'Log harvest', onClick:()=> markHarvested(kebab, sec.n)});
+      actions.push({label:'Log issue', onClick:()=> openIssueForm(kebab, sec.n)});
+      actions.push({label:'Move…', onClick:()=> openMoveForm(kebab, POTS.indexOf(sec)!==-1?'pot':'bed', sec.n)});
+      openActionMenu(kebab, actions);
+    });
+    div.appendChild(kebab);
   }
   const vbtn = document.createElement('button');
   vbtn.className = 'volunteer-btn' + (volunteer_log[sec.n] ? ' logged' : '');
@@ -2161,7 +2318,7 @@ function renderGreenhouseTrays(containerId, trays){
   const el = document.getElementById(containerId);
   if(!el) return;
   el.innerHTML = '';
-  trays.forEach(tray=>{
+  trays.forEach((tray, idx)=>{
     const item = document.createElement('div'); item.className = 'prop-item';
     const sprite = document.createElement('div'); sprite.className = 'sprite-wrap';
     sprite.dataset.sprite = tray.species; sprite.dataset.stage = 'seedling';
@@ -2170,6 +2327,19 @@ function renderGreenhouseTrays(containerId, trays){
     const span = document.createElement('span'); span.innerHTML = tray.note;
     txt.appendChild(b); txt.appendChild(span);
     item.appendChild(sprite); item.appendChild(txt);
+    // Only on the Veg Patch page's own copy of this card -- the Overview
+    // mirror (containerId 'overview-greenhouse') is a read-only glance at
+    // what's in the greenhouse, same as the rest of that page, so it gets
+    // no interactive controls of its own.
+    if(containerId === 'patch-greenhouse'){
+      const kebab = document.createElement('button'); kebab.type='button'; kebab.className='kebab-btn'; kebab.title='More actions';
+      kebab.textContent = '⋮';
+      kebab.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openActionMenu(kebab, [{label:'Move to a pot or bed…', onClick:()=> openMoveForm(kebab, 'greenhouse', idx)}]);
+      });
+      item.appendChild(kebab);
+    }
     el.appendChild(item);
   });
 }
@@ -2265,6 +2435,11 @@ let INVENTORY = [
   {id:'runnerbean', species:'runnerbean', name:'Runner Bean', variety:'', sow:[5,6], harvest:[7,10], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
   {id:'springonion', species:'springonion', name:'Spring Onion', variety:'', sow:[3,8], harvest:[5,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
   {id:'sweetcorn_goldenbantam', species:'sweetcorn', name:'Sweet Corn', variety:'Golden Bantam', sow:[4,5], harvest:[8,9], spacing:35, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
+
+  /* ---------- additional overwintering crops (2026-09) ---------- */
+  {id:'broccoli_purplesprouting', species:'broccoli', name:'Broccoli', variety:'Purple Sprouting', sow:[4,5], harvest:[1,4], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Sown late spring and transplanted out in summer, then stands through winter for a late-winter/early-spring pick — the reward for the longest wait of anything in the plot. Planting window estimated and tuned for Norfolk\'s climate.', overwinters:true},
+  {id:'cabbage_spring', species:'cabbage', name:'Cabbage', variety:'Spring (April)', sow:[8,9], harvest:[3,5], spacing:30, sun:'Full sun', good:['beetroot','onion','frenchbean'], bad:['tomato'], stock:'sealed', comments:'Autumn-sown so it overwinters as a small plant and hearts up in spring, well before the summer-sown cabbage above is anywhere near ready. Planting window estimated and tuned for Norfolk\'s climate.', overwinters:true},
+  {id:'swede', species:'swede', name:'Swede', variety:'', sow:[5,6], harvest:[10,2], spacing:30, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Left in the ground and lifted through winter as needed rather than harvested all at once. Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
 ];
 let INV = {};
 function rebuildInvIndex(){ INV = {}; INVENTORY.forEach(it=>{ INV[it.id]=it; }); }
@@ -2307,6 +2482,14 @@ let inv_sort = 'name';
 let plan_sort = 'name';
 function setInvSort(mode){ inv_sort = mode; renderInventory(); }
 function setPlanSort(mode){ plan_sort = mode; renderPlanSidebar(); }
+// Per-device display preferences, not synced -- same category as sort
+// order and theme (see the getSyncState comment), not something to
+// round-trip through Supabase.
+let inv_hide_oos = false;
+let plan_hide_oos = false;
+function setInvHideOOS(v){ inv_hide_oos = v; renderInventory(); }
+function setPlanHideOOS(v){ plan_hide_oos = v; renderPlanSidebar(); }
+function visibleItems(hideOOS){ return hideOOS ? INVENTORY.filter(it=>it.stock!=='none') : INVENTORY; }
 
 /* ============================================================
    INVENTORY PAGE
@@ -2315,7 +2498,14 @@ function renderInventory(){
   const el = document.getElementById('inv-grid');
   if(!el) return;
   el.innerHTML = '';
-  sortItems(INVENTORY, inv_sort).forEach(item=>{
+  const items = sortItems(visibleItems(inv_hide_oos), inv_sort);
+  if(!items.length){
+    const p = document.createElement('p'); p.className='companion-empty';
+    p.textContent = 'Nothing in stock right now — untick "Hide out of stock" to see everything.';
+    el.appendChild(p);
+    return;
+  }
+  items.forEach(item=>{
     const outer = document.createElement('div'); outer.className = 'inv-card-outer';
     const inner = document.createElement('div'); inner.className = 'inv-card-inner';
 
@@ -2512,7 +2702,14 @@ function renderPlanSidebar(){
   const el = document.getElementById('plan-sidebar');
   if(!el) return;
   el.innerHTML = '';
-  sortItems(INVENTORY, plan_sort).forEach(item=>{
+  const items = sortItems(visibleItems(plan_hide_oos), plan_sort);
+  if(!items.length){
+    const p = document.createElement('p'); p.className='companion-empty';
+    p.textContent = 'Nothing in stock right now — untick "Hide out of stock" to see everything.';
+    el.appendChild(p);
+    return;
+  }
+  items.forEach(item=>{
     const card = document.createElement('div');
     card.className = 'plan-seed';
     card.dataset.item = item.id;
@@ -2988,12 +3185,15 @@ function renderStatsHarvestLog(){
     return;
   }
   itemIds.forEach(itemId=>{
-    const entries = yLog[itemId].slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+    // Keep each entry's index in the underlying (unsorted) yLog[itemId]
+    // array alongside it, since that's what an edit/delete has to splice
+    // -- the list itself is shown oldest-first regardless of log order.
+    const entries = yLog[itemId].map((e,i)=>({e,i})).sort((a,b)=> new Date(a.e.date) - new Date(b.e.date));
     const item = getItem(itemId);
-    const totalWeight = entries.reduce((s,e)=> s + (e.weight||0), 0);
-    const totalQty = entries.reduce((s,e)=> s + (e.qty||0), 0);
-    const hasWeight = entries.some(e=>e.weight);
-    const hasQty = entries.some(e=>e.qty);
+    const totalWeight = entries.reduce((s,{e})=> s + (e.weight||0), 0);
+    const totalQty = entries.reduce((s,{e})=> s + (e.qty||0), 0);
+    const hasWeight = entries.some(({e})=>e.weight);
+    const hasQty = entries.some(({e})=>e.qty);
     const totalsParts = [];
     if(hasWeight) totalsParts.push(totalWeight+'g total');
     if(hasQty) totalsParts.push(totalQty+' harvested');
@@ -3009,48 +3209,96 @@ function renderStatsHarvestLog(){
     box.appendChild(head);
 
     const ul = document.createElement('ul'); ul.className='stats-harvest-occasions';
-    entries.forEach(e=>{
+    entries.forEach(({e,i})=>{
       const li = document.createElement('li');
       const bits = [];
       if(e.weight) bits.push(e.weight+'g');
       if(e.qty) bits.push(e.qty+(e.qty===1?' item':' items'));
-      li.textContent = e.date+' — '+bits.join(', ') + (e.comment ? ' — '+e.comment : '');
+      const txt = document.createElement('span');
+      txt.textContent = e.date+' — '+bits.join(', ') + (e.comment ? ' — '+e.comment : '');
+      li.appendChild(txt);
+      const kebab = document.createElement('button'); kebab.type='button'; kebab.className='log-kebab'; kebab.title='Edit or delete this entry';
+      kebab.textContent = '⋮';
+      kebab.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        openActionMenu(kebab, [
+          {label:'Edit', onClick:()=> openStatsHarvestForm(kebab, {itemId, index:i})},
+          {label:'Delete', onClick:()=> confirmDeleteEntry(kebab, 'Removes the '+e.date+' harvest log for '+item.name+'.', ()=>{
+            getHarvestYearLog(stats_year)[itemId].splice(i,1);
+            renderStats();
+          })},
+        ]);
+      });
+      li.appendChild(kebab);
       ul.appendChild(li);
     });
     box.appendChild(ul);
     el.appendChild(box);
   });
 }
-function openStatsHarvestForm(anchorBtn){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+// `editing` is {itemId, index} to edit that existing harvest_log entry in
+// place, or omitted to log a brand new one. The crop itself is fixed once
+// an entry exists -- editing is for fixing a mistyped weight/date/etc,
+// not for moving an entry to a different crop's log.
+function openStatsHarvestForm(anchorBtn, editing){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
+  const existing = editing ? getHarvestYearLog(stats_year)[editing.itemId][editing.index] : null;
   const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
   form.innerHTML =
-    '<strong>Log a harvest &mdash; '+stats_year+'</strong>'+
-    '<label>Crop<select id="shf-item">'+options+'</select></label>'+
-    '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="shf-weight" placeholder="e.g. 220"></label>'+
-    '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="shf-qty" placeholder="e.g. 4"></label>'+
-    '<label>Date<input type="date" id="shf-date" value="'+todayISODate()+'"></label>'+
-    '<label>Comments (optional)<textarea id="shf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year"></textarea></label>'+
-    '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
+    '<strong>'+(editing?'Edit harvest':'Log a harvest')+' &mdash; '+stats_year+'</strong>'+
+    (editing
+      ? '<p class="confirm-msg">'+getItem(editing.itemId).name+(getItem(editing.itemId).variety?' — '+getItem(editing.itemId).variety:'')+'</p>'
+      : '<label>Crop<select id="shf-item">'+options+'</select></label>')+
+    '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="shf-weight" placeholder="e.g. 220" value="'+(existing&&existing.weight?existing.weight:'')+'"></label>'+
+    '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="shf-qty" placeholder="e.g. 4" value="'+(existing&&existing.qty?existing.qty:'')+'"></label>'+
+    '<label>Date<input type="date" id="shf-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
+    '<label>Comments (optional)<textarea id="shf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year">'+(existing&&existing.comment?existing.comment:'')+'</textarea></label>'+
+    '<div class="row"><button class="save">'+(editing?'Save':'Log harvest')+'</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
-    const itemId = form.querySelector('#shf-item').value;
+    const itemId = editing ? editing.itemId : form.querySelector('#shf-item').value;
     const weight = parseFloat(form.querySelector('#shf-weight').value);
     const qty = parseFloat(form.querySelector('#shf-qty').value);
     const date = isoDateToDisplay(form.querySelector('#shf-date').value) || todayDateString();
     const comment = form.querySelector('#shf-comment').value.trim();
     if(!weight && !qty){ form.querySelector('#shf-weight').focus(); return; }
     const yLog = getHarvestYearLog(stats_year);
-    if(!yLog[itemId]) yLog[itemId] = [];
-    yLog[itemId].push({date, weight: weight||null, qty: qty||null, comment: comment||''});
+    const entry = {date, weight: weight||null, qty: qty||null, comment: comment||''};
+    if(editing) yLog[editing.itemId][editing.index] = entry;
+    else { if(!yLog[itemId]) yLog[itemId] = []; yLog[itemId].push(entry); }
     form.remove();
     renderStats();
   });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
+/* ---------- Shared confirm-delete popover for a single log entry ----------
+   Same fixed-position, click-outside-dismiss popover as everywhere else,
+   styled like openDiscardForm's confirm -- a log entry is data someone
+   might actually want back, so deleting one still gets a confirmation
+   step rather than vanishing on the first click. */
+function confirmDeleteEntry(anchorBtn, message, onConfirm){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.innerHTML =
+    '<strong>Delete this entry?</strong>'+
+    '<p class="confirm-msg">'+message+'</p>'+
+    '<div class="row"><button class="save" style="background:#b3453a;">Yes, delete</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelector('.save').addEventListener('click', ()=>{ form.remove(); onConfirm(); });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
   setTimeout(()=>{
     document.addEventListener('click', function outside(e){
@@ -3100,7 +3348,10 @@ function renderStatsEventLog(){
   const el = document.getElementById('stats-event-log');
   if(!el) return;
   el.innerHTML = '';
-  const entries = getEventYearLog(stats_year).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+  // Index kept alongside each entry (see the same note in
+  // renderStatsHarvestLog) so edit/delete splice the right row of the
+  // underlying, unsorted event_log[year] array.
+  const entries = getEventYearLog(stats_year).map((e,i)=>({e,i})).sort((a,b)=> new Date(a.e.date) - new Date(b.e.date));
   if(!entries.length){
     const p = document.createElement('p'); p.className='companion-empty';
     p.textContent = 'Nothing logged for '+stats_year+'.';
@@ -3109,32 +3360,54 @@ function renderStatsEventLog(){
   }
   const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
   const typePill = {late:'info', failed:'warn', missed:'warn'};
-  entries.forEach(e=>{
+  entries.forEach(({e,i})=>{
     const item = getItem(e.itemId);
     const row = document.createElement('div'); row.className='event';
     const left = document.createElement('span');
     const pill = document.createElement('span'); pill.className = 'pill '+(typePill[e.type]||'info'); pill.textContent = typeLabel[e.type]||e.type;
     left.appendChild(pill);
     left.appendChild(document.createTextNode(' '+item.name+(e.note?' — '+e.note:'')));
-    const right = document.createElement('span'); right.className='d'; right.textContent = e.date;
+    const right = document.createElement('span'); right.className='d'; right.style.display='inline-flex'; right.style.alignItems='center'; right.style.gap='.35rem';
+    const dateSpan = document.createElement('span'); dateSpan.textContent = e.date;
+    right.appendChild(dateSpan);
+    const kebab = document.createElement('button'); kebab.type='button'; kebab.className='log-kebab'; kebab.title='Edit or delete this entry';
+    kebab.textContent = '⋮';
+    kebab.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      openActionMenu(kebab, [
+        {label:'Edit', onClick:()=> openStatsEventForm(kebab, i)},
+        {label:'Delete', onClick:()=> confirmDeleteEntry(kebab, 'Removes the '+e.date+' issue logged for '+item.name+'.', ()=>{
+          getEventYearLog(stats_year).splice(i,1);
+          renderStats();
+        })},
+      ]);
+    });
+    right.appendChild(kebab);
     row.appendChild(left); row.appendChild(right);
     el.appendChild(row);
   });
 }
-function openStatsEventForm(anchorBtn){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
+// `editing` is the index of an existing event_log[stats_year] entry to
+// edit in place, or omitted to log a brand new one. Unlike a harvest
+// entry, an issue is a flat per-year list rather than one grouped by
+// crop, so there's no separate container to move between -- editing can
+// freely change type, crop, note and date all at once.
+function openStatsEventForm(anchorBtn, editing){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  const existing = (editing!==undefined && editing!==null) ? getEventYearLog(stats_year)[editing] : null;
+  const options = INVENTORY.map(it=>'<option value="'+it.id+'"'+(existing&&existing.itemId===it.id?' selected':'')+'>'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  const typeOptions = ['late','failed','missed'].map(t=>'<option value="'+t+'"'+(existing&&existing.type===t?' selected':'')+'>'+({late:'Late',failed:'Failed',missed:'Missed planting'}[t])+'</option>').join('');
   form.innerHTML =
-    '<strong>Log an issue &mdash; '+stats_year+'</strong>'+
-    '<label>Type<select id="sef-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
+    '<strong>'+(existing?'Edit issue':'Log an issue')+' &mdash; '+stats_year+'</strong>'+
+    '<label>Type<select id="sef-type">'+typeOptions+'</select></label>'+
     '<label>Crop<select id="sef-item">'+options+'</select></label>'+
-    '<label>Note<input type="text" id="sef-note" placeholder="What happened?"></label>'+
-    '<label>Date<input type="date" id="sef-date" value="'+todayISODate()+'"></label>'+
-    '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
+    '<label>Note<input type="text" id="sef-note" placeholder="What happened?" value="'+(existing&&existing.note?existing.note.replace(/"/g,'&quot;'):'')+'"></label>'+
+    '<label>Date<input type="date" id="sef-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
+    '<div class="row"><button class="save">'+(existing?'Save':'Log issue')+'</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
   form.querySelector('.save').addEventListener('click', ()=>{
@@ -3142,7 +3415,9 @@ function openStatsEventForm(anchorBtn){
     const itemId = form.querySelector('#sef-item').value;
     const note = form.querySelector('#sef-note').value.trim();
     const date = isoDateToDisplay(form.querySelector('#sef-date').value) || todayDateString();
-    getEventYearLog(stats_year).push({type, itemId, note, date});
+    const entry = {type, itemId, note, date};
+    if(existing) getEventYearLog(stats_year)[editing] = entry;
+    else getEventYearLog(stats_year).push(entry);
     form.remove();
     renderStats();
   });
