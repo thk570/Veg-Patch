@@ -276,6 +276,7 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
   color:var(--m-text); text-align:left; cursor:pointer;
 }
 .action-menu button:hover, .action-menu button:focus-visible{ background:var(--m-surface-2); }
+.action-menu button.danger{ color:#b3453a; }
 .volunteer-form{
   position:absolute; z-index:20; background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:.6rem;
   box-shadow:0 6px 18px rgba(0,0,0,.22); display:grid; gap:.4rem; font-size:.72rem; min-width:180px; color:var(--m-text);
@@ -517,12 +518,33 @@ body[data-style="pixel"] .section .crop-name{ font-family:var(--font-body); font
 /* ---------- list toolbar: sort + add (Inventory & Plan sidebar) ---------- */
 .list-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
 .list-toolbar .sort-control{ display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:var(--m-text-dim); }
-.list-toolbar .hide-oos-control{ cursor:pointer; user-select:none; }
-.list-toolbar .hide-oos-control input{ margin:0; }
 .list-toolbar select{ font-family:var(--font-body); font-size:.76rem; padding:.3rem .5rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
 .list-toolbar .add-btn{ font-family:var(--font-mono); font-size:.72rem; background:var(--m-accent); color:var(--m-accent-ink); border:none; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
 body[data-style="pixel"] .list-toolbar select{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); color:var(--p-text); }
 body[data-style="pixel"] .list-toolbar .add-btn{ border-radius:0; border:2px solid var(--p-text); }
+.list-toolbar .filter-btn{
+  font-family:var(--font-body); font-size:.72rem; padding:.32rem .6rem; border-radius:6px; border:1px solid var(--m-border);
+  background:var(--m-surface); color:var(--m-text); cursor:pointer; display:inline-flex; align-items:center; gap:.35rem;
+}
+.list-toolbar .filter-btn.active{ border-color:var(--m-accent); color:var(--m-accent); }
+.list-toolbar .filter-btn .filter-count{
+  background:var(--m-accent); color:var(--m-accent-ink); border-radius:999px; font-size:.62rem; font-weight:700; line-height:1;
+  padding:.15rem .4rem;
+}
+body[data-style="pixel"] .list-toolbar .filter-btn{ border-radius:0; border:2px solid var(--p-text); background:var(--p-surface); color:var(--p-text); }
+/* ---------- Filters popover (Inventory & Plan sidebar) ---------- */
+.filter-panel{ min-width:200px; }
+/* .filter-check: an inline checkbox/radio + label, one row. Scoped under
+   .volunteer-form (every popover form's shared class) rather than
+   standalone, since it needs to beat that class's own
+   "label{ display:grid }" rule -- used by the Filters panel and by the
+   Add-event repeat options below. */
+.volunteer-form .filter-check{ display:flex; flex-direction:row; align-items:center; gap:.4rem; font-size:.76rem; cursor:pointer; user-select:none; }
+.volunteer-form .filter-check input{ margin:0; }
+.filter-group{ display:grid; gap:.3rem; padding-top:.2rem; border-top:1px dashed var(--m-border); }
+.filter-group-label{ font-family:var(--font-mono); font-size:.62rem; text-transform:uppercase; letter-spacing:.04em; color:var(--m-text-dim); }
+.repeat-every-row{ display:flex; align-items:center; gap:.4rem; }
+.repeat-every-row select{ font-family:var(--font-body); font-size:.76rem; padding:.2rem .3rem; border-radius:5px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
 
 /* ---------- inventory: stock control, flip-to-comments, add form ---------- */
 /* Cards sit in a CSS Grid row and stretch to match the tallest card in that
@@ -810,9 +832,11 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
               <option value="harvest-early">Earliest harvest</option>
               <option value="harvest-late">Latest harvest</option>
               <option value="duration">Time in ground</option>
+              <option value="spacing-asc">Spacing (smallest first)</option>
+              <option value="spacing-desc">Spacing (largest first)</option>
             </select>
           </span>
-          <label class="sort-control hide-oos-control"><input type="checkbox" id="inv-hide-oos" onchange="setInvHideOOS(this.checked)"> Hide out of stock</label>
+          <button type="button" class="filter-btn" id="inv-filter-btn" onclick="openFilterPanel(this,'inv')">Filters<span class="filter-count" id="inv-filter-count" hidden></span></button>
           <button class="add-btn" onclick="toggleAddForm()">+ Add seed</button>
         </div>
 
@@ -875,7 +899,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
                   <option value="duration">Time in ground</option>
                 </select>
               </span>
-              <label class="sort-control hide-oos-control"><input type="checkbox" id="plan-hide-oos" onchange="setPlanHideOOS(this.checked)"> Hide out of stock</label>
+              <button type="button" class="filter-btn" id="plan-filter-btn" onclick="openFilterPanel(this,'plan')">Filters<span class="filter-count" id="plan-filter-count" hidden></span></button>
             </div>
             <div class="plan-sidebar" id="plan-sidebar"></div>
           </div>
@@ -1914,6 +1938,11 @@ function openActionMenu(anchorBtn, actions){
   actions.forEach(a=>{
     const btn = document.createElement('button');
     btn.type = 'button'; btn.textContent = a.label;
+    // Any destructive action shows in red -- currently just "Delete", but
+    // matched by label rather than a one-off flag so a future destructive
+    // entry (e.g. "Remove") gets the same treatment by being named the
+    // same way, and existing callers don't need to be touched.
+    if(/^(delete|remove)\b/i.test(a.label)) btn.className = 'danger';
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.remove(); a.onClick(); });
     menu.appendChild(btn);
   });
@@ -2154,6 +2183,75 @@ function renderOverviewTasks(){
   wireOverviewTaskChecks();
 }
 
+/* ---------- Recurring events ----------
+   A custom event can repeat every N weeks/months/years, either on the
+   same day-of-month as its start date or on the Nth weekday of the
+   period (e.g. "every 2 months on the first Saturday" -- the Compost
+   Day reminder above is exactly this shape, just hardcoded; this is the
+   general version for anything a user adds). Rather than storing every
+   future occurrence, only the rule plus the original start date is kept,
+   and the next occurrence on/after today is computed fresh on every
+   render -- the same approach as getCompostDayState() above, just for
+   an arbitrary rule instead of one fixed target month. There's no
+   "mark this cycle done" step (unlike Compost Day, a custom event has
+   no log to write to): it just always shows whatever's next, and
+   removing it via its ✕ ends the whole series. */
+const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const ORDINAL_LABEL = {1:'first',2:'second',3:'third',4:'fourth','-1':'last'};
+function formatDisplayDate(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); }
+function parseDisplayDate(s){
+  if(!s) return null;
+  const m = s.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})$/);
+  if(!m) return null;
+  const mo = MONTH_ABBR.findIndex(x=> x.toLowerCase() === m[2].slice(0,3).toLowerCase());
+  if(mo < 0) return null;
+  return new Date(parseInt(m[3],10), mo, parseInt(m[1],10));
+}
+function nthWeekdayOfMonth(year, month, ordinal, weekday){
+  if(ordinal === -1){
+    const last = new Date(year, month+1, 0);
+    return new Date(year, month+1, 0 - ((last.getDay()-weekday+7)%7));
+  }
+  const first = new Date(year, month, 1);
+  const day = 1 + ((weekday-first.getDay()+7)%7) + (ordinal-1)*7;
+  return new Date(year, month, day);
+}
+// Adds `n` months to `d`, clamping the day so e.g. 31 Jan + 1 month lands
+// on 28/29 Feb instead of overflowing into March.
+function addMonthsClamped(d, n){
+  const day = d.getDate();
+  const nd = new Date(d.getFullYear(), d.getMonth()+n, 1);
+  nd.setDate(Math.min(day, new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate()));
+  return nd;
+}
+function repeatOccurrenceZero(anchor, r){
+  if((r.unit==='month'||r.unit==='year') && r.mode==='weekday') return nthWeekdayOfMonth(anchor.getFullYear(), anchor.getMonth(), r.ordinal, r.weekday);
+  return anchor;
+}
+function repeatStep(occ, r){
+  if(r.unit === 'week'){ const d = new Date(occ); d.setDate(d.getDate()+7*r.interval); return d; }
+  const monthsToAdd = r.unit === 'year' ? 12*r.interval : r.interval;
+  if(r.mode === 'weekday'){
+    const base = new Date(occ.getFullYear(), occ.getMonth()+monthsToAdd, 1);
+    return nthWeekdayOfMonth(base.getFullYear(), base.getMonth(), r.ordinal, r.weekday);
+  }
+  return addMonthsClamped(occ, monthsToAdd);
+}
+function nextOccurrence(anchor, r, from){
+  let occ = repeatOccurrenceZero(anchor, r);
+  let guard = 0;
+  while(occ < from && guard < 2000){ occ = repeatStep(occ, r); guard++; }
+  return occ;
+}
+function describeRepeat(r){
+  const unitWord = r.unit+(r.interval===1?'':'s');
+  const everyStr = r.interval===1 ? ('every '+r.unit) : ('every '+r.interval+' '+unitWord);
+  if((r.unit==='month'||r.unit==='year') && r.mode==='weekday'){
+    return everyStr+' on the '+ORDINAL_LABEL[r.ordinal]+' '+WEEKDAY_NAMES[r.weekday];
+  }
+  return everyStr;
+}
+
 function openAddTaskEventForm(anchorBtn, kind){
   document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
@@ -2161,25 +2259,78 @@ function openAddTaskEventForm(anchorBtn, kind){
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
   const noun = kind === 'event' ? 'event' : 'task';
+  // Repeat is an event-only concept for now -- a task is a one-off thing
+  // to do and gets ticked off (see onTaskCheckClick), which doesn't map
+  // onto "the next occurrence of a recurring thing" the way a plain
+  // reminder does. The ordinal/weekday row only matters for month/year
+  // (a weekly repeat's weekday is just whatever the start date's is), so
+  // it starts hidden and is toggled below once a unit is picked.
+  const repeatFields = kind === 'event'
+    ? '<label>Repeats<select id="atf-repeat-unit">'+
+        '<option value="">Does not repeat</option>'+
+        '<option value="week">Weekly</option>'+
+        '<option value="month">Monthly</option>'+
+        '<option value="year">Yearly</option>'+
+      '</select></label>'+
+      '<div id="atf-repeat-interval-row" hidden><label>Every<span class="repeat-every-row">'+
+        '<input type="number" min="1" value="1" id="atf-repeat-interval" style="width:3.4em">'+
+        '<span id="atf-repeat-unit-word">week(s)</span>'+
+      '</span></label></div>'+
+      '<div id="atf-repeat-mode-row" hidden>'+
+        '<label class="filter-check"><input type="radio" name="atf-repeat-mode" value="date" checked> Same date each time</label>'+
+        '<label class="filter-check"><input type="radio" name="atf-repeat-mode" value="weekday">On the <span class="repeat-every-row">'+
+          '<select id="atf-repeat-ordinal"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="-1">last</option></select>'+
+          '<select id="atf-repeat-weekday">'+WEEKDAY_NAMES.map((w,i)=>'<option value="'+i+'">'+w+'</option>').join('')+'</select>'+
+        '</span></label>'+
+      '</div>'
+    : '';
   form.innerHTML =
     '<strong>Add '+noun+'</strong>'+
     '<label>Title<input type="text" id="atf-title" placeholder="e.g. Order seed potatoes"></label>'+
     '<label>Description<input type="text" id="atf-desc" placeholder="Optional detail"></label>'+
-    '<label>Target date<input type="date" id="atf-date" value="'+todayISODate()+'"></label>'+
+    '<label>'+(kind==='event'?'Start date':'Target date')+'<input type="date" id="atf-date" value="'+todayISODate()+'"></label>'+
+    repeatFields+
     '<label>Location (if applicable)<input type="text" id="atf-loc" placeholder="Optional"></label>'+
     '<div class="row"><button class="save">Add '+noun+'</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
   form.querySelector('#atf-title').focus();
+  if(kind === 'event'){
+    const unitSel = form.querySelector('#atf-repeat-unit');
+    const intervalRow = form.querySelector('#atf-repeat-interval-row');
+    const modeRow = form.querySelector('#atf-repeat-mode-row');
+    const unitWord = form.querySelector('#atf-repeat-unit-word');
+    unitSel.addEventListener('change', ()=>{
+      const unit = unitSel.value;
+      intervalRow.hidden = !unit;
+      modeRow.hidden = !(unit==='month' || unit==='year');
+      if(unit) unitWord.textContent = unit+'(s)';
+      positionPopoverForm(form, rect); // fields just changed size -- re-clamp on screen
+    });
+  }
   form.querySelector('.save').addEventListener('click', ()=>{
     const title = form.querySelector('#atf-title').value.trim();
     if(!title){ form.querySelector('#atf-title').focus(); return; }
+    let repeat = null;
+    if(kind === 'event'){
+      const unit = form.querySelector('#atf-repeat-unit').value;
+      if(unit){
+        const interval = Math.max(1, parseInt(form.querySelector('#atf-repeat-interval').value,10) || 1);
+        const mode = (unit==='month'||unit==='year') ? form.querySelector('input[name="atf-repeat-mode"]:checked').value : 'date';
+        repeat = { unit, interval, mode };
+        if(mode === 'weekday'){
+          repeat.ordinal = parseInt(form.querySelector('#atf-repeat-ordinal').value,10);
+          repeat.weekday = parseInt(form.querySelector('#atf-repeat-weekday').value,10);
+        }
+      }
+    }
     const entry = {
       id: 'custom-'+Date.now().toString(36),
       title,
       description: form.querySelector('#atf-desc').value.trim(),
       date: isoDateToDisplay(form.querySelector('#atf-date').value) || todayDateString(),
       location: form.querySelector('#atf-loc').value.trim(),
+      repeat,
     };
     if(kind === 'event'){ custom_events.push(entry); renderCustomEvents(); }
     else { custom_tasks.push(entry); renderOverviewTasks(); }
@@ -2204,7 +2355,13 @@ function renderCustomEvents(){
     left.appendChild(b);
     if(ev.description) left.appendChild(document.createTextNode(' — '+ev.description));
     const right = document.createElement('span'); right.className = 'd';
-    right.appendChild(document.createTextNode(ev.location ? (ev.date+' · '+ev.location+' ') : (ev.date+' ')));
+    let dateLabel = ev.date;
+    if(ev.repeat){
+      const anchor = parseDisplayDate(ev.date);
+      const next = anchor ? nextOccurrence(anchor, ev.repeat, today) : null;
+      dateLabel = (next ? formatDisplayDate(next) : ev.date) + ' · repeats ' + describeRepeat(ev.repeat);
+    }
+    right.appendChild(document.createTextNode(ev.location ? (dateLabel+' · '+ev.location+' ') : (dateLabel+' ')));
     const rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this event';
     rm.textContent = '✕';
@@ -2474,6 +2631,8 @@ function sortItems(list, mode){
     'harvest-early':(a,b)=> a.harvest[0]-b.harvest[0],
     'harvest-late': (a,b)=> b.harvest[1]-a.harvest[1],
     'duration':     (a,b)=> spanFor(b.id)-spanFor(a.id),
+    'spacing-asc':  (a,b)=> a.spacing-b.spacing,
+    'spacing-desc': (a,b)=> b.spacing-a.spacing,
   }[mode] || null;
   if(cmp) arr.sort(cmp);
   return arr;
@@ -2482,14 +2641,126 @@ let inv_sort = 'name';
 let plan_sort = 'name';
 function setInvSort(mode){ inv_sort = mode; renderInventory(); }
 function setPlanSort(mode){ plan_sort = mode; renderPlanSidebar(); }
-// Per-device display preferences, not synced -- same category as sort
-// order and theme (see the getSyncState comment), not something to
-// round-trip through Supabase.
-let inv_hide_oos = false;
-let plan_hide_oos = false;
-function setInvHideOOS(v){ inv_hide_oos = v; renderInventory(); }
-function setPlanHideOOS(v){ plan_hide_oos = v; renderPlanSidebar(); }
-function visibleItems(hideOOS){ return hideOOS ? INVENTORY.filter(it=>it.stock!=='none') : INVENTORY; }
+
+/* ---------- Crop type (for the Type filter) ----------
+   One species -> type lookup rather than a field on every INVENTORY
+   item/variety, so another variety of an existing species never needs
+   remembering to set it, and a brand new species needs exactly one line
+   added here. "Fruit" groups the classic fruiting crops (tomato,
+   cucumber, the squash family, peppers, aubergine) the way most home
+   growers actually think of them, separate from root/leaf/brassica/
+   allium veg -- botanically fuzzy (a pepper IS a fruit), but the useful
+   split for a filter. Anything not listed here defaults to "veg". */
+const SPECIES_TYPE = {
+  tomato:'fruit', cucumber:'fruit', courgette:'fruit', squash:'fruit', pumpkin:'fruit', watermelon:'fruit', pepper:'fruit', aubergine:'fruit',
+  basil:'herb', coriander:'herb', dill:'herb', parsley:'herb', rosemary:'herb', thyme:'herb',
+};
+const TYPE_LABEL = {fruit:'Fruit', veg:'Veg', herb:'Herb'};
+function typeFor(item){ return SPECIES_TYPE[item.species] || 'veg'; }
+
+/* ---------- Sow season (for the Season filter) ----------
+   UK meteorological seasons by month. An item counts for a season if its
+   sow window overlaps it at all, not just starts in it -- a Mar-Jul sow
+   window (e.g. carrots) counts for both Spring and Summer. */
+const SEASON_MONTHS = { spring:[3,4,5], summer:[6,7,8], autumn:[9,10,11], winter:[12,1,2] };
+const SEASON_LABEL = { spring:'Spring', summer:'Summer', autumn:'Autumn', winter:'Winter' };
+function sowInSeason(item, season){
+  for(let m=item.sow[0]; m<=item.sow[1]; m++){ if(SEASON_MONTHS[season].includes(m)) return true; }
+  return false;
+}
+
+/* ---------- Filters: Inventory and Plan each keep their own set, same
+   as sort order -- per-device display state, not synced (see the
+   getSyncState comment). Every facet is additive within itself (ticking
+   Spring and Summer shows either) but the facets AND together (Herb +
+   Spring shows only herbs sowable in spring), which is what makes
+   several filters "simultaneously selected" actually narrow the list
+   rather than just replacing one one-shot filter with another. ---------- */
+// Stock and Overwinter are each tri-state ('all'/one of two opposite
+// narrowings) rather than a pair of independent checkboxes -- "hide out
+// of stock" and "only out of stock" can't both be true at once, so
+// making that structurally impossible (a radio group) beats letting the
+// user tick both and see an empty list with no clue why.
+function defaultFilters(){ return { stock:'all', overwinter:'all', seasons:[], types:[] }; }
+let inv_filters = defaultFilters();
+let plan_filters = defaultFilters();
+function filtersFor(scope){ return scope==='inv' ? inv_filters : plan_filters; }
+function activeFilterCount(f){ return (f.stock!=='all'?1:0) + (f.overwinter!=='all'?1:0) + f.seasons.length + f.types.length; }
+function applyFilters(list, f){
+  return list.filter(item=>{
+    if(f.stock==='hide' && item.stock==='none') return false;
+    if(f.stock==='only' && item.stock!=='none') return false;
+    if(f.overwinter==='only' && !item.overwinters) return false;
+    if(f.overwinter==='hide' && item.overwinters) return false;
+    if(f.seasons.length && !f.seasons.some(s=>sowInSeason(item,s))) return false;
+    if(f.types.length && !f.types.includes(typeFor(item))) return false;
+    return true;
+  });
+}
+function updateFilterBtn(scope){
+  const f = filtersFor(scope);
+  const n = activeFilterCount(f);
+  const countEl = document.getElementById(scope+'-filter-count');
+  const btn = document.getElementById(scope+'-filter-btn');
+  if(countEl){ countEl.textContent = n; countEl.hidden = n===0; }
+  if(btn) btn.classList.toggle('active', n>0);
+}
+// One shared popover for both pages' filter buttons -- checkboxes, so
+// (unlike openActionMenu) it stays open across multiple selections and
+// only closes on an outside click, same as the volunteer/harvest/issue
+// forms it's styled after.
+function openFilterPanel(anchorBtn, scope){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
+  const f = filtersFor(scope);
+  const rerender = ()=>{ (scope==='inv' ? renderInventory : renderPlanSidebar)(); updateFilterBtn(scope); };
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form filter-panel';
+  form.style.position = 'fixed';
+  const seasonBoxes = Object.keys(SEASON_LABEL).map(s=>
+    '<label class="filter-check"><input type="checkbox" data-season="'+s+'"'+(f.seasons.includes(s)?' checked':'')+'> '+SEASON_LABEL[s]+'</label>'
+  ).join('');
+  const typeBoxes = Object.keys(TYPE_LABEL).map(t=>
+    '<label class="filter-check"><input type="checkbox" data-type="'+t+'"'+(f.types.includes(t)?' checked':'')+'> '+TYPE_LABEL[t]+'</label>'
+  ).join('');
+  const stockBoxes = [['all','All'],['hide','Hide out of stock'],['only','Only out of stock']].map(([v,label])=>
+    '<label class="filter-check"><input type="radio" name="ff-stock" value="'+v+'"'+(f.stock===v?' checked':'')+'> '+label+'</label>'
+  ).join('');
+  const overwinterBoxes = [['all','All'],['only','Overwinters only'],['hide','Hide overwintering']].map(([v,label])=>
+    '<label class="filter-check"><input type="radio" name="ff-overwinter" value="'+v+'"'+(f.overwinter===v?' checked':'')+'> '+label+'</label>'
+  ).join('');
+  form.innerHTML =
+    '<strong>Filters</strong>'+
+    '<div class="filter-group"><span class="filter-group-label">Stock</span>'+stockBoxes+'</div>'+
+    '<div class="filter-group"><span class="filter-group-label">Overwintering</span>'+overwinterBoxes+'</div>'+
+    '<div class="filter-group"><span class="filter-group-label">Sow season</span>'+seasonBoxes+'</div>'+
+    '<div class="filter-group"><span class="filter-group-label">Type</span>'+typeBoxes+'</div>'+
+    '<div class="row"><button type="button" class="cancel" id="ff-clear">Clear all</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelectorAll('input[name="ff-stock"]').forEach(r=> r.addEventListener('change', e=>{ f.stock = e.target.value; rerender(); }));
+  form.querySelectorAll('input[name="ff-overwinter"]').forEach(r=> r.addEventListener('change', e=>{ f.overwinter = e.target.value; rerender(); }));
+  form.querySelectorAll('[data-season]').forEach(cb=> cb.addEventListener('change', e=>{
+    const s = e.target.dataset.season;
+    f.seasons = e.target.checked ? [...f.seasons, s] : f.seasons.filter(x=>x!==s);
+    rerender();
+  }));
+  form.querySelectorAll('[data-type]').forEach(cb=> cb.addEventListener('change', e=>{
+    const t = e.target.dataset.type;
+    f.types = e.target.checked ? [...f.types, t] : f.types.filter(x=>x!==t);
+    rerender();
+  }));
+  form.querySelector('#ff-clear').addEventListener('click', ()=>{
+    Object.assign(f, defaultFilters());
+    form.remove();
+    rerender();
+  });
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
+}
 
 /* ============================================================
    INVENTORY PAGE
@@ -2498,10 +2769,10 @@ function renderInventory(){
   const el = document.getElementById('inv-grid');
   if(!el) return;
   el.innerHTML = '';
-  const items = sortItems(visibleItems(inv_hide_oos), inv_sort);
+  const items = sortItems(applyFilters(INVENTORY, inv_filters), inv_sort);
   if(!items.length){
     const p = document.createElement('p'); p.className='companion-empty';
-    p.textContent = 'Nothing in stock right now — untick "Hide out of stock" to see everything.';
+    p.textContent = 'Nothing matches the current filters — try Filters → Clear all.';
     el.appendChild(p);
     return;
   }
@@ -2702,10 +2973,10 @@ function renderPlanSidebar(){
   const el = document.getElementById('plan-sidebar');
   if(!el) return;
   el.innerHTML = '';
-  const items = sortItems(visibleItems(plan_hide_oos), plan_sort);
+  const items = sortItems(applyFilters(INVENTORY, plan_filters), plan_sort);
   if(!items.length){
     const p = document.createElement('p'); p.className='companion-empty';
-    p.textContent = 'Nothing in stock right now — untick "Hide out of stock" to see everything.';
+    p.textContent = 'Nothing matches the current filters — try Filters → Clear all.';
     el.appendChild(p);
     return;
   }
