@@ -233,6 +233,7 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
 .section .label{ font-family:var(--font-mono); font-size:.62rem; color:rgba(255,255,255,.75); position:absolute; top:2px; left:6px; }
 .section.empty{ opacity:.5; }
 .section .crop-name{ font-size:.72rem; color:#fff; font-weight:600; }
+.section .crop-note{ font-size:.58rem; color:rgba(255,255,255,.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70px; }
 .section .ready-ring{ position:absolute; inset:-2px; border-radius:8px; border:2px solid var(--m-accent-2); animation:pulse 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion:reduce){ .section .ready-ring{ animation:none; } }
 @keyframes pulse{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
@@ -255,10 +256,25 @@ body[data-style="pixel"] .legend .sw{ border:2px solid var(--p-text); }
   position:absolute; bottom:2px; right:2px; width:16px; height:16px; border-radius:4px; border:1px solid rgba(255,255,255,.6);
   background:rgba(0,0,0,.28); color:#fff; font-size:.6rem; font-weight:800; line-height:14px; text-align:center; cursor:pointer; z-index:3; padding:0;
 }
+.section .plant-btn{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:22px; height:22px; border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,.6); background:rgba(255,255,255,.08); color:#fff; font-size:.9rem; font-weight:700;
+  line-height:19px; text-align:center; cursor:pointer; z-index:3; padding:0;
+}
+.section .plant-btn:hover{ background:rgba(255,255,255,.18); border-style:solid; }
+.tray-add-btn{ margin-top:.4rem; }
 .prop-item{ position:relative; }
+/* Same small dark overlay buttons, same corners, as a bed/pot section's
+   discard-btn/kebab-btn -- a tray tile is just a lighter-background
+   version of the same "planted thing" tile, so its controls should look
+   like the same control, not a separate light bordered button. */
+.prop-item .discard-btn{
+  position:absolute; top:4px; right:4px; width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.6);
+  background:rgba(0,0,0,.35); color:#fff; font-size:.5rem; line-height:12px; text-align:center; cursor:pointer; z-index:3; padding:0;
+}
 .prop-item .kebab-btn{
-  position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:4px; border:1px solid var(--m-border);
-  background:var(--m-surface); color:var(--m-text-dim); font-size:.65rem; font-weight:800; line-height:16px; text-align:center; cursor:pointer; z-index:3; padding:0;
+  position:absolute; bottom:4px; right:4px; width:16px; height:16px; border-radius:4px; border:1px solid rgba(255,255,255,.6);
+  background:rgba(0,0,0,.35); color:#fff; font-size:.6rem; font-weight:800; line-height:14px; text-align:center; cursor:pointer; z-index:3; padding:0;
 }
 /* One shared dropdown for the "Log harvest / Log issue / Move" actions a
    planted tile or greenhouse tray can have. Deliberately excludes Discard
@@ -617,7 +633,7 @@ body[data-style="mixed"] .plan-seed{ border:2px solid var(--p-border); box-shado
 /* propagation strip */
 .prop-strip{ display:grid; grid-template-columns:repeat(2,1fr); gap:.7rem; }
 @media (max-width:560px){ .prop-strip{ grid-template-columns:1fr; } }
-.prop-item{ display:flex; gap:.6rem; align-items:center; padding:.6rem .7rem; border-radius:10px; background:var(--m-surface-2); }
+.prop-item{ display:flex; gap:.6rem; align-items:center; padding:.6rem 1.6rem .6rem .7rem; border-radius:10px; background:var(--m-surface-2); }
 body[data-style="pixel"] .prop-item{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface-2); }
 .prop-item .sprite-wrap{ flex:none; }
 .prop-item .txt b{ display:block; font-size:.82rem; }
@@ -760,44 +776,17 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
       <nav class="app-nav" data-navfor="overview"></nav>
       <div class="app-body">
         <div class="card">
-          <h3>Current Status</h3>
-          <div class="stat-row">
-            <div class="stat"><div class="n">14</div><div class="l">sections planted</div></div>
-            <div class="stat"><div class="n">3</div><div class="l">ready to harvest</div></div>
-            <div class="stat"><div class="n">2</div><div class="l">trays propagating</div></div>
-          </div>
+          <h3>Live Status</h3>
+          <div class="stat-row" id="live-status-stats"></div>
         </div>
 
-        <div class="grid-2">
-          <div class="card">
-            <div class="list-toolbar">
-              <h3 style="margin:0;">Upcoming tasks</h3>
-              <button class="add-btn" onclick="openAddTaskEventForm(this, 'task')">+ Add task</button>
-            </div>
-            <ul class="tasks" id="overview-tasks"></ul>
+        <div class="card">
+          <div class="list-toolbar">
+            <h3 style="margin:0;">Upcoming Tasks</h3>
+            <button class="add-btn" onclick="openAddTaskEventForm(this, 'task')">+ Add task</button>
           </div>
-          <div class="card">
-            <h3>Look out for</h3>
-            <div class="events">
-              <div class="event"><span><span class="pill warn">Blight risk</span> Cool damp spell forecast</span></div>
-              <div class="event"><span><span class="pill info">Slugs</span> Active around Brussels sprouts</span></div>
-              <div class="event"><span><span class="pill prop">Damping off</span> Check windowsill tray airflow</span></div>
-              <div class="event"><span><span class="pill ok">On track</span> Beetroot bed clear for next crop</span></div>
-              <div class="event" id="volunteer-alert" hidden><span><span class="pill warn">Volunteer potatoes</span> <span class="msg"></span></span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" id="card-greenhouse">
-          <h3>Greenhouse</h3>
-          <div class="prop-strip" id="overview-greenhouse"></div>
-        </div>
-        <div class="card" id="card-windowsill">
-          <h3>Windowsill</h3>
-          <div class="prop-strip">
-            <div class="prop-item" id="tray-indoor-1"><div class="sprite-wrap" data-sprite="brusselsprout" data-stage="seedling"></div>
-              <div class="txt"><b>Brussels Sprout (x6)</b><span>Windowsill tray &middot; sown 3 Mar &middot; true leaves forming</span></div></div>
-          </div>
+          <ul class="tasks" id="overview-tasks"></ul>
+          <p class="companion-empty" id="tasks-empty" hidden>Nothing due — nice.</p>
         </div>
 
         <div class="card">
@@ -805,16 +794,31 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
             <h3 style="margin:0;">Upcoming Events</h3>
             <button class="add-btn" onclick="openAddTaskEventForm(this, 'event')">+ Add event</button>
           </div>
-          <div class="events" id="upcoming-events-list">
-            <div class="event"><span>First expected autumn frost</span><span class="d">~15 Oct</span></div>
-            <div class="event"><span>Last safe sowing &ndash; overwintering onions</span><span class="d">10 Oct</span></div>
-            <div class="event"><span>Brussels sprout indoor sow (2027)</span><span class="d">1 Feb</span></div>
-            <div class="event"><span>Last expected spring frost (2027)</span><span class="d">~5 May</span></div>
+          <div class="events" id="upcoming-events-list"></div>
+          <p class="companion-empty" id="events-empty" hidden>Nothing scheduled.</p>
+        </div>
+
+        <div class="card">
+          <h3>Look Out For</h3>
+          <div class="events" id="lookout-list">
+            <div class="event" id="volunteer-alert" hidden><span><span class="pill warn">Volunteer potatoes</span> <span class="msg"></span></span></div>
           </div>
+          <p class="companion-empty" id="lookout-empty" hidden>All clear — nothing to flag right now.</p>
+        </div>
+
+        <div class="card" id="card-windowsill">
+          <h3>Windowsill</h3>
+          <div class="prop-strip" id="overview-windowsill"></div>
+          <p class="companion-empty" id="overview-windowsill-empty" hidden>Nothing on the windowsill.</p>
+        </div>
+
+        <div class="card" id="card-greenhouse">
+          <h3>Greenhouse</h3>
+          <div class="prop-strip" id="overview-greenhouse"></div>
+          <p class="companion-empty" id="overview-greenhouse-empty" hidden>Greenhouse is empty.</p>
         </div>
       </div>
     </div>
-    <p class="note"><b>Overview</b> &mdash; figures shown are placeholders, not live counts.</p>
   </section>
 
   <!-- ============================= INVENTORY ============================= -->
@@ -941,13 +945,28 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
           </div>
         </div>
         <div class="card">
-          <h3><span class="eyebrow">Pots &amp; containers</span></h3>
+          <div class="list-toolbar" style="margin-bottom:.6rem;">
+            <h3 style="margin:0;"><span class="eyebrow">Pots &amp; containers</span></h3>
+            <button type="button" class="add-btn" onclick="openPlantForm(this, 'pot', null)">+ Plant in a new pot</button>
+          </div>
           <div class="bed-diagram"><div class="bed-grid" id="pot-grid" style="grid-template-columns:26px 1fr"></div></div>
           <p class="companion-empty" id="pot-grid-empty" hidden>No pots in use yet.</p>
         </div>
         <div class="card">
-          <h3><span class="eyebrow">Greenhouse</span></h3>
+          <div class="list-toolbar" style="margin-bottom:.6rem;">
+            <h3 style="margin:0;"><span class="eyebrow">Greenhouse</span></h3>
+            <span id="patch-greenhouse-toolbar"></span>
+          </div>
           <div class="prop-strip" id="patch-greenhouse"></div>
+          <p class="companion-empty" id="patch-greenhouse-empty" hidden>Greenhouse is empty.</p>
+        </div>
+        <div class="card">
+          <div class="list-toolbar" style="margin-bottom:.6rem;">
+            <h3 style="margin:0;"><span class="eyebrow">Windowsill</span></h3>
+            <span id="patch-windowsill-toolbar"></span>
+          </div>
+          <div class="prop-strip" id="patch-windowsill"></div>
+          <p class="companion-empty" id="patch-windowsill-empty" hidden>Nothing on the windowsill.</p>
         </div>
       </div>
     </div>
@@ -1491,10 +1510,28 @@ function buildSpriteEl(species, stage, px){
   });
   return wrap;
 }
+// ---------- Overview "Live Status" -- real counts, not the hardcoded
+// 14/3/2 this card used to show regardless of what was actually planted.
+function renderLiveStatus(){
+  const el = document.getElementById('live-status-stats');
+  if(!el) return;
+  const all = [...A, ...B, ...POTS, ...GREENHOUSE_TRAYS, ...WINDOWSILL_TRAYS];
+  const occupied = all.filter(s=>s.species);
+  const planted = occupied.length;
+  const ready = occupied.filter(s=>s.stage==='ready').length;
+  const propagating = [...GREENHOUSE_TRAYS, ...WINDOWSILL_TRAYS].filter(t=>t.stage!=='ready').length;
+  el.innerHTML =
+    '<div class="stat"><div class="n">'+planted+'</div><div class="l">sections planted</div></div>'+
+    '<div class="stat"><div class="n">'+ready+'</div><div class="l">ready to harvest</div></div>'+
+    '<div class="stat"><div class="n">'+propagating+'</div><div class="l">trays propagating</div></div>';
+}
 function renderAllSprites(){
+  refreshGrowthStages();
   // Build these own [data-sprite] elements first -- must run before the sweep below
-  renderGreenhouseTrays('patch-greenhouse', GREENHOUSE_TRAYS);
-  renderGreenhouseTrays('overview-greenhouse', GREENHOUSE_TRAYS);
+  renderTrayCard('patch-greenhouse', GREENHOUSE_TRAYS, 'greenhouse', false);
+  renderTrayCard('overview-greenhouse', GREENHOUSE_TRAYS, 'greenhouse', true);
+  renderTrayCard('patch-windowsill', WINDOWSILL_TRAYS, 'windowsill', false);
+  renderTrayCard('overview-windowsill', WINDOWSILL_TRAYS, 'windowsill', true);
   document.querySelectorAll('[data-sprite]').forEach(el=>{
     el.innerHTML='';
     const isBig = el.classList.contains('sprite-wrap') && el.closest('.inv-top, .prop-item');
@@ -1502,6 +1539,8 @@ function renderAllSprites(){
   });
   renderBed('bed-grid', A, B, true);
   renderPots('pot-grid', POTS);
+  renderLiveStatus();
+  renderLookOutFor();
 }
 
 /* ============================================================
@@ -1550,11 +1589,31 @@ let POTS = [
 // Distinct from POTS: greenhouse/propagation trays, shown in their own
 // card on the Veg Patch page, and mirrored on the Overview page's
 // "Greenhouse" card (both are rendered from this same array -- see
-// renderAllSprites -- so there's only ever one place to update).
+// renderAllSprites -- so there's only ever one place to update). Shares
+// the same {n, species, stage, label} shape as bed sections and pots (n
+// is a stable id like 'GH1', used by findBedSection/sectionEl so a tray
+// gets the full harvest/issue/move/discard menu, not a bespoke one) plus
+// an optional `note` for the sown-date/status line that beds and pots
+// don't need.
 let GREENHOUSE_TRAYS = [
-  {species:'tomato',   stage:'seedling', name:'Tomato (Red Cherry)',   note:'Sown 4 Mar · ready to pot on'},
-  {species:'cucumber', stage:'seedling', name:'Cucumber (Wisconsin)',  note:'Sown 12 May · hardening off'},
+  {n:'GH1', species:'tomato',   stage:'seedling', label:'Tomato (Red Cherry)',  note:'Sown 4 Mar · ready to pot on'},
+  {n:'GH2', species:'cucumber', stage:'seedling', label:'Cucumber (Wisconsin)', note:'Sown 12 May · hardening off'},
 ];
+// Windowsill trays: same shape and same treatment as GREENHOUSE_TRAYS,
+// just a separate card/array since they're a physically different spot
+// (propagating indoors on a windowsill rather than in the greenhouse).
+// Seeded here with what's actually on the windowsill right now -- this
+// used to be static, non-interactive HTML with no backing data at all.
+let WINDOWSILL_TRAYS = [
+  {n:'WS1', species:'brusselsprout', stage:'seedling', label:'Brussels Sprout (x6)', note:'Windowsill tray · sown 3 Mar · true leaves forming'},
+];
+// Shared id generator for a new pot or tray -- 'Pot 3', 'GH3', 'WS2', ...
+function nextSlotName(arr, prefix){
+  const existing = new Set(arr.map(x=>x.n));
+  let i = 1;
+  while(existing.has(prefix+i)) i++;
+  return prefix+i;
+}
 
 /* ---------- volunteer potatoes: tubers that sprout on their own ---------- */
 let volunteer_log = {
@@ -1651,6 +1710,48 @@ function refreshVolunteerAlert(){
   }
 }
 
+/* ---------- Overview "Look out for" -- real signals, not the four
+   static lines this card used to always show regardless of what was
+   actually going on. Two sources: the volunteer-potato alert above
+   (already computed) and anything logged as late/failed/missed via
+   "Log issue" in the last couple of weeks -- older issues stay on
+   record on the Stats page, but aren't still worth a callout here. */
+const LOOKOUT_RECENT_DAYS = 14;
+const LOOKOUT_TYPE_PILL = {
+  failed: {cls:'warn', label:'Failed'},
+  missed: {cls:'warn', label:'Missed'},
+  late:   {cls:'info', label:'Late'},
+};
+function renderLookOutFor(){
+  const el = document.getElementById('lookout-list');
+  if(!el) return;
+  el.querySelectorAll('.issue-row').forEach(n=>n.remove());
+  const volunteerAlert = document.getElementById('volunteer-alert');
+  const yLog = getEventYearLog(today.getFullYear());
+  const recent = yLog
+    .map(ev=>({ev, d: parseDisplayDate(ev.date)}))
+    .filter(x=>{
+      if(!x.d) return false;
+      const days = (today - x.d) / 86400000;
+      return days >= 0 && days <= LOOKOUT_RECENT_DAYS;
+    })
+    .sort((a,b)=> b.d - a.d);
+  recent.forEach(({ev})=>{
+    const pill = LOOKOUT_TYPE_PILL[ev.type] || {cls:'info', label:ev.type};
+    const row = document.createElement('div'); row.className = 'event issue-row';
+    const span = document.createElement('span');
+    const p = document.createElement('span'); p.className = 'pill '+pill.cls; p.textContent = pill.label;
+    span.appendChild(p);
+    span.appendChild(document.createTextNode(' '+getItem(ev.itemId).name+(ev.note?' — '+ev.note:'')+' ('+ev.date+')'));
+    row.appendChild(span);
+    if(volunteerAlert) el.insertBefore(row, volunteerAlert); else el.appendChild(row);
+  });
+  refreshVolunteerAlert();
+  const hasVolunteer = !!(volunteerAlert && !volunteerAlert.hidden);
+  const empty = document.getElementById('lookout-empty');
+  if(empty) empty.hidden = recent.length > 0 || hasVolunteer;
+}
+
 /* ============================================================
    RECORD-KEEPING: harvest log, issue log, per-year notes, compost day.
    Everything here is keyed by year (like plan_data) and, other than the
@@ -1722,7 +1823,8 @@ function applyMoveEffect(moveType, target){
     const pot = POTS[idx];
     if(pot.species){
       GREENHOUSE_TRAYS.push({
-        species: pot.species, stage:'seedling', name: pot.label || pot.species,
+        n: nextSlotName(GREENHOUSE_TRAYS, 'GH'),
+        species: pot.species, stage:'seedling', label: pot.label || pot.species,
         note: 'Moved from '+target+' into the greenhouse · '+todayDateString(),
       });
     }
@@ -1735,12 +1837,12 @@ function onTaskCheckClick(chk){
   chk.disabled = true; // block double-clicks while an async form (harvest log) may be open
   const kind = chk.dataset.taskKind;
   const taskId = chk.dataset.taskId;
-  // Removes the task for good: built-in tasks are remembered in
-  // completed_task_ids (synced) so they don't reappear once the date
-  // window recalculates; custom tasks are just deleted outright.
+  // Removes the task for good, the same way either kind: custom tasks
+  // are deleted from custom_tasks, built-in ones from BUILTIN_TASKS --
+  // both synced, so a tick on one device stays ticked on another.
   const removeAndRerender = ()=>{
     if(kind === 'custom') custom_tasks = custom_tasks.filter(x=>x.id!==taskId);
-    else if(taskId && !completed_task_ids.includes(taskId)) completed_task_ids.push(taskId);
+    else if(taskId) BUILTIN_TASKS = BUILTIN_TASKS.filter(x=>x.id!==taskId);
     renderOverviewTasks();
   };
   if(kind === 'sow'){
@@ -1808,7 +1910,8 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
 }
 
 function findBedSection(sectionId){
-  return A.find(s=>s.n===sectionId) || B.find(s=>s.n===sectionId) || POTS.find(s=>s.n===sectionId);
+  return A.find(s=>s.n===sectionId) || B.find(s=>s.n===sectionId) || POTS.find(s=>s.n===sectionId)
+    || GREENHOUSE_TRAYS.find(s=>s.n===sectionId) || WINDOWSILL_TRAYS.find(s=>s.n===sectionId);
 }
 // Used only by discard (the X control): caps a planting's end month at the
 // given date rather than deleting the plan record outright, so the Plan
@@ -1828,7 +1931,18 @@ function endPlantingAt(sectionId, dateStr){
     if(mi !== null) planting.end = Math.min(planting.end, mi);
   }
   const sec = findBedSection(sectionId);
-  if(sec){ sec.stage = 'empty'; sec.species = null; sec.label = ''; }
+  if(!sec) return;
+  const kind = kindOfSection(sec);
+  if(kind === 'bed'){
+    // A fixed slot -- clear it in place rather than removing it, since
+    // there's always exactly 20 bed sections.
+    sec.stage = 'empty'; sec.species = null; sec.label = ''; sec.note = '';
+  } else {
+    // A pot or tray isn't a fixed slot -- once nothing's growing in it,
+    // remove the row/tray entirely rather than leaving an empty one
+    // sitting around unrendered.
+    removeCropFromSource(kind, sectionId);
+  }
 }
 
 function markHarvested(anchorBtn, sectionId){
@@ -1963,30 +2077,91 @@ function openActionMenu(anchorBtn, actions){
    greenhouse seedling out to a pot or straight into the veg patch once
    it's hardened off, or bringing a potted or bedded plant into the
    greenhouse for the winter. */
+// Which array a live-status object belongs to, by n -- drives both the
+// Move destination list (exclude "where it already is") and how removing
+// it from its source behaves (bed sections are fixed slots that get
+// cleared in place; pots and trays aren't slots at all, so they're
+// spliced out entirely once the crop leaves).
+function kindOfSection(sec){
+  if(POTS.includes(sec)) return 'pot';
+  if(GREENHOUSE_TRAYS.includes(sec)) return 'greenhouse';
+  if(WINDOWSILL_TRAYS.includes(sec)) return 'windowsill';
+  return 'bed';
+}
 function getCropAt(sourceKind, sourceId){
-  if(sourceKind === 'greenhouse'){
-    const tray = GREENHOUSE_TRAYS[sourceId];
-    return tray ? {species: tray.species, name: tray.name} : null;
-  }
   const sec = findBedSection(sourceId);
   return (sec && sec.species) ? {species: sec.species, name: sec.label} : null;
 }
 function removeCropFromSource(sourceKind, sourceId){
-  if(sourceKind === 'greenhouse'){
-    GREENHOUSE_TRAYS.splice(sourceId, 1);
-  } else if(sourceKind === 'pot'){
-    const idx = POTS.findIndex(p=>p.n===sourceId);
-    if(idx !== -1) POTS.splice(idx, 1);
+  if(sourceKind === 'pot' || sourceKind === 'greenhouse' || sourceKind === 'windowsill'){
+    const arr = sourceKind === 'pot' ? POTS : sourceKind === 'greenhouse' ? GREENHOUSE_TRAYS : WINDOWSILL_TRAYS;
+    const idx = arr.findIndex(x=>x.n===sourceId);
+    if(idx !== -1) arr.splice(idx, 1);
   } else {
     const sec = findBedSection(sourceId);
-    if(sec){ sec.species = null; sec.stage = 'empty'; sec.label = ''; }
+    if(sec){ sec.species = null; sec.stage = 'empty'; sec.label = ''; sec.note = ''; }
   }
 }
-function nextPotName(){
-  const existing = new Set(POTS.map(p=>p.n));
-  let i = 1;
-  while(existing.has('Pot '+i)) i++;
-  return 'Pot '+i;
+function nextPotName(){ return nextSlotName(POTS, 'Pot '); }
+
+/* ---------- Plant here: start a crop away from the Plan page ----------
+   Plan is for the season's calendar (what's meant to go where, when); this
+   is for what's physically happening right now -- popping something onto
+   an empty bed tile, into a new pot, or into a greenhouse/windowsill tray,
+   without first setting up a Plan row for it. Whatever gets planted this
+   way is a completely ordinary planting afterwards: it shows up wherever
+   that kind of tile does, with the exact same harvest/issue/move/discard
+   menu as anything planted via Plan and a sow tick. */
+function openPlantForm(anchorBtn, kind, sectionId){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
+  const rect = anchorBtn.getBoundingClientRect();
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  const kindLabel = {bed: sectionId, pot:'a new pot', greenhouse:'the greenhouse', windowsill:'the windowsill'}[kind];
+  const options = INVENTORY.slice()
+    .sort((a,b)=> (a.name+a.variety).localeCompare(b.name+b.variety))
+    .map(it=> '<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  form.innerHTML =
+    '<strong>Plant in '+kindLabel+'</strong>'+
+    '<label>Crop<select id="pf-item">'+options+'</select></label>'+
+    '<label>Plant date<input type="date" id="pf-date" value="'+todayISODate()+'"></label>'+
+    '<label>Note (optional)<input type="text" id="pf-note" placeholder="e.g. First true leaves"></label>'+
+    '<div class="row"><button class="save">Plant</button><button class="cancel" type="button">Cancel</button></div>';
+  document.body.appendChild(form);
+  positionPopoverForm(form, rect);
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const itemId = form.querySelector('#pf-item').value;
+    const item = getItem(itemId);
+    const plantedOn = form.querySelector('#pf-date').value || todayISODate();
+    const userNote = form.querySelector('#pf-note').value.trim();
+    // Artwork and "ready to harvest" now progress from this date -- see
+    // estimateGrowthStage()/refreshGrowthStages() -- rather than being
+    // fixed at whatever this popover guessed at planting time.
+    const stage = estimateGrowthStage(item, plantedOn);
+    const label = item.name + (item.variety ? ' ('+item.variety+')' : '');
+    const dateLabel = (kind === 'greenhouse' || kind === 'windowsill' ? 'Sown ' : 'Planted ') + isoDateToDisplay(plantedOn);
+    const note = userNote ? (dateLabel+' · '+userNote) : dateLabel;
+    if(kind === 'bed'){
+      const sec = findBedSection(sectionId);
+      if(sec){ sec.species = item.species; sec.stage = stage; sec.label = label; sec.note = note; sec.plantedOn = plantedOn; }
+    } else if(kind === 'pot'){
+      POTS.push({n: nextPotName(), species: item.species, stage, label, note, plantedOn});
+    } else if(kind === 'greenhouse'){
+      GREENHOUSE_TRAYS.push({n: nextSlotName(GREENHOUSE_TRAYS, 'GH'), species: item.species, stage, label, note, plantedOn});
+    } else if(kind === 'windowsill'){
+      WINDOWSILL_TRAYS.push({n: nextSlotName(WINDOWSILL_TRAYS, 'WS'), species: item.species, stage, label, note, plantedOn});
+    }
+    form.remove();
+    renderAllSprites();
+    showToast('Planted '+label+'.');
+  });
+  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
+  setTimeout(()=>{
+    document.addEventListener('click', function outside(e){
+      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
+    });
+  },0);
 }
 function openMoveForm(anchorBtn, sourceKind, sourceId){
   document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
@@ -1996,6 +2171,7 @@ function openMoveForm(anchorBtn, sourceKind, sourceId){
   const emptySections = [...A, ...B].filter(s=>s.stage==='empty');
   const options = [];
   if(sourceKind !== 'greenhouse') options.push('<option value="greenhouse">The greenhouse</option>');
+  if(sourceKind !== 'windowsill') options.push('<option value="windowsill">The windowsill</option>');
   if(sourceKind !== 'pot') options.push('<option value="pot">A new pot</option>');
   if(emptySections.length) options.push('<optgroup label="An empty bed section">'+emptySections.map(s=>'<option value="bed:'+s.n+'">'+s.n+'</option>').join('')+'</optgroup>');
   const rect = anchorBtn.getBoundingClientRect();
@@ -2026,7 +2202,9 @@ function openMoveForm(anchorBtn, sourceKind, sourceId){
 function performMove(sourceKind, sourceId, dest, crop, label){
   removeCropFromSource(sourceKind, sourceId);
   if(dest === 'greenhouse'){
-    GREENHOUSE_TRAYS.push({species: crop.species, stage:'seedling', name: label, note:'Moved into the greenhouse · '+todayDateString()});
+    GREENHOUSE_TRAYS.push({n: nextSlotName(GREENHOUSE_TRAYS,'GH'), species: crop.species, stage:'seedling', label, note:'Moved into the greenhouse · '+todayDateString()});
+  } else if(dest === 'windowsill'){
+    WINDOWSILL_TRAYS.push({n: nextSlotName(WINDOWSILL_TRAYS,'WS'), species: crop.species, stage:'seedling', label, note:'Moved to the windowsill · '+todayDateString()});
   } else if(dest === 'pot'){
     POTS.push({n: nextPotName(), species: crop.species, stage:'growing', label});
   } else if(dest.indexOf('bed:') === 0){
@@ -2079,7 +2257,7 @@ function renderCompostDayTask(){
   const existing = document.getElementById('task-compost-day');
   if(existing) existing.remove();
   const st = getCompostDayState();
-  if(!st.visible) return;
+  if(!st.visible){ updateTasksEmptyState(); return; }
   const li = document.createElement('li');
   li.id = 'task-compost-day';
   li.className = 'task-link';
@@ -2097,6 +2275,7 @@ function renderCompostDayTask(){
   li.appendChild(chk); li.appendChild(txt); li.appendChild(arrow);
   ul.insertBefore(li, ul.firstChild);
   wireOverviewTaskChecks();
+  updateTasksEmptyState();
 }
 
 /* ---------- User-added tasks & events (Overview page) ----------
@@ -2105,14 +2284,19 @@ function renderCompostDayTask(){
    genuinely optional for a task (most won't need it) but kept in the
    same form either way, per spec. */
 let custom_tasks = [];
-let custom_events = [];
-// Ids of built-in DEMO_TASKS (below) that have been ticked off. Custom
-// tasks don't need this -- ticking one just removes it from custom_tasks
-// outright -- but the built-in tasks are a fixed list re-evaluated against
-// today's date on every render, so "ticked" has to be remembered somewhere
-// or it would reappear the moment the date window recalculates. Synced
-// (see getSyncState) so a tick on one device stays ticked on another.
-let completed_task_ids = [];
+// These four used to be static <div class="event"> markup on the Overview
+// page -- never removable, never editable, and not synced -- despite
+// being real seasonal reminders, not placeholder content. They're
+// ordinary custom_events now (yearly-repeating, via the same repeat
+// engine "+ Add event" uses), so they show, sort and recur exactly like
+// anything added by hand, and the ✕ control removes one for good if it's
+// no longer wanted.
+let custom_events = [
+  {id:'seed-autumn-frost', title:'First expected autumn frost (approximate)', description:'', date:'15 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
+  {id:'seed-onion-sowing', title:'Last safe sowing — overwintering onions', description:'', date:'10 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
+  {id:'seed-brussels-sow', title:'Brussels sprout indoor sow', description:'', date:'1 Feb 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
+  {id:'seed-spring-frost', title:'Last expected spring frost (approximate)', description:'', date:'5 May 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
+];
 
 /* ---------- Overview "Upcoming tasks" ----------
    These used to be five hand-authored <li> elements, always shown in a
@@ -2123,11 +2307,18 @@ let completed_task_ids = [];
    capped at 10 -- rather than a hand-picked priority ranking by task
    type (harvest vs. sow vs. general), which would need real usage to
    tune sensibly. Chronological-within-the-month is simple, predictable,
-   and never needs tuning. */
-const DEMO_TASKS = [
+   and never needs tuning.
+
+   These used to live in a `const DEMO_TASKS` that never synced and could
+   only ever be "hidden" (via completed_task_ids), never truly edited or
+   removed -- despite being real tasks, not placeholder content. They're
+   `let BUILTIN_TASKS` now, included in getSyncState/applySyncState like
+   everything else, and ticking one off removes it outright (see
+   onTaskCheckClick) the same way a custom task does. */
+let BUILTIN_TASKS = [
   {id:'demo-harvest-courgette', date:'2026-09-15', kind:'harvest', itemId:'courgette', year:2026, targets:['A7','A8'], gotoPage:'patch', title:'Harvest courgette/marrow before they get woody', due:'A7–A8, due now'},
   {id:'demo-earth-up-leeks', date:'2026-09-20', kind:'done', targets:['B9','B10'], gotoPage:'patch', title:'Earth up leeks as they thicken', due:'B9–B10, this week'},
-  {id:'demo-pot-on-brussels', date:'2026-09-22', kind:'done', targets:['tray-indoor-1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Indoor tray 1, next few days'},
+  {id:'demo-pot-on-brussels', date:'2026-09-22', kind:'done', targets:['WS1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Windowsill tray, next few days'},
   {id:'demo-sow-onion-sets', date:'2026-09-28', kind:'sow', rows:['A9','A10'], year:2026, targets:['A9','A10'], gotoPage:'plan', title:'Sow overwintering onion sets', due:'A9–A10, from 28 Sep'},
   // kind:'move' relocates a crop from one part of the Live Status page to
   // another (see applyMoveEffect) -- unlike 'done', ticking this one edits
@@ -2144,7 +2335,7 @@ function renderOverviewTasks(){
     kind:'custom', id:t.id, title:t.title, description:t.description,
     due: t.location ? (t.date+' · '+t.location) : t.date,
   }));
-  const pool = DEMO_TASKS.filter(t=>!completed_task_ids.includes(t.id)).concat(custom)
+  const pool = BUILTIN_TASKS.concat(custom)
     .filter(t=>{ const d = new Date(t.date); return !isNaN(d) && d >= today && d <= horizon; })
     .sort((a,b)=> new Date(a.date) - new Date(b.date))
     .slice(0, 10);
@@ -2176,11 +2367,24 @@ function renderOverviewTasks(){
       const arrow = document.createElement('span'); arrow.className = 'goto-arrow'; arrow.textContent = '→';
       li.title = 'Go to '+t.targets.join('–')+' on the '+(GOTO_PAGE_NAMES[t.gotoPage]||'')+' page';
       li.addEventListener('click', ()=> taskGoto(t.gotoPage, t.targets));
-      li.appendChild(chk); li.appendChild(txt); li.appendChild(arrow);
+      const rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this task';
+      rm.textContent = '✕';
+      rm.addEventListener('click', (e)=>{ e.stopPropagation(); BUILTIN_TASKS = BUILTIN_TASKS.filter(x=>x.id!==t.id); renderOverviewTasks(); });
+      li.appendChild(chk); li.appendChild(txt); li.appendChild(arrow); li.appendChild(rm);
     }
     ul.appendChild(li);
   });
   wireOverviewTaskChecks();
+  updateTasksEmptyState();
+}
+// Shared by renderOverviewTasks and renderCompostDayTask (whichever runs
+// last decides whether the list is really empty, since Compost Day's own
+// <li> is added/removed independently of the date-filtered pool above).
+function updateTasksEmptyState(){
+  const ul = document.getElementById('overview-tasks');
+  const empty = document.getElementById('tasks-empty');
+  if(ul && empty) empty.hidden = ul.children.length > 0;
 }
 
 /* ---------- Recurring events ----------
@@ -2348,19 +2552,24 @@ function renderCustomEvents(){
   const el = document.getElementById('upcoming-events-list');
   if(!el) return;
   el.querySelectorAll('.custom-event-item').forEach(e=>e.remove());
-  custom_events.forEach(ev=>{
+  const withDates = custom_events.map(ev=>{
+    const anchor = parseDisplayDate(ev.date);
+    const next = ev.repeat ? (anchor ? nextOccurrence(anchor, ev.repeat, today) : null) : anchor;
+    return {ev, next};
+  }).sort((a,b)=>{
+    if(!a.next) return 1;
+    if(!b.next) return -1;
+    return a.next - b.next;
+  });
+  withDates.forEach(({ev, next})=>{
     const row = document.createElement('div'); row.className = 'event custom-event-item';
     const left = document.createElement('span');
     const b = document.createElement('b'); b.textContent = ev.title;
     left.appendChild(b);
     if(ev.description) left.appendChild(document.createTextNode(' — '+ev.description));
     const right = document.createElement('span'); right.className = 'd';
-    let dateLabel = ev.date;
-    if(ev.repeat){
-      const anchor = parseDisplayDate(ev.date);
-      const next = anchor ? nextOccurrence(anchor, ev.repeat, today) : null;
-      dateLabel = (next ? formatDisplayDate(next) : ev.date) + ' · repeats ' + describeRepeat(ev.repeat);
-    }
+    let dateLabel = next ? formatDisplayDate(next) : ev.date;
+    if(ev.repeat) dateLabel += ' · repeats ' + describeRepeat(ev.repeat);
     right.appendChild(document.createTextNode(ev.location ? (dateLabel+' · '+ev.location+' ') : (dateLabel+' ')));
     const rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'custom-item-rm'; rm.title = 'Remove this event';
@@ -2370,19 +2579,33 @@ function renderCustomEvents(){
     row.appendChild(left); row.appendChild(right);
     el.appendChild(row);
   });
+  const empty = document.getElementById('events-empty');
+  if(empty) empty.hidden = custom_events.length > 0;
 }
 
+// One tile renderer for every kind of "thing currently growing somewhere"
+// -- a bed section, a pot, a greenhouse tray or a windowsill tray -- so
+// all four get the exact same actions (harvest/issue/move/discard) rather
+// than beds and pots having the full menu while trays got a bespoke,
+// more limited one. `kindOfSection` tells volunteer-potato (outdoor beds
+// only) and Move's "where is this already" apart; everything else reads
+// straight off `sec` regardless of which array it came from.
 function sectionEl(sec, col){
+  const kind = kindOfSection(sec);
   const div = document.createElement('div');
   div.className = 'section' + (sec.stage === 'empty' ? ' empty' : '') + (sec.stage === 'ready' ? ' ready-tile' : '');
   div.style.gridColumn = String(col);
-  div.dataset.sec = sec.n; // lets Overview task "shortcuts" find and highlight this exact section/pot
+  div.dataset.sec = sec.n; // lets Overview task "shortcuts" find and highlight this exact section/pot/tray
   const lab = document.createElement('span'); lab.className='label'; lab.textContent = sec.n;
   div.appendChild(lab);
   if(sec.species){
     div.appendChild(buildSpriteEl(sec.species, sec.stage === 'ready' ? 'mature' : sec.stage, 26));
     const nm = document.createElement('span'); nm.className='crop-name'; nm.textContent = sec.label;
     div.appendChild(nm);
+    if(sec.note){
+      const note = document.createElement('span'); note.className='crop-note'; note.textContent = sec.note;
+      div.appendChild(note);
+    }
     if(sec.stage === 'ready'){
       const ring = document.createElement('span'); ring.className='ready-ring'; div.appendChild(ring);
       const flag = document.createElement('span'); flag.className='ready-flag'; flag.textContent='Ready!'; div.appendChild(flag);
@@ -2405,19 +2628,32 @@ function sectionEl(sec, col){
       const actions = [];
       if(sec.stage === 'ready') actions.push({label:'Log harvest', onClick:()=> markHarvested(kebab, sec.n)});
       actions.push({label:'Log issue', onClick:()=> openIssueForm(kebab, sec.n)});
-      actions.push({label:'Move…', onClick:()=> openMoveForm(kebab, POTS.indexOf(sec)!==-1?'pot':'bed', sec.n)});
+      actions.push({label:'Move…', onClick:()=> openMoveForm(kebab, kind, sec.n)});
       openActionMenu(kebab, actions);
     });
     div.appendChild(kebab);
+  } else {
+    // Nothing growing here -- offer to start something, right on the
+    // tile, instead of that only being possible via the Plan page.
+    const plant = document.createElement('button'); plant.type='button'; plant.className='plant-btn';
+    plant.textContent = '+'; plant.title = 'Plant something here';
+    plant.addEventListener('click', (e)=>{ e.stopPropagation(); openPlantForm(plant, kind, sec.n); });
+    div.appendChild(plant);
   }
-  const vbtn = document.createElement('button');
-  vbtn.className = 'volunteer-btn' + (volunteer_log[sec.n] ? ' logged' : '');
-  vbtn.textContent = 'P'; // plain monogram for "volunteer potato" -- full meaning is in the tooltip/form
-  vbtn.title = volunteer_log[sec.n]
-    ? 'Volunteer potato logged: '+volunteer_log[sec.n].qty+' on '+volunteer_log[sec.n].date+' — click to edit'
-    : 'Log a volunteer potato spotted here';
-  vbtn.addEventListener('click', (e)=>{ e.stopPropagation(); openVolunteerForm(vbtn, sec.n); });
-  div.appendChild(vbtn);
+  // Volunteer potatoes are an outdoor-bed phenomenon -- a tuber left in
+  // the soil from a past potato crop sprouting on its own. Doesn't apply
+  // to a pot (nothing left in it between plantings) or a tray (never had
+  // soil to leave a tuber in), so the button's just noise there.
+  if(kind === 'bed'){
+    const vbtn = document.createElement('button');
+    vbtn.className = 'volunteer-btn' + (volunteer_log[sec.n] ? ' logged' : '');
+    vbtn.textContent = 'P'; // plain monogram for "volunteer potato" -- full meaning is in the tooltip/form
+    vbtn.title = volunteer_log[sec.n]
+      ? 'Volunteer potato logged: '+volunteer_log[sec.n].qty+' on '+volunteer_log[sec.n].date+' — click to edit'
+      : 'Log a volunteer potato spotted here';
+    vbtn.addEventListener('click', (e)=>{ e.stopPropagation(); openVolunteerForm(vbtn, sec.n); });
+    div.appendChild(vbtn);
+  }
   return div;
 }
 
@@ -2471,34 +2707,63 @@ function renderPots(containerId, pots){
   if(emptyMsg) emptyMsg.hidden = occupied.length > 0;
 }
 
-function renderGreenhouseTrays(containerId, trays){
+// One renderer for both tray cards (Greenhouse and Windowsill), on both
+// the Veg Patch page (fully interactive: harvest/issue/move/discard/plant,
+// same as a bed section) and the Overview page (a read-only glance, same
+// as the rest of that page -- no controls of its own). `kind` is
+// 'greenhouse' or 'windowsill', used for Move's "where is this already"
+// and for the empty-state message; `readOnly` suppresses every button
+// except the plain sprite+name+note display.
+function renderTrayCard(containerId, trays, kind, readOnly){
   const el = document.getElementById(containerId);
   if(!el) return;
   el.innerHTML = '';
-  trays.forEach((tray, idx)=>{
-    const item = document.createElement('div'); item.className = 'prop-item';
+  trays.forEach(tray=>{
+    const item = document.createElement('div'); item.className = 'prop-item' + (tray.stage==='ready' ? ' ready-tile' : '');
+    item.dataset.sec = tray.n; // lets Overview task "shortcuts" find and pulse this tray
     const sprite = document.createElement('div'); sprite.className = 'sprite-wrap';
-    sprite.dataset.sprite = tray.species; sprite.dataset.stage = 'seedling';
+    sprite.dataset.sprite = tray.species; sprite.dataset.stage = tray.stage === 'ready' ? 'mature' : tray.stage;
     const txt = document.createElement('div'); txt.className = 'txt';
-    const b = document.createElement('b'); b.textContent = tray.name;
-    const span = document.createElement('span'); span.innerHTML = tray.note;
+    const b = document.createElement('b'); b.textContent = tray.label;
+    const span = document.createElement('span'); span.innerHTML = tray.note || '';
     txt.appendChild(b); txt.appendChild(span);
     item.appendChild(sprite); item.appendChild(txt);
-    // Only on the Veg Patch page's own copy of this card -- the Overview
-    // mirror (containerId 'overview-greenhouse') is a read-only glance at
-    // what's in the greenhouse, same as the rest of that page, so it gets
-    // no interactive controls of its own.
-    if(containerId === 'patch-greenhouse'){
+    if(tray.stage === 'ready'){
+      const flag = document.createElement('span'); flag.className='ready-flag'; flag.textContent='Ready!'; item.appendChild(flag);
+    }
+    if(!readOnly){
+      const disc = document.createElement('button'); disc.type='button'; disc.className='discard-btn'; disc.title='Discard this planting (died, diseased, etc.)';
+      disc.textContent = '✕';
+      disc.addEventListener('click', (e)=>{ e.stopPropagation(); openDiscardForm(disc, tray.n); });
+      item.appendChild(disc);
       const kebab = document.createElement('button'); kebab.type='button'; kebab.className='kebab-btn'; kebab.title='More actions';
       kebab.textContent = '⋮';
       kebab.addEventListener('click', (e)=>{
         e.stopPropagation();
-        openActionMenu(kebab, [{label:'Move to a pot or bed…', onClick:()=> openMoveForm(kebab, 'greenhouse', idx)}]);
+        const actions = [];
+        if(tray.stage === 'ready') actions.push({label:'Log harvest', onClick:()=> markHarvested(kebab, tray.n)});
+        actions.push({label:'Log issue', onClick:()=> openIssueForm(kebab, tray.n)});
+        actions.push({label:'Move…', onClick:()=> openMoveForm(kebab, kind, tray.n)});
+        openActionMenu(kebab, actions);
       });
       item.appendChild(kebab);
     }
     el.appendChild(item);
   });
+  const emptyMsg = document.getElementById(containerId+'-empty');
+  if(emptyMsg) emptyMsg.hidden = trays.length > 0;
+  // Lives in the card header's toolbar span (top-right, next to the card
+  // title), matching where "+ Add task"/"+ Add event" sit on Overview,
+  // rather than below the tray tiles -- keeps it in a fixed spot instead
+  // of shifting position depending on how many trays wrap onto a row.
+  const toolbar = document.getElementById(containerId+'-toolbar');
+  if(toolbar) toolbar.innerHTML = '';
+  if(!readOnly && toolbar){
+    const addBtn = document.createElement('button'); addBtn.type='button'; addBtn.className='add-btn tray-add-btn';
+    addBtn.textContent = '+ Plant in the '+(kind==='greenhouse'?'greenhouse':'windowsill');
+    addBtn.addEventListener('click', ()=> openPlantForm(addBtn, kind, null));
+    toolbar.appendChild(addBtn);
+  }
 }
 
 renderAllSprites();
@@ -2610,6 +2875,36 @@ function spriteFor(id){ const it=getItem(id); return it.sprite || it.species; }
 function spanFor(id){
   const m = getItem(id);
   return m.overwinters ? (m.harvest[1]+12-m.sow[0]) : (m.harvest[1]-m.sow[0]);
+}
+// Estimates a planting's growth stage (seedling/growing/ready) purely from
+// how long ago it was actually planted, using the same sow-to-harvest span
+// spanFor() already uses for "Time in ground" sorting -- so the artwork and
+// "ready to harvest" status advance on their own as days pass, instead of
+// staying exactly as set at planting time until someone manually changes
+// them. Reaching the estimated ready date is what flips something to
+// 'ready' (not a duration fraction), matching what unlocks "Log harvest"
+// elsewhere.
+function estimateGrowthStage(item, plantedOnISO){
+  if(!plantedOnISO) return 'growing';
+  const planted = new Date(plantedOnISO+'T00:00:00');
+  if(isNaN(planted.getTime())) return 'growing';
+  const months = item.overwinters ? (item.harvest[1]+12-item.sow[0]) : (item.harvest[1]-item.sow[0]);
+  const readyDate = addMonthsClamped(planted, months > 0 ? months : 1);
+  if(today >= readyDate) return 'ready';
+  const totalMs = readyDate - planted;
+  const elapsedMs = today - planted;
+  const frac = totalMs > 0 ? elapsedMs / totalMs : 1;
+  return frac >= 0.5 ? 'growing' : 'seedling';
+}
+// Advances stage for anything planted via the "+ Plant..." flow (the only
+// source of a plantedOn date) each time the app renders -- so a seedling
+// planted today shows as further along a week later without any action.
+// Leaves everything else (demo data, anything already 'ready') untouched.
+function refreshGrowthStages(){
+  [...A, ...B, ...POTS, ...GREENHOUSE_TRAYS, ...WINDOWSILL_TRAYS].forEach(sec=>{
+    if(!sec.species || !sec.plantedOn || sec.stage === 'ready') return;
+    sec.stage = estimateGrowthStage(getItem(sec.species), sec.plantedOn);
+  });
 }
 function capacityFor(id){
   const m = getItem(id);
@@ -3776,6 +4071,7 @@ setPlanYear(2026);
 renderStats();
 renderOverviewTasks();
 renderCompostDayTask();
+renderCustomEvents();
 const statsNotesEl = document.getElementById('stats-notes-input');
 if(statsNotesEl) statsNotesEl.addEventListener('input', (e)=>{ stats_notes[stats_year] = e.target.value; });
 ['today-label-4','today-label-5'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
@@ -3799,11 +4095,12 @@ let lastSyncedJSON = null;
 
 /* Every piece of state a user actually edits, gathered into one blob that
    maps straight onto the table's single jsonb `data` column. This now
-   includes the Veg Patch page's live status (bed sections, pots and
-   greenhouse trays, via bed_a/bed_b/pots/greenhouse_trays) and which
-   built-in Upcoming Tasks have been ticked off (completed_task_ids) --
-   both used to be per-device only, which is exactly why a change made on
-   one device (or one login) didn't stick and the old data reappeared.
+   includes the Veg Patch page's live status (bed sections, pots,
+   greenhouse trays and windowsill trays, via
+   bed_a/bed_b/pots/greenhouse_trays/windowsill_trays) and the built-in
+   Upcoming Tasks themselves (builtin_tasks) -- all of these used to be
+   per-device only (or, for builtin_tasks, hardcoded and never synced at
+   all), which is exactly why a change made on one device didn't stick.
    Still deliberately NOT included: sort preferences and theme/mode
    (per-device, not worth round-tripping) and the real "today" date. */
 function getSyncState(){
@@ -3817,11 +4114,12 @@ function getSyncState(){
     compost_log: compost_log,
     custom_tasks: custom_tasks,
     custom_events: custom_events,
-    completed_task_ids: completed_task_ids,
+    builtin_tasks: BUILTIN_TASKS,
     bed_a: A,
     bed_b: B,
     pots: POTS,
     greenhouse_trays: GREENHOUSE_TRAYS,
+    windowsill_trays: WINDOWSILL_TRAYS,
   };
 }
 function applySyncState(s){
@@ -3836,13 +4134,20 @@ function applySyncState(s){
   if(s.event_log) event_log = s.event_log;
   if(s.stats_notes) stats_notes = s.stats_notes;
   if(s.compost_log) compost_log = s.compost_log;
+  // One-time migration: older synced state has no builtin_tasks (it was
+  // a hardcoded const back then) but may have completed_task_ids from
+  // the old "remember what's been ticked" scheme -- use it once to drop
+  // any built-ins already ticked off before that array existed, so nothing
+  // reappears that was already dealt with.
+  if(Array.isArray(s.builtin_tasks)) BUILTIN_TASKS = s.builtin_tasks;
+  else if(Array.isArray(s.completed_task_ids)) BUILTIN_TASKS = BUILTIN_TASKS.filter(t=>!s.completed_task_ids.includes(t.id));
   if(Array.isArray(s.custom_tasks)) custom_tasks = s.custom_tasks;
   if(Array.isArray(s.custom_events)) custom_events = s.custom_events;
-  if(Array.isArray(s.completed_task_ids)) completed_task_ids = s.completed_task_ids;
   if(Array.isArray(s.bed_a)) A = s.bed_a;
   if(Array.isArray(s.bed_b)) B = s.bed_b;
   if(Array.isArray(s.pots)) POTS = s.pots;
   if(Array.isArray(s.greenhouse_trays)) GREENHOUSE_TRAYS = s.greenhouse_trays;
+  if(Array.isArray(s.windowsill_trays)) WINDOWSILL_TRAYS = s.windowsill_trays;
   lastSyncedJSON = JSON.stringify(getSyncState());
   renderEverything();
 }
