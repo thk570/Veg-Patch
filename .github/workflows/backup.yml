@@ -1,0 +1,83 @@
+name: Backup Supabase data
+
+# Tier 2 backup: an off-Supabase snapshot committed into this repo, on the
+# 2nd and 16th of every month, independent of the Supabase project entirely
+# (survives project deletion, suspension, or the free tier's auto-pause
+# after inactivity -- see keepalive.yml, which exists to stop that pause
+# from happening in the first place).
+#
+# Schedule deliberately offset from round numbers (2nd/16th at 03:37 UTC,
+# not 1st/15th at 03:00) to land away from the most congested times on
+# GitHub's shared runners.
+#
+# Native cron only -- no day-counting script logic. day-of-month "2,16"
+# means this isn't exactly a fixed 14/16-day gap (months vary in length),
+# but it's simple, predictable, and has no custom arithmetic to get wrong.
+#
+# Setup (one-time, in the thk570/Veg-Patch repo on GitHub):
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#     SUPABASE_SERVICE_ROLE_KEY = the service_role key from
+#       Supabase -> Project Settings -> API (NOT the anon key -- this one
+#       bypasses row-level security, which is what lets this workflow read
+#       the row without signing in as you)
+#     VEG_PLOT_USER_ID = your auth.users id, found via:
+#       select id from auth.users where email = 'your-login-email';
+#
+# A successful run commits every time (even if the data is unchanged from
+# last time -- see the "no diff-based skip" discussion this was built
+# from), which as a side effect also counts as repo activity and keeps
+# GitHub from auto-disabling the schedule after 60 days of inactivity.
+
+on:
+  schedule:
+    - cron: '37 3 2,16 * *'   # 2nd and 16th of each month, 03:37 UTC
+  workflow_dispatch: {}        # lets you trigger a backup on demand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch current data from Supabase
+        env:
+          SUPABASE_URL: https://wdbmghwhgpgsvqgryywn.supabase.co
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          USER_ID: ${{ secrets.VEG_PLOT_USER_ID }}
+        run: |
+          mkdir -p backups
+          stamp=$(date -u +%F)
+          http_code=$(curl -sS -o "backups/veg_plot_data-$stamp.json" -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/veg_plot_data?user_id=eq.$USER_ID&select=data,updated_at" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+          # Fail loudly rather than committing an error body or empty
+          # response as if it were a legitimate backup. This is the
+          # defensive path that also protects against a paused Supabase
+          # project, if the keepalive ping ever fails to prevent one.
+          if [ "$http_code" != "200" ]; then
+            echo "Supabase returned HTTP $http_code, not committing:"
+            cat "backups/veg_plot_data-$stamp.json"
+            exit 1
+          fi
+          if ! grep -q '"data"' "backups/veg_plot_data-$stamp.json"; then
+            echo "Response didn't contain a data field, not committing:"
+            cat "backups/veg_plot_data-$stamp.json"
+            exit 1
+          fi
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "veg-patch-backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backups/
+          if git diff --cached --quiet; then
+            echo "No change since last snapshot, skipping commit"
+          else
+            git commit -m "Backup: $(date -u +%F)"
+            git push
+          fi

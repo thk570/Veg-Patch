@@ -1,0 +1,58 @@
+name: Keep Supabase project active
+
+# Supabase's free tier pauses a project after about 7 days of low activity,
+# and un-pausing is a manual dashboard step (no auto-resume on the next
+# request). This workflow exists purely to stop that pause from ever
+# happening during a quiet stretch of the app (e.g. over winter), by
+# generating a small amount of genuine database activity every few days --
+# comfortably more often than the 7-day threshold.
+#
+# Deliberately a separate workflow from backup.yml: this one's only job is
+# "make a request", it doesn't touch the repo at all (no commits, no
+# `contents: write`), so a problem in one can't affect the other.
+#
+# Uses the same SUPABASE_SERVICE_ROLE_KEY secret as backup.yml (see that
+# file for where to get it), rather than the public anon key. A request
+# under the anon key with no signed-in session would likely still count as
+# activity -- Postgres enforces row-level security while running the
+# query, not before it -- but "likely" isn't good enough for the one thing
+# this workflow exists to guarantee, and reusing the existing secret costs
+# nothing extra.
+#
+# Schedule offset from round numbers for the same reason as backup.yml:
+# 2nd of the month, then every 5 days after (day-of-month 2,7,12,17,22,27),
+# at 03:37 UTC rather than 03:00. Native cron day-of-month step syntax, no
+# custom script -- the gap between the last hit of one month and the first
+# of the next varies a little (4-6 days) depending on month length, which
+# doesn't matter here: the whole point is "well under 7 days", not an
+# exact interval.
+
+on:
+  schedule:
+    - cron: '37 3 2-31/5 * *'
+  workflow_dispatch: {}   # lets you trigger a ping on demand from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: https://wdbmghwhgpgsvqgryywn.supabase.co
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          USER_ID: ${{ secrets.VEG_PLOT_USER_ID }}
+        run: |
+          http_code=$(curl -sS -o /tmp/ping_response.json -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/veg_plot_data?user_id=eq.$USER_ID&select=updated_at" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+          echo "Supabase responded with HTTP $http_code"
+          cat /tmp/ping_response.json
+          # Non-200 here doesn't need to fail the job loudly -- there's
+          # nothing to protect from corruption (no commit, no write), and
+          # a transient failure will just be followed by another attempt
+          # in a few days. Still exits non-zero so a run shows red in the
+          # Actions tab if it's worth a look.
+          if [ "$http_code" != "200" ]; then
+            exit 1
+          fi
