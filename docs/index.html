@@ -20,12 +20,12 @@
   --m-bg: #f2f4ee; --m-surface: #ffffff; --m-surface-2: #e8ece2; --m-border: #d7ddcd;
   --m-text: #23291f; --m-text-dim: #5b6353;
   --m-accent: #3f6b4a; --m-accent-ink: #ffffff; --m-accent-2: #b5842a;
-  --m-warn: #b5482a; --m-ok: #3f6b4a; --m-soil: #8a6a4d;
+  --m-warn: #b5482a; --m-ok: #3f6b4a; --m-soil: #8a6a4d; --m-water: #2f7fb3;
 
   --p-bg: #cfe6b0; --p-surface: #f4ecd8; --p-surface-2: #e3d6ae; --p-border: #2b2118;
   --p-text: #2b2118; --p-text-dim: #5b4a37;
   --p-accent: #4c7a34; --p-accent-ink: #f4ecd8; --p-accent-2: #d18a2b;
-  --p-warn: #c0392b; --p-ok: #4c7a34; --p-soil: #6b4a34; --p-sky: #bfe6f5;
+  --p-warn: #c0392b; --p-ok: #4c7a34; --p-soil: #6b4a34; --p-sky: #bfe6f5; --p-water: #2f7fb3;
 
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Karla', system-ui, sans-serif;
@@ -37,19 +37,19 @@
   :root:not([data-mode="light"]){
     --m-bg:#171b14; --m-surface:#202519; --m-surface-2:#262c1e; --m-border:#38402c;
     --m-text:#e9ede1; --m-text-dim:#a9b39c; --m-accent:#7bbf6a; --m-accent-ink:#10230f;
-    --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f;
+    --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f; --m-water:#6fb3e0;
     --p-bg:#16210f; --p-surface:#241d13; --p-surface-2:#2e2416; --p-border:#efe4c8;
     --p-text:#f4ecd8; --p-text-dim:#cbb98f; --p-accent:#7bbf6a; --p-accent-ink:#16210f;
-    --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57;
+    --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57; --p-water:#6fb3e0;
   }
 }
 :root[data-mode="dark"]{
   --m-bg:#171b14; --m-surface:#202519; --m-surface-2:#262c1e; --m-border:#38402c;
   --m-text:#e9ede1; --m-text-dim:#a9b39c; --m-accent:#7bbf6a; --m-accent-ink:#10230f;
-  --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f;
+  --m-accent-2:#e0a83f; --m-warn:#e0755a; --m-ok:#7bbf6a; --m-soil:#a9825f; --m-water:#6fb3e0;
   --p-bg:#16210f; --p-surface:#241d13; --p-surface-2:#2e2416; --p-border:#efe4c8;
   --p-text:#f4ecd8; --p-text-dim:#cbb98f; --p-accent:#7bbf6a; --p-accent-ink:#16210f;
-  --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57;
+  --p-accent-2:#e0a83f; --p-warn:#e0755a; --p-ok:#7bbf6a; --p-soil:#4a3222; --p-sky:#274b57; --p-water:#6fb3e0;
 }
 
 *{ box-sizing:border-box; }
@@ -121,7 +121,6 @@ body[data-style="modern"] .grid-2 > .card, body[data-style="mixed"] .grid-2 > .c
 body[data-style="modern"] .card, body[data-style="mixed"] .card{ background:var(--m-surface); border:1px solid var(--m-border); border-radius:12px; padding:1rem 1.15rem; margin:0; }
 body[data-style="mixed"] .card{ border:2px solid var(--p-border); border-radius:8px; box-shadow:2px 2px 0 rgba(0,0,0,.12); border-top:4px solid var(--m-accent); }
 body[data-style="modern"] .card h3, body[data-style="mixed"] .card h3{ font-family:var(--font-display); font-size:.92rem; font-weight:700; margin:0 0 .65rem; display:flex; align-items:center; gap:.5rem; }
-body[data-style="modern"] .eyebrow, body[data-style="mixed"] .eyebrow{ font-family:var(--font-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--m-text-dim); }
 body[data-style="modern"] .stat-row, body[data-style="mixed"] .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; }
 body[data-style="modern"] .stat, body[data-style="mixed"] .stat{ background:var(--m-surface-2); border-radius:10px; padding:.75rem .85rem; }
 body[data-style="modern"] .stat .n, body[data-style="mixed"] .stat .n{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.4rem; font-weight:700; }
@@ -179,7 +178,6 @@ body[data-style="pixel"] .grid-2 > .card{ margin-top:0; display:flex; flex-direc
 @media (max-width:720px){ body[data-style="pixel"] .grid-2{ grid-template-columns:1fr; } }
 body[data-style="pixel"] .card{ background:var(--p-surface); border:3px solid var(--p-text); padding:.9rem 1rem; margin:0; box-shadow:4px 4px 0 rgba(0,0,0,.2); }
 body[data-style="pixel"] .card h3{ font-family:var(--font-display); font-size:.95rem; font-weight:700; margin:0 0 .65rem; display:flex; align-items:center; gap:.5rem; }
-body[data-style="pixel"] .eyebrow{ font-family:var(--font-mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--p-text-dim); }
 body[data-style="pixel"] .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; }
 body[data-style="pixel"] .stat{ background:var(--p-surface-2); border:2px solid var(--p-text); padding:.6rem .5rem; text-align:center; }
 body[data-style="pixel"] .stat .n{ font-family:var(--font-mono); font-size:1.2rem; font-weight:700; }
@@ -535,9 +533,9 @@ body[data-style="pixel"] .section .crop-name{ font-family:var(--font-body); font
 .list-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
 .list-toolbar .sort-control{ display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:var(--m-text-dim); }
 .list-toolbar select{ font-family:var(--font-body); font-size:.76rem; padding:.3rem .5rem; border-radius:6px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text); }
-.list-toolbar .add-btn{ font-family:var(--font-mono); font-size:.72rem; background:var(--m-accent); color:var(--m-accent-ink); border:none; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
+.add-btn{ font-family:var(--font-mono); font-size:.72rem; background:var(--m-accent); color:var(--m-accent-ink); border:none; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
 body[data-style="pixel"] .list-toolbar select{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); color:var(--p-text); }
-body[data-style="pixel"] .list-toolbar .add-btn{ border-radius:0; border:2px solid var(--p-text); }
+body[data-style="pixel"] .add-btn{ border-radius:0; border:2px solid var(--p-text); }
 .list-toolbar .filter-btn{
   font-family:var(--font-body); font-size:.72rem; padding:.32rem .6rem; border-radius:6px; border:1px solid var(--m-border);
   background:var(--m-surface); color:var(--m-text); cursor:pointer; display:inline-flex; align-items:center; gap:.35rem;
@@ -639,6 +637,57 @@ body[data-style="pixel"] .prop-item{ border:2px solid var(--p-text); border-radi
 .prop-item .txt b{ display:block; font-size:.82rem; }
 .prop-item .txt span{ font-size:.72rem; color:var(--m-text-dim); }
 body[data-style="pixel"] .prop-item .txt span{ color:var(--p-text-dim); }
+
+[hidden]{ display:none !important; }
+
+/* ---------- weather ---------- */
+.weather-loc-name{ font-size:.95rem; font-weight:600; margin:0; }
+.weather-current{ display:flex; flex-wrap:wrap; align-items:baseline; gap:.6rem; }
+.weather-current.compact{ gap:.5rem; }
+.weather-icon{ font-size:1.6rem; line-height:1; }
+.weather-current.compact .weather-icon{ font-size:1.3rem; }
+.weather-temp{ font-size:1.5rem; font-weight:700; }
+.weather-current.compact .weather-temp{ font-size:1.15rem; }
+.weather-cond-label{ font-size:.82rem; color:var(--m-text-dim); }
+.weather-stat-row{ flex-basis:100%; display:flex; gap:.9rem; font-size:.74rem; color:var(--m-text-dim); margin-top:.2rem; }
+.weather-hint{ font-size:.78rem; color:var(--m-text-dim); margin:.5rem 0 0; }
+.forecast-strip{ display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; }
+@media (max-width:700px){ .forecast-strip{ grid-template-columns:repeat(4,1fr); } }
+.forecast-day{ background:var(--m-surface-2); border-radius:10px; padding:.5rem .3rem; text-align:center; }
+.forecast-day.frost{ box-shadow:inset 0 0 0 1.5px var(--m-water); }
+body[data-style="pixel"] .forecast-day{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface-2); }
+body[data-style="pixel"] .forecast-day.frost{ box-shadow:inset 0 0 0 2px var(--p-water); }
+.fd-day{ font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--m-text-dim); }
+.fd-icon{ font-size:1.2rem; margin:.15rem 0; }
+.fd-temps{ font-size:.76rem; }
+.fd-temps span{ color:var(--m-text-dim); }
+.fd-rain{ font-size:.62rem; color:var(--m-water); margin-top:.15rem; }
+.fd-frost{ font-size:.6rem; font-weight:700; color:var(--m-water); margin-top:.1rem; }
+.forecast-strip > .companion-empty{ grid-column:1/-1; }
+body[data-style="pixel"] .fd-rain, body[data-style="pixel"] .fd-frost{ color:var(--p-water); }
+.loc-results{ display:flex; flex-direction:column; gap:.3rem; margin:.3rem 0; }
+.loc-result{ font:inherit; font-size:.78rem; text-align:left; padding:.35rem .5rem; border:1px solid var(--m-border); border-radius:6px; background:var(--m-surface); color:var(--m-text); cursor:pointer; }
+.loc-result:hover{ background:var(--m-surface-2); }
+body[data-style="pixel"] .loc-result{ border:2px solid var(--p-text); border-radius:0; background:var(--p-surface); color:var(--p-text); }
+.raindrop-row{ display:flex; gap:1.4rem; }
+.raindrop-item{ display:flex; flex-direction:column; align-items:center; gap:.3rem; }
+.raindrop-item.small{ gap:.15rem; }
+.raindrop-item.empty{ opacity:.55; max-width:110px; }
+.raindrop-label{ font-size:.68rem; color:var(--m-text-dim); text-align:center; }
+.raindrop-sub{ font-size:.6rem; color:var(--m-text-dim); text-align:center; opacity:.85; }
+.add-btn.small{ font-size:.6rem; padding:.25rem .5rem; margin-top:.1rem; }
+.raindrop-bg{ fill:var(--m-border); }
+.raindrop-fill{ fill:var(--m-water); }
+/* Same thin outline as a crop .sprite, traced along the drop's contour. */
+.raindrop-outline{ fill:none; stroke:rgba(0,0,0,.4); stroke-width:1.5; }
+body[data-style="pixel"] .raindrop-fill{ fill:var(--p-water); }
+body[data-style="pixel"] .raindrop-bg{ fill:var(--p-surface-2); }
+.weather-season-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; }
+.overview-weather-card{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.8rem; }
+.overview-weather-card .weather-current{ flex:1 1 auto; }
+.overview-weather-card .raindrop-row{ gap:.9rem; }
+.overview-weather-loc{ font-size:.68rem; color:var(--m-text-dim); text-transform:uppercase; letter-spacing:.03em; }
+.overview-weather-rain{ flex-basis:100%; font-size:.74rem; color:var(--m-text-dim); }
 
 /* ---------- mobile fixes ----------
    The in-page nav (5 links, one of them two words) is wider than a phone
@@ -782,6 +831,18 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
 
         <div class="card">
           <div class="list-toolbar">
+            <h3 style="margin:0;">Weather</h3>
+            <span class="overview-weather-loc" id="overview-weather-loc"></span>
+          </div>
+          <div class="overview-weather-card">
+            <div class="weather-current" id="overview-weather-current"></div>
+            <div class="raindrop-row" id="overview-weather-raindrops"></div>
+            <p class="overview-weather-rain" id="overview-weather-rain"></p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="list-toolbar">
             <h3 style="margin:0;">Upcoming Tasks</h3>
             <button class="add-btn" onclick="openAddTaskEventForm(this, 'task')">+ Add task</button>
           </div>
@@ -801,7 +862,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         <div class="card">
           <h3>Look Out For</h3>
           <div class="events" id="lookout-list">
-            <div class="event" id="volunteer-alert" hidden><span><span class="pill warn">Volunteer potatoes</span> <span class="msg"></span></span></div>
+            <div class="event" id="volunteer-alert" hidden><span><span class="pill warn">Volunteer Potatoes</span> <span class="msg"></span></span></div>
           </div>
           <p class="companion-empty" id="lookout-empty" hidden>All clear — nothing to flag right now.</p>
         </div>
@@ -867,7 +928,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </form>
 
         <div class="card">
-          <h3><span class="eyebrow">Seed store</span></h3>
+          <h3>Seed Store</h3>
           <div class="inv-grid" id="inv-grid"></div>
         </div>
       </div>
@@ -920,7 +981,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
 
         <div class="card companion-card" id="companion-panel">
-          <h3><span class="eyebrow">Companion suggestions</span></h3>
+          <h3>Companion Suggestions</h3>
           <p class="companion-empty">Click a planting in the grid above to see what grows well alongside it.</p>
         </div>
       </div>
@@ -935,7 +996,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
       <nav class="app-nav" data-navfor="patch"></nav>
       <div class="app-body">
         <div class="card">
-          <h3><span class="eyebrow">Bed</span></h3>
+          <h3>Bed</h3>
           <div class="bed-diagram"><div class="bed-grid" id="bed-grid"></div></div>
           <div class="legend">
             <span><span class="sw" style="background:var(--m-soil)"></span>Empty</span>
@@ -946,7 +1007,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
         <div class="card">
           <div class="list-toolbar" style="margin-bottom:.6rem;">
-            <h3 style="margin:0;"><span class="eyebrow">Pots &amp; containers</span></h3>
+            <h3 style="margin:0;">Pots &amp; Containers</h3>
             <button type="button" class="add-btn" onclick="openPlantForm(this, 'pot', null)">+ Plant in a new pot</button>
           </div>
           <div class="bed-diagram"><div class="bed-grid" id="pot-grid" style="grid-template-columns:26px 1fr"></div></div>
@@ -954,7 +1015,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
         <div class="card">
           <div class="list-toolbar" style="margin-bottom:.6rem;">
-            <h3 style="margin:0;"><span class="eyebrow">Greenhouse</span></h3>
+            <h3 style="margin:0;">Greenhouse</h3>
             <span id="patch-greenhouse-toolbar"></span>
           </div>
           <div class="prop-strip" id="patch-greenhouse"></div>
@@ -962,7 +1023,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
         <div class="card">
           <div class="list-toolbar" style="margin-bottom:.6rem;">
-            <h3 style="margin:0;"><span class="eyebrow">Windowsill</span></h3>
+            <h3 style="margin:0;">Windowsill</h3>
             <span id="patch-windowsill-toolbar"></span>
           </div>
           <div class="prop-strip" id="patch-windowsill"></div>
@@ -970,7 +1031,46 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
       </div>
     </div>
-    <p class="note"><b>Veg patch</b> &mdash; section IDs (A1, B7, Pot 1&hellip;) match the row labels used on the Plan page and in Overview tasks.</p>
+    <p class="note"><b>Veg Patch</b> &mdash; section IDs (A1, B7, Pot 1&hellip;) match the row labels used on the Plan page and in Overview tasks.</p>
+  </section>
+
+  <!-- ============================= WEATHER ============================= -->
+  <section id="page-weather" class="page">
+    <div class="app-shell">
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-6"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <nav class="app-nav" data-navfor="weather"></nav>
+      <div class="app-body">
+        <div class="card">
+          <div class="list-toolbar">
+            <h3 style="margin:0;">Location</h3>
+            <button type="button" class="add-btn" id="weather-location-btn" onclick="openWeatherLocationForm(this)">Change</button>
+          </div>
+          <p class="weather-loc-name" id="weather-loc-name"></p>
+        </div>
+
+        <div class="card">
+          <h3>Right Now</h3>
+          <div class="weather-current" id="weather-current"></div>
+        </div>
+
+        <div class="card">
+          <h3>7-Day Forecast</h3>
+          <div class="forecast-strip" id="weather-forecast"></div>
+        </div>
+
+        <div class="card">
+          <h3>Should I Water Today?</h3>
+          <div class="raindrop-row" id="weather-raindrops"></div>
+          <p class="weather-hint" id="weather-water-hint"></p>
+        </div>
+
+        <div class="card">
+          <h3>This Year So Far</h3>
+          <div class="weather-season-stats" id="weather-season-stats"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Weather</b> &mdash; live data from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (forecast, current conditions, archive rainfall/temperature), fetched by each device at launch. The raindrops estimate soil moisture from rain and evaporation since your last logged watering. Frost risk flags clear, calm, cold nights when the ground can freeze below the forecast air temperature.</p>
   </section>
 
   <!-- ============================= STATS ============================= -->
@@ -986,7 +1086,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
         </div>
 
         <div class="card">
-          <h3>Sowings vs harvests by month</h3>
+          <h3>Sowings vs Harvests by Month</h3>
           <div class="stats-chart" id="stats-month-chart"></div>
           <div class="stats-legend">
             <span><span class="sw sown"></span>Sown (confirmed)</span>
@@ -996,14 +1096,14 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
 
         <div class="card">
           <div class="list-toolbar">
-            <h3 style="margin:0;">Harvest log</h3>
+            <h3 style="margin:0;">Harvest Log</h3>
             <button class="add-btn" onclick="openStatsHarvestForm(this)">+ Log a harvest</button>
           </div>
           <div id="stats-harvest-log"></div>
         </div>
 
         <div class="card">
-          <h3>Most-grown crops</h3>
+          <h3>Most-Grown Crops</h3>
           <div class="stats-rank" id="stats-rank"></div>
         </div>
 
@@ -1102,11 +1202,12 @@ function toggleThemeMenu(anchorBtn){
 }
 const SPRITE_GRID = 18;
 function setPage(p){
-  ['overview','inventory','plan','patch','stats'].forEach(id=>{
+  ['overview','inventory','plan','patch','weather','stats'].forEach(id=>{
     document.getElementById('page-'+id).classList.toggle('active', id===p);
   });
   renderAppNav(p);
   if(p === 'stats') renderStats(); // recompute in case inventory/plan changed since last visit
+  if(p === 'weather'){ renderWeatherAll(); refreshWeatherIfStale(); }
   // The seed bank's height is pegged to the calendar's rendered height (see
   // syncPlanSidebarHeight below). While the Plan page sits under display:none
   // (i.e. any time it isn't the active page), the calendar measures 0px tall,
@@ -1116,13 +1217,14 @@ function setPage(p){
 }
 
 /* The in-page nav at the top of every page (Overview / Inventory / Plan /
-   Veg Patch / Stats) is built here rather than hand-written per page, so
-   all five copies stay in sync and share one set of click handlers. */
+   Veg Patch / Weather / Stats) is built here rather than hand-written per
+   page, so all six copies stay in sync and share one set of click handlers. */
 const NAV_PAGES = [
   {id:'overview', label:'Overview'},
   {id:'inventory', label:'Inventory'},
   {id:'plan', label:'Plan'},
   {id:'patch', label:'Veg Patch'},
+  {id:'weather', label:'Weather'},
   {id:'stats', label:'Stats'},
 ];
 function renderAppNav(current){
@@ -1167,7 +1269,7 @@ setStyle(savedTheme.style); setMode(savedTheme.mode);
 
 const today = new Date(); today.setHours(0,0,0,0);
 const label = today.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-['today-label','today-label-2','today-label-3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
+['today-label','today-label-2','today-label-3','today-label-6'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
 
 /* ============================================================
    SPRITES: shapes defined in normalized 0..1 coords, rasterized
@@ -1541,6 +1643,7 @@ function renderAllSprites(){
   renderPots('pot-grid', POTS);
   renderLiveStatus();
   renderLookOutFor();
+  renderOverviewWeather();
 }
 
 /* ============================================================
@@ -1615,10 +1718,483 @@ function nextSlotName(arr, prefix){
   return prefix+i;
 }
 
-/* ---------- volunteer potatoes: tubers that sprout on their own ---------- */
-let volunteer_log = {
-  A5: {qty:2, date:'10 Jun 2026'}, // example: spotted after last year's potato patch there
+/* ============================================================
+   WEATHER (Open-Meteo)
+   Each device fetches directly at launch: free, no API key, CORS-enabled.
+   Forecast data isn't synced (it isn't user data); the garden location is.
+   Rainfall history isn't stored -- it's re-pulled from the archive API.
+   ============================================================ */
+let WEATHER_LOCATION = { name: 'Norwich, UK', lat: 52.6309, lon: 1.2974 };
+const OM_FORECAST = 'https://api.open-meteo.com/v1/forecast';
+const OM_ARCHIVE  = 'https://archive-api.open-meteo.com/v1/archive';
+const OM_GEOCODE  = 'https://geocoding-api.open-meteo.com/v1/search';
+// Recent days come from the forecast API's past_days; the archive (ERA5)
+// runs a few days behind, so it only covers 1 Jan up to just before those.
+const OM_RECENT_DAYS = 14;
+const WEATHER_STALE_MS = 60*60*1000;
+
+// {status:'idle'|'loading'|'ok'|'error', error?, current?, days?, season?, fetchedAt?}
+let weather = { status:'idle' };
+let weatherReqId = 0;
+let weatherInFlight = false;
+
+async function omGet(base, params){
+  const res = await fetch(base+'?'+new URLSearchParams(params));
+  const body = await res.json().catch(()=>null);
+  if(!res.ok || !body || body.error) throw new Error((body && body.reason) || 'HTTP '+res.status);
+  return body;
+}
+function addDaysISO(iso, n){
+  const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n);
+  return toISODate(d);
+}
+
+// WMO weather interpretation codes -> glyph + label.
+function wmo(code){
+  if(code === 0) return ['☀', 'Clear'];
+  if(code === 1) return ['🌤', 'Mainly clear'];
+  if(code === 2) return ['⛅', 'Partly cloudy'];
+  if(code === 3) return ['☁', 'Overcast'];
+  if(code === 45 || code === 48) return ['🌫', 'Fog'];
+  if(code >= 51 && code <= 57) return ['🌦', 'Drizzle'];
+  if(code >= 61 && code <= 67) return ['🌧', 'Rain'];
+  if(code >= 71 && code <= 77) return ['🌨', 'Snow'];
+  if(code >= 80 && code <= 82) return ['🌦', 'Showers'];
+  if(code === 85 || code === 86) return ['🌨', 'Snow showers'];
+  if(code >= 95) return ['⛈', 'Thunderstorm'];
+  return ['·', 'Unknown'];
+}
+
+// Ground-frost heuristic for the night starting on `dayISO` (18:00 to 09:00
+// next morning). On clear, calm nights the ground radiates heat away and
+// can sit a few degrees below the forecast (screen-height) air temperature;
+// dry air (low dew point) strengthens that. Thresholds are a starting
+// point, tunable later.
+function nightFrostRisk(hourly, dayISO){
+  const from = dayISO+'T18:00', to = addDaysISO(dayISO, 1)+'T09:00';
+  let minGround = Infinity, minAir = Infinity;
+  hourly.time.forEach((t, i)=>{
+    if(t < from || t > to) return;
+    const air = hourly.temperature_2m[i];
+    if(air == null) return;
+    const cloud = hourly.cloud_cover[i] ?? 100;
+    const wind = hourly.wind_speed_10m[i] ?? 99;
+    const dew = hourly.dew_point_2m[i];
+    let drop = 0;
+    if(cloud <= 30 && wind <= 10) drop = 3;
+    else if(cloud <= 60 && wind <= 15) drop = 1.5;
+    if(drop && dew != null && dew <= 1) drop += 0.5;
+    minAir = Math.min(minAir, air);
+    minGround = Math.min(minGround, air - drop);
+  });
+  if(minGround === Infinity) return null;
+  return { frost: minGround <= 0, groundMinC: Math.round(minGround*10)/10, airMinC: minAir };
+}
+
+function summariseSeason(dailySets){
+  let rain = 0, tempSum = 0, tempDays = 0, days = 0;
+  dailySets.forEach(d=>{
+    d.time.forEach((_, i)=>{
+      const p = d.precipitation_sum[i], hi = d.temperature_2m_max[i], lo = d.temperature_2m_min[i];
+      if(p != null){ rain += p; days++; }
+      if(hi != null && lo != null){ tempSum += (hi+lo)/2; tempDays++; }
+    });
+  });
+  return days ? { rainMm: rain, avgTempC: tempDays ? tempSum/tempDays : null, days } : null;
+}
+// Keeps only the entries of an Open-Meteo `daily` block that satisfy keep(dateISO).
+function sliceDaily(daily, keep){
+  const idx = daily.time.map((t,i)=> keep(t) ? i : -1).filter(i=> i >= 0);
+  const out = {};
+  Object.keys(daily).forEach(k=>{ out[k] = idx.map(i=> daily[k][i]); });
+  return out;
+}
+
+async function fetchWeather(){
+  const reqId = ++weatherReqId;
+  const {lat, lon} = WEATHER_LOCATION;
+  weatherInFlight = true;
+  // A background refresh keeps showing the last data until the new one lands.
+  if(weather.status !== 'ok'){ weather = { status:'loading' }; renderWeatherAll(); }
+
+  const todayISO = todayISODate();
+  const yearStart = today.getFullYear()+'-01-01';
+  const archiveEnd = addDaysISO(todayISO, -OM_RECENT_DAYS-1);
+  const forecastP = omGet(OM_FORECAST, {
+    latitude: lat, longitude: lon, timezone: 'auto',
+    current: 'temperature_2m,relative_humidity_2m,weather_code,cloud_cover,wind_speed_10m',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max',
+    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,cloud_cover,wind_speed_10m,precipitation,et0_fao_evapotranspiration',
+    past_days: OM_RECENT_DAYS, forecast_days: 7,
+  });
+  const archiveP = archiveEnd >= yearStart
+    ? omGet(OM_ARCHIVE, {
+        latitude: lat, longitude: lon, timezone: 'auto',
+        start_date: yearStart, end_date: archiveEnd,
+        daily: 'precipitation_sum,temperature_2m_max,temperature_2m_min',
+      })
+    : Promise.resolve(null);
+  const [fc, ar] = await Promise.allSettled([forecastP, archiveP]);
+  if(reqId !== weatherReqId) return; // location changed mid-flight
+  weatherInFlight = false;
+
+  if(fc.status === 'rejected'){
+    // Keep stale data on a failed refresh; only show the error if there's nothing to show.
+    if(weather.status !== 'ok') weather = { status:'error', error: fc.reason.message };
+    renderWeatherAll();
+    return;
+  }
+  const f = fc.value;
+  const days = f.daily.time.map((date, i)=>({
+    date,
+    code: f.daily.weather_code[i],
+    hi: f.daily.temperature_2m_max[i],
+    lo: f.daily.temperature_2m_min[i],
+    rainMm: f.daily.precipitation_sum[i],
+    rainPct: f.daily.precipitation_probability_max[i],
+    windMax: f.daily.wind_speed_10m_max[i],
+    frost: nightFrostRisk(f.hourly, date),
+  })).filter(d=> d.date >= todayISO).slice(0, 7);
+
+  // Season totals need both halves; a failed archive call shows "—"
+  // rather than a misleadingly small total from the recent days alone.
+  let season = null;
+  if(ar.status === 'fulfilled'){
+    const recent = sliceDaily(f.daily, t=> t >= yearStart && t < todayISO);
+    season = summariseSeason(ar.value ? [ar.value.daily, recent] : [recent]);
+  }
+
+  weather = { status:'ok', current: f.current, days, season, hourly: f.hourly,
+              nowHour: f.current.time.slice(0,13)+':00', fetchedAt: Date.now() };
+  renderWeatherAll();
+}
+function refreshWeatherIfStale(){
+  if(weatherInFlight) return;
+  if(!weather.fetchedAt || Date.now() - weather.fetchedAt > WEATHER_STALE_MS) fetchWeather();
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshWeatherIfStale(); });
+
+/* ---------- watering: a soil-water bucket per tracker ----------
+   Beds and pots/greenhouse/windowsill dry out at different rates, so each
+   has its own bucket (0 = dry, 1 = just watered), stepped hourly over the
+   last OM_RECENT_DAYS days of Open-Meteo data: rain refills it (capped at
+   full), reference evapotranspiration (ET0) drains it, and a logged
+   watering resets it to full. Calibrated so a UK summer (ET0 ~4mm/day)
+   empties the beds in about 3 days. Pots drain faster and get only half
+   the rain (the greenhouse and windowsill get none). Tune WATER_MODEL. */
+const WATER_MODEL = {
+  bed:  { capacityMm: 12, etFactor: 1.0, rainFactor: 1.0 },
+  pots: { capacityMm: 8,  etFactor: 1.2, rainFactor: 0.5 },
 };
+const WATER_DRY = 0.35, WATER_OK = 0.6;
+const WATERING_HOUR = '18:00'; // logs are date-only, so assume an evening watering
+const WATER_TARGET_LABEL = { bed:'Beds', pots:'Pots & greenhouse' };
+
+function wateringDatesISO(target){
+  const todayISO = todayISODate();
+  const out = [];
+  Object.values(watering_log).forEach(entries=> entries.forEach(e=>{
+    if(e.target !== target) return;
+    const iso = displayDateToISO(e.date);
+    if(iso && iso <= todayISO) out.push(iso);
+  }));
+  return out.sort();
+}
+function lastWateredISO(target){
+  const d = wateringDatesISO(target);
+  return d.length ? d[d.length-1] : null;
+}
+function shortDate(iso){ return isoDateToDisplay(iso).replace(/ \d{4}$/, ''); }
+
+// Rain only reaches outdoor pots, never the greenhouse or windowsill.
+function waterRainFactor(target){
+  if(target === 'pots' && !POTS.some(p=> p.species)) return 0;
+  return WATER_MODEL[target].rainFactor;
+}
+// 0..1, or null when there's no weather data to model it from.
+function waterLevelFor(target){
+  if(weather.status !== 'ok') return null;
+  const m = WATER_MODEL[target], h = weather.hourly, now = weather.nowHour;
+  const rainFactor = waterRainFactor(target);
+  const waterings = new Set(wateringDatesISO(target).map(d=>{
+    const t = d+'T'+WATERING_HOUR;
+    return t > now ? now : t;
+  }));
+  let level = 0.5; // unknown start; two weeks of weather washes this out
+  for(let i = 0; i < h.time.length && h.time[i] <= now; i++){
+    level += ((h.precipitation[i]||0)*rainFactor - (h.et0_fao_evapotranspiration[i]||0)*m.etFactor) / m.capacityMm;
+    level = Math.max(0, Math.min(1, level));
+    if(waterings.has(h.time[i])) level = 1;
+  }
+  return level;
+}
+function rainNextHours(n){
+  if(weather.status !== 'ok') return 0;
+  const h = weather.hourly, i0 = h.time.indexOf(weather.nowHour);
+  if(i0 < 0) return 0;
+  return h.precipitation.slice(i0+1, i0+1+n).reduce((a,b)=> a+(b||0), 0);
+}
+
+// {level, caption, advice} for one tracker; falls back to the log alone offline.
+function waterStatus(target){
+  const last = lastWateredISO(target);
+  const doneToday = last === todayISODate();
+  const level = waterLevelFor(target);
+  if(level === null){
+    return {
+      level: doneToday ? 1 : 0,
+      caption: doneToday ? 'Watered today' : (last ? 'Last: '+shortDate(last) : 'Not logged yet'),
+      advice: doneToday ? 'watered today' : (last ? 'last watered '+shortDate(last) : 'no watering logged yet'),
+    };
+  }
+  const rain = rainNextHours(24);
+  const effRain = rain * waterRainFactor(target);
+  const rainTxt = 'about '+Math.round(rain)+'mm of rain is due in the next 24 hours';
+  if(doneToday && level >= WATER_OK) return {level, caption:'Watered today', advice:'watered today'};
+  if(level >= WATER_OK) return {level, caption:'Well watered', advice:'well watered, no need today'};
+  if(level >= WATER_DRY) return {level, caption:'Drying out',
+    advice: effRain >= 3 ? 'drying out, but '+rainTxt : 'drying out, water tomorrow if no rain comes'};
+  if(effRain >= 5) return {level, caption:'Dry', advice:'dry, but '+rainTxt+(target === 'pots' ? ' (it won\'t reach the greenhouse or windowsill)' : ', so it can probably wait')};
+  return {level, caption:'Dry', advice:'dry, water today'};
+}
+function logWatering(target, dateISO){
+  const year = parseInt(dateISO.slice(0,4), 10) || today.getFullYear();
+  getWateringYearLog(year).push({date: isoDateToDisplay(dateISO), target});
+}
+// Unique calendar days, so beds + pots on the same day counts once.
+function computeTimesWateredThisYear(){
+  return new Set(getWateringYearLog(today.getFullYear()).map(e=>e.date)).size;
+}
+function potsGreenhouseHasPlantings(){
+  return [...POTS, ...GREENHOUSE_TRAYS, ...WINDOWSILL_TRAYS].some(s=>s.species);
+}
+
+// Shared popover plumbing: close other popovers, anchor, dismiss on outside click.
+function openPopover(anchorBtn, html){
+  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
+  const form = document.createElement('div');
+  form.className = 'volunteer-form';
+  form.style.position = 'fixed';
+  form.innerHTML = html;
+  document.body.appendChild(form);
+  positionPopoverForm(form, anchorBtn.getBoundingClientRect());
+  const close = ()=>{ form.remove(); document.removeEventListener('click', outside); };
+  function outside(e){ if(!form.contains(e.target) && e.target !== anchorBtn) close(); }
+  setTimeout(()=> document.addEventListener('click', outside), 0);
+  const cancel = form.querySelector('.cancel');
+  if(cancel) cancel.addEventListener('click', close);
+  return {form, close};
+}
+
+function openWaterLogForm(anchorBtn, target){
+  const targetLabel = target === 'bed' ? 'Beds' : 'Pots & greenhouse';
+  const {form, close} = openPopover(anchorBtn,
+    '<strong>Log Watering &mdash; '+targetLabel+'</strong>'+
+    '<label>Date<input type="date" id="wlog-date" value="'+todayISODate()+'"></label>'+
+    '<div class="row"><button class="save">Log watering</button><button class="cancel" type="button">Cancel</button></div>');
+  form.querySelector('.save').addEventListener('click', ()=>{
+    const dateISO = form.querySelector('#wlog-date').value || todayISODate();
+    logWatering(target, dateISO);
+    close();
+    renderWeatherAll();
+    showToast('Logged watering: '+targetLabel+' on '+isoDateToDisplay(dateISO)+'.');
+  });
+}
+
+// Teardrop meter; fill is clipped from the bottom up to `level` (0..1).
+function buildRaindropEl(level, px){
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs)=>{ const el = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k,v])=> el.setAttribute(k, v)); return el; };
+  const size = px || 44;
+  const y = 28*(1 - Math.max(0, Math.min(1, level)));
+  const clipId = 'drop-clip-'+Math.random().toString(36).slice(2,9);
+  const d = 'M12 2C12 2 3 14 3 19a9 9 0 0018 0C21 14 12 2 12 2z';
+  const svg = mk('svg', {viewBox:'0 0 24 28', width:size, height:size*28/24, class:'raindrop-svg'});
+  const clip = mk('clipPath', {id:clipId});
+  clip.appendChild(mk('rect', {x:0, y, width:24, height:28-y}));
+  const defs = mk('defs', {}); defs.appendChild(clip);
+  svg.append(defs,
+    mk('path', {d, class:'raindrop-bg'}),
+    mk('path', {d, class:'raindrop-fill', 'clip-path':'url(#'+clipId+')'}),
+    mk('path', {d, class:'raindrop-outline'}));
+  return svg;
+}
+
+function buildRaindropItems(size, logBtnLabel, small){
+  const potsOccupied = potsGreenhouseHasPlantings();
+  return ['bed', 'pots'].map(target=>{
+    const label = WATER_TARGET_LABEL[target];
+    const show = target === 'bed' || potsOccupied;
+    const item = document.createElement('div');
+    item.className = 'raindrop-item'+(small ? ' small' : '')+(show ? '' : ' empty');
+    const cap = document.createElement('span'); cap.className = 'raindrop-label';
+    cap.textContent = show ? label : label+' (nothing planted)';
+    if(!show){ item.append(buildRaindropEl(0, size), cap); return item; }
+    const st = waterStatus(target);
+    const last = lastWateredISO(target);
+    item.title = label+': '+Math.round(st.level*100)+'% · '+(last ? 'last watered '+shortDate(last) : 'no watering logged');
+    const sub = document.createElement('span'); sub.className = 'raindrop-sub';
+    sub.textContent = st.caption;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'add-btn small';
+    btn.textContent = logBtnLabel;
+    btn.title = 'Log watering — '+label;
+    btn.addEventListener('click', ()=> openWaterLogForm(btn, target));
+    item.append(buildRaindropEl(st.level, size), cap, sub, btn);
+    return item;
+  });
+}
+function weatherWaterHint(){
+  let s = 'Beds: '+waterStatus('bed').advice+'.';
+  if(potsGreenhouseHasPlantings()) s += ' Pots & greenhouse: '+waterStatus('pots').advice+'.';
+  return s;
+}
+
+/* ---------- rendering ---------- */
+function weatherStatusMsg(el, withRetry){
+  const p = document.createElement('p'); p.className = 'companion-empty';
+  if(weather.status === 'error'){
+    p.textContent = 'Couldn\'t load weather from Open-Meteo ('+weather.error+'). ';
+    if(withRetry){
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'add-btn small';
+      b.textContent = 'Retry'; b.addEventListener('click', fetchWeather);
+      p.appendChild(b);
+    }
+  } else {
+    p.textContent = 'Loading weather…';
+  }
+  el.replaceChildren(p);
+}
+function renderWeatherCurrent(containerId, compact){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.classList.toggle('compact', !!compact);
+  if(weather.status !== 'ok'){ weatherStatusMsg(el, !compact); return; }
+  const c = weather.current;
+  const [glyph, label] = wmo(c.weather_code);
+  el.innerHTML =
+    '<span class="weather-icon">'+glyph+'</span>'+
+    '<span class="weather-temp">'+Math.round(c.temperature_2m)+'°C</span>'+
+    '<span class="weather-cond-label">'+label+'</span>'+
+    (compact ? '' :
+      '<div class="weather-stat-row">'+
+        '<span>Humidity '+c.relative_humidity_2m+'%</span>'+
+        '<span>Wind '+Math.round(c.wind_speed_10m)+' km/h</span>'+
+        '<span>Cloud '+c.cloud_cover+'%</span>'+
+        '<span>Updated '+new Date(weather.fetchedAt).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})+'</span>'+
+      '</div>');
+}
+function renderWeatherForecast(){
+  const el = document.getElementById('weather-forecast');
+  if(!el) return;
+  if(weather.status !== 'ok'){ weatherStatusMsg(el, false); return; }
+  el.innerHTML = weather.days.map((d, i)=>{
+    const [glyph, label] = wmo(d.code);
+    const dayLabel = i === 0 ? 'Today' : new Date(d.date+'T00:00:00').toLocaleDateString('en-GB', {weekday:'short'});
+    const frost = d.frost && d.frost.frost;
+    const rain = (d.rainPct ?? 0)+'%'+(d.rainMm > 0 ? ' · '+d.rainMm+'mm' : '');
+    return '<div class="forecast-day'+(frost ? ' frost' : '')+'" title="'+label+(frost ? ' — ground may reach '+d.frost.groundMinC+'°C overnight' : '')+'">'+
+      '<div class="fd-day">'+dayLabel+'</div>'+
+      '<div class="fd-icon">'+glyph+'</div>'+
+      '<div class="fd-temps"><b>'+Math.round(d.hi)+'°</b> <span>'+Math.round(d.lo)+'°</span></div>'+
+      '<div class="fd-rain">'+rain+'</div>'+
+      (frost ? '<div class="fd-frost">Frost risk</div>' : '')+
+    '</div>';
+  }).join('');
+}
+function renderWeatherRaindrops(){
+  const el = document.getElementById('weather-raindrops');
+  if(el) el.replaceChildren(...buildRaindropItems(48, '+ Log watering', false));
+  const hint = document.getElementById('weather-water-hint');
+  if(hint) hint.textContent = weatherWaterHint();
+}
+function renderWeatherSeasonStats(){
+  const el = document.getElementById('weather-season-stats');
+  if(!el) return;
+  const s = weather.status === 'ok' ? weather.season : null;
+  const rain = s ? (s.rainMm >= 10 ? Math.round(s.rainMm) : s.rainMm.toFixed(1))+'mm' : '—';
+  const temp = s && s.avgTempC != null ? s.avgTempC.toFixed(1)+'°C' : '—';
+  el.innerHTML =
+    '<div class="stat"><div class="n">'+rain+'</div><div class="l">rain since 1 Jan</div></div>'+
+    '<div class="stat"><div class="n">'+temp+'</div><div class="l">avg temperature</div></div>'+
+    '<div class="stat"><div class="n">'+computeTimesWateredThisYear()+'</div><div class="l">times watered</div></div>';
+}
+function renderWeatherLocation(){
+  ['weather-loc-name', 'overview-weather-loc'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = WEATHER_LOCATION.name;
+  });
+}
+function renderOverviewWeather(){
+  renderWeatherCurrent('overview-weather-current', true);
+  const drops = document.getElementById('overview-weather-raindrops');
+  if(drops) drops.replaceChildren(...buildRaindropItems(30, '+ Log', true));
+  const rainEl = document.getElementById('overview-weather-rain');
+  if(!rainEl) return;
+  const t = weather.status === 'ok' && weather.days[0];
+  rainEl.textContent = t
+    ? 'Rain today: '+(t.rainPct ?? 0)+'%'+(t.rainMm > 0 ? ' ('+t.rainMm+'mm)' : '')+
+      (t.frost && t.frost.frost ? ' · Frost risk tonight' : '')
+    : '';
+}
+function renderWeatherAll(){
+  renderWeatherLocation();
+  renderWeatherCurrent('weather-current', false);
+  renderWeatherForecast();
+  renderWeatherRaindrops();
+  renderWeatherSeasonStats();
+  renderOverviewWeather();
+  renderLookOutFor();
+}
+
+/* ---------- location search (Open-Meteo geocoding) ---------- */
+function formatPlace(r){
+  const parts = [r.name, r.admin1, r.country].filter(Boolean);
+  return parts.filter((p, i)=> parts.indexOf(p) === i).join(', ');
+}
+function setWeatherLocation(loc){
+  WEATHER_LOCATION = loc;
+  weather = { status:'idle' };
+  fetchWeather();
+}
+function openWeatherLocationForm(anchorBtn){
+  const {form, close} = openPopover(anchorBtn,
+    '<strong>Change Location</strong>'+
+    '<label>Town or postcode<input type="text" id="wlf-name" autocomplete="off"></label>'+
+    '<div class="loc-results" id="wlf-results"></div>'+
+    '<div class="row"><button class="save" type="button">Search</button><button class="cancel" type="button">Cancel</button></div>');
+  const input = form.querySelector('#wlf-name');
+  const results = form.querySelector('#wlf-results');
+  input.placeholder = 'e.g. Norwich';
+  input.focus();
+  const note = text=>{ const p = document.createElement('p'); p.className = 'confirm-msg'; p.textContent = text; results.replaceChildren(p); };
+  async function search(){
+    const q = input.value.trim();
+    if(q.length < 2){ note('Type at least 2 characters.'); return; }
+    note('Searching…');
+    try{
+      const body = await omGet(OM_GEOCODE, {name:q, count:5, language:'en', format:'json'});
+      const hits = body.results || [];
+      if(!hits.length){ note('No places found for "'+q+'".'); return; }
+      results.replaceChildren(...hits.map(r=>{
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'loc-result';
+        b.textContent = formatPlace(r);
+        b.addEventListener('click', ()=>{
+          close();
+          setWeatherLocation({name: formatPlace(r), lat: r.latitude, lon: r.longitude});
+          showToast('Location set to '+WEATHER_LOCATION.name+'.');
+        });
+        return b;
+      }));
+    }catch(err){
+      note('Search failed ('+err.message+').');
+    }
+  }
+  form.querySelector('.save').addEventListener('click', search);
+  input.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); search(); } });
+}
+
+/* ---------- volunteer potatoes: tubers that sprout on their own ---------- */
+let volunteer_log = {};
 /* ---------- shared popover-form helpers ----------
    Every "mini-form" popover (volunteer potato, harvest log, add task/event,
    stats harvest/issue) is position:fixed and anchored under the button
@@ -1648,9 +2224,10 @@ function positionPopoverForm(form, rect){
    of the general keyboard -- only accepts/emits ISO "yyyy-mm-dd". These
    convert at the form boundary so nothing downstream has to change. */
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function todayISODate(){
-  return today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+function toISODate(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+function todayISODate(){ return toISODate(today); }
 function displayDateToISO(s){
   if(!s) return '';
   const m = s.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})$/);
@@ -1676,7 +2253,7 @@ function openVolunteerForm(anchorBtn, sectionId){
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
   form.innerHTML =
-    '<strong>Volunteer potato &mdash; '+sectionId+'</strong>'+
+    '<strong>Volunteer Potato &mdash; '+sectionId+'</strong>'+
     '<label>Quantity spotted<input type="number" inputmode="numeric" min="1" id="vf-qty" value="'+(existing?existing.qty:1)+'"></label>'+
     '<label>Date first seen<input type="date" id="vf-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
     '<div class="row"><button class="save">Save</button><button class="cancel" type="button">Cancel</button></div>';
@@ -1710,83 +2287,331 @@ function refreshVolunteerAlert(){
   }
 }
 
-/* ---------- Overview "Look out for" -- real signals, not the four
-   static lines this card used to always show regardless of what was
-   actually going on. Two sources: the volunteer-potato alert above
-   (already computed) and anything logged as late/failed/missed via
-   "Log issue" in the last couple of weeks -- older issues stay on
-   record on the Stats page, but aren't still worth a callout here. */
+/* ---------- weather-driven "Look Out For" alerts ----------
+   Rules over the Open-Meteo forecast, each only shown when something it
+   applies to is actually planted (or the matching issue has been logged
+   recently), and phrased as something to do. Thresholds are starting
+   points, tunable later. */
+const TENDER_SPECIES = new Set(['tomato','cucumber','courgette','squash','pumpkin','pepper','aubergine','frenchbean','runnerbean','sweetcorn','basil','watermelon']);
+const BLIGHT_SPECIES = new Set(['tomato','potato']);
+const SLUG_SPECIES = new Set(['lettuce','cabbage','kale','spinach','rocket','broccoli','cauliflower','brusselsprout','rhubarbchard','sorrel','frenchbean','runnerbean','peas','courgette','squash','pumpkin','basil','chicory','celery']);
+const TALL_SPECIES = new Set(['brusselsprout','runnerbean','sweetcorn','broadbean','peas','tomato','frenchbean','artichoke','kale','broccoli']);
+const ISSUE_RECENT_DAYS = 60;
+
+// frost_log[year] = ISO date of that autumn's first forecast frost night (synced).
+let frost_log = {};
+
+function plantedList(){
+  const tag = (arr, place)=> arr.filter(s=> s.species).map(s=> ({s, place}));
+  return [...tag(A,'bed'), ...tag(B,'bed'), ...tag(POTS,'pot'),
+          ...tag(GREENHOUSE_TRAYS,'greenhouse'), ...tag(WINDOWSILL_TRAYS,'windowsill')];
+}
+function isOutdoor(p){ return p.place === 'bed' || p.place === 'pot'; }
+// "Courgette in A7, A8; Cucumber (Wisconsin) in Pot 1"
+function describePlantings(list){
+  const groups = new Map();
+  list.forEach(({s})=>{
+    const k = s.label || getItem(s.species).name;
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(s.n);
+  });
+  return [...groups].map(([k, ids])=> k+' in '+ids.join(', ')).join('; ');
+}
+function describeIssues(list){
+  return [...new Set(list.map(e=> getItem(e.itemId).name))].join(', ');
+}
+function dayWord(i, night){
+  if(i === 0) return night ? 'tonight' : 'today';
+  if(i === 1) return night ? 'tomorrow night' : 'tomorrow';
+  const wd = new Date(weather.days[i].date+'T00:00:00').toLocaleDateString('en-GB', {weekday:'long'});
+  return night ? wd+' night' : wd;
+}
+function dayRange(i, j){ return i === j ? dayWord(i) : dayWord(i)+' to '+dayWord(j); }
+function hoursBetween(fromT, toT){
+  const h = weather.hourly, out = [];
+  h.time.forEach((t, i)=>{ if(t >= fromT && t < toT) out.push(i); });
+  return out;
+}
+function hoursOfDay(dayISO){ return hoursBetween(dayISO+'T00:00', addDaysISO(dayISO, 1)+'T00:00'); }
+const mean = xs=> xs.length ? xs.reduce((a,b)=> a+b, 0)/xs.length : NaN;
+
+// Hutton criteria (UK blight warning): a day with min temp >= 10°C and at
+// least 6 hours of relative humidity >= 90%, two days running.
+function huttonDay(dayISO){
+  const idx = hoursOfDay(dayISO), h = weather.hourly;
+  if(idx.length < 20) return false;
+  const minT = Math.min(...idx.map(i=> h.temperature_2m[i]));
+  return minT >= 10 && idx.filter(i=> h.relative_humidity_2m[i] >= 90).length >= 6;
+}
+// Dry, not too humid, with a breeze: leaves dry fast and sprays stay put.
+function goodTreatmentDay(){
+  const h = weather.hourly;
+  const i = weather.days.findIndex(d=>{
+    if(!(d.rainMm < 0.2 && (d.rainPct ?? 0) <= 20 && d.windMax >= 8 && d.windMax <= 25)) return false;
+    const day = hoursBetween(d.date+'T09:00', d.date+'T18:00');
+    return mean(day.map(k=> h.relative_humidity_2m[k])) <= 75;
+  });
+  return i < 0 ? null : dayWord(i);
+}
+function treatmentTip(what){
+  const d = goodTreatmentDay();
+  return d ? ' Best window to '+what+': '+d+' (dry and breezy).' : '';
+}
+// First run of >= `len` consecutive forecast days passing test(day, i).
+function findSpell(test, len){
+  let start = -1;
+  for(let i = 0; i < weather.days.length; i++){
+    if(test(weather.days[i], i)){ if(start < 0) start = i; if(i - start + 1 >= len) return [start, i]; }
+    else start = -1;
+  }
+  return null;
+}
+// Autumn only (spring frosts aren't "first of the season"). Recorded once
+// the frost is forecast for tonight, so a frost that drops out of a
+// longer-range forecast never gets written down.
+function isFirstFrost(dateISO, tonight){
+  if(parseInt(dateISO.slice(5,7), 10) < 7) return false;
+  const y = dateISO.slice(0,4);
+  if(frost_log[y] && frost_log[y] !== dateISO) return false;
+  if(tonight) frost_log[y] = dateISO;
+  return true;
+}
+
+function computeWeatherAlerts(){
+  if(weather.status !== 'ok') return [];
+  const alerts = [];
+  const planted = plantedList();
+  const outdoor = planted.filter(isOutdoor);
+  const greenhouse = planted.filter(p=> p.place === 'greenhouse');
+  const h = weather.hourly;
+
+  // Frost: first frost-risk night in the next three.
+  const fi = weather.days.slice(0,3).findIndex(d=> d.frost && d.frost.frost);
+  if(fi >= 0){
+    const d = weather.days[fi];
+    const tender = outdoor.filter(p=> TENDER_SPECIES.has(p.s.species));
+    const ghTender = greenhouse.filter(p=> TENDER_SPECIES.has(p.s.species));
+    let text = 'Ground may reach '+d.frost.groundMinC+'°C '+dayWord(fi, true)+'.';
+    text += tender.length
+      ? ' Fleece or bring in the tender crops: '+describePlantings(tender)+'.'
+      : ' Nothing tender is planted outdoors; fleece any young seedlings.';
+    if(ghTender.length) text += ' Close the greenhouse before dusk ('+describePlantings(ghTender)+').';
+    alerts.push({pill: isFirstFrost(d.date, fi === 0) ? 'First Frost of the Season' : 'Frost Risk', cls:'warn', text});
+  }
+
+  // Blight: a Hutton period starting yesterday or later.
+  const hosts = planted.filter(p=> BLIGHT_SPECIES.has(p.s.species));
+  const blightLogged = recentIssues('blight', ISSUE_RECENT_DAYS);
+  if(hosts.length || blightLogged.length || Object.keys(volunteer_log).length){
+    // dates[k] is weather.days[k-1]; dates[0] is yesterday.
+    const dates = [addDaysISO(weather.days[0].date, -1), ...weather.days.map(d=> d.date)];
+    for(let k = 0; k < dates.length - 1; k++){
+      if(huttonDay(dates[k]) && huttonDay(dates[k+1])){
+        let text = 'Warm, humid conditions that spread blight, '+(k === 0 ? 'yesterday to today' : dayRange(k-1, k))+'.';
+        if(hosts.length) text += ' Check '+describePlantings(hosts)+' daily, remove blotched leaves, and water at the base.';
+        if(blightLogged.length) text += ' Blight was already logged on '+describeIssues(blightLogged)+'.';
+        text += treatmentTip('apply a preventative treatment');
+        alerts.push({pill:'Blight Risk', cls:'warn', text});
+        break;
+      }
+    }
+  }
+
+  // Strong wind in the next four days.
+  const wi = weather.days.slice(0,4).findIndex(d=> d.windMax >= 35);
+  if(wi >= 0){
+    const tall = outdoor.filter(p=> TALL_SPECIES.has(p.s.species));
+    let text = 'Winds up to '+Math.round(weather.days[wi].windMax)+' km/h '+dayWord(wi)+'.';
+    if(tall.length) text += ' Stake or tie in '+describePlantings(tall)+'.';
+    if(greenhouse.length) text += ' Shut the greenhouse door and vents.';
+    if(tall.length || greenhouse.length) alerts.push({pill:'Strong Wind', cls:'warn', text});
+  }
+
+  // Slugs: a mild, damp night, if they've been a problem or there's something tender to eat.
+  const slugLogged = recentIssues('slugs', ISSUE_RECENT_DAYS);
+  const slugFood = outdoor.filter(p=> SLUG_SPECIES.has(p.s.species) || p.s.stage === 'seedling');
+  if(slugLogged.length || slugFood.some(p=> p.s.stage === 'seedling')){
+    const si = weather.days.slice(0,3).findIndex(d=>{
+      const night = hoursBetween(d.date+'T20:00', addDaysISO(d.date, 1)+'T07:00');
+      if(night.length < 6) return false;
+      const minT = Math.min(...night.map(k=> h.temperature_2m[k]));
+      const wet = hoursBetween(d.date+'T07:00', addDaysISO(d.date, 1)+'T07:00').reduce((a,k)=> a+(h.precipitation[k]||0), 0) >= 1
+        || mean(night.map(k=> h.relative_humidity_2m[k])) >= 90;
+      return minT >= 8 && wet;
+    });
+    if(si >= 0){
+      let text = 'Mild and damp '+dayWord(si, true)+', ideal slug weather.';
+      if(slugFood.length) text += ' Check '+describePlantings(slugFood)+' after dark and refresh traps or barriers.';
+      if(slugLogged.length) text += ' Slugs were logged recently on '+describeIssues(slugLogged)+'.';
+      alerts.push({pill:'Slug Night', cls:'info', text});
+    }
+  }
+
+  // Mildew / grey mould: a humid, still spell, mostly a greenhouse problem.
+  const fungalLogged = recentIssues('fungal', ISSUE_RECENT_DAYS);
+  if(greenhouse.length || fungalLogged.length){
+    const spell = findSpell(d=>{
+      const idx = hoursOfDay(d.date);
+      return mean(idx.map(k=> h.relative_humidity_2m[k])) >= 85 && d.windMax <= 15;
+    }, 2);
+    if(spell){
+      let text = 'Humid, still spell '+dayRange(spell[0], spell[1])+', ideal for mildew and grey mould.';
+      text += greenhouse.length ? ' Ventilate the greenhouse during the day, water in the morning at the base, and clear fallen leaves.' : ' Water in the morning at the base and clear fallen leaves.';
+      if(fungalLogged.length) text += ' A fungal issue was logged recently on '+describeIssues(fungalLogged)+'.'+treatmentTip('treat it');
+      alerts.push({pill:'Mildew Risk', cls:'info', text});
+    }
+  }
+
+  // Aphids and other pests breed fast in warm, dry spells.
+  const pestLogged = recentIssues('pests', ISSUE_RECENT_DAYS);
+  if(pestLogged.length){
+    const spell = findSpell(d=> d.hi >= 20 && d.rainMm < 1, 3);
+    if(spell){
+      alerts.push({pill:'Aphid Weather', cls:'info',
+        text:'Warm, dry spell '+dayRange(spell[0], spell[1])+', when aphids multiply fast. Check leaf undersides on '+describeIssues(pestLogged)+'.'+treatmentTip('spray or squash them')});
+    }
+  }
+
+  // Hot day under glass.
+  if(greenhouse.length){
+    const gi = weather.days.slice(0,3).findIndex(d=> d.hi >= 24);
+    if(gi >= 0){
+      alerts.push({pill:'Greenhouse Heat', cls:'info',
+        text:Math.round(weather.days[gi].hi)+'°C outside '+dayWord(gi)+', much hotter under glass. Open the vents and door, and damp down the floor.'});
+    }
+  }
+
+  // A good treatment day, flagged on its own if an issue is still recent and no alert above covered it.
+  const treatable = [...blightLogged, ...fungalLogged, ...pestLogged].filter(e=>{
+    const d = parseDisplayDate(e.date); return d && (today - d)/86400000 <= 21;
+  });
+  if(treatable.length && !alerts.some(a=> /Best window/.test(a.text))){
+    const d = goodTreatmentDay();
+    if(d) alerts.push({pill:'Good Spraying Day', cls:'ok',
+      text:d.charAt(0).toUpperCase()+d.slice(1)+' looks dry and breezy, a good time to treat '+describeIssues(treatable)+'.'});
+  }
+  return alerts;
+}
+
+/* ---------- Overview "Look Out For" ----------
+   Weather alerts first, then issues logged in the last two weeks (older
+   ones stay on the Stats page), then the volunteer-potato alert. */
 const LOOKOUT_RECENT_DAYS = 14;
 const LOOKOUT_TYPE_PILL = {
   failed: {cls:'warn', label:'Failed'},
-  missed: {cls:'warn', label:'Missed'},
+  missed: {cls:'warn', label:'Missed Planting'},
   late:   {cls:'info', label:'Late'},
 };
+function lookoutRow(pillLabel, pillCls, text){
+  const row = document.createElement('div'); row.className = 'event lookout-row';
+  const span = document.createElement('span');
+  const p = document.createElement('span'); p.className = 'pill '+pillCls; p.textContent = pillLabel;
+  span.append(p, ' '+text);
+  row.appendChild(span);
+  return row;
+}
 function renderLookOutFor(){
   const el = document.getElementById('lookout-list');
   if(!el) return;
-  el.querySelectorAll('.issue-row').forEach(n=>n.remove());
+  el.querySelectorAll('.lookout-row').forEach(n=> n.remove());
   const volunteerAlert = document.getElementById('volunteer-alert');
-  const yLog = getEventYearLog(today.getFullYear());
-  const recent = yLog
-    .map(ev=>({ev, d: parseDisplayDate(ev.date)}))
-    .filter(x=>{
-      if(!x.d) return false;
-      const days = (today - x.d) / 86400000;
-      return days >= 0 && days <= LOOKOUT_RECENT_DAYS;
-    })
+  const add = row=> volunteerAlert ? el.insertBefore(row, volunteerAlert) : el.appendChild(row);
+  const alerts = computeWeatherAlerts();
+  alerts.forEach(a=> add(lookoutRow(a.pill, a.cls, a.text)));
+  const recent = getEventYearLog(today.getFullYear())
+    .map(ev=> ({ev, d: parseDisplayDate(ev.date)}))
+    .filter(x=> x.d && (today - x.d)/86400000 >= 0 && (today - x.d)/86400000 <= LOOKOUT_RECENT_DAYS)
     .sort((a,b)=> b.d - a.d);
   recent.forEach(({ev})=>{
     const pill = LOOKOUT_TYPE_PILL[ev.type] || {cls:'info', label:ev.type};
-    const row = document.createElement('div'); row.className = 'event issue-row';
-    const span = document.createElement('span');
-    const p = document.createElement('span'); p.className = 'pill '+pill.cls; p.textContent = pill.label;
-    span.appendChild(p);
-    span.appendChild(document.createTextNode(' '+getItem(ev.itemId).name+(ev.note?' — '+ev.note:'')+' ('+ev.date+')'));
-    row.appendChild(span);
-    if(volunteerAlert) el.insertBefore(row, volunteerAlert); else el.appendChild(row);
+    add(lookoutRow(pill.label, pill.cls, getItem(ev.itemId).name+' ('+(ISSUE_CATEGORY_LABEL[ev.category] || 'Other')+')'+(ev.note ? ' — '+ev.note : '')+' ('+ev.date+')'));
   });
   refreshVolunteerAlert();
   const hasVolunteer = !!(volunteerAlert && !volunteerAlert.hidden);
   const empty = document.getElementById('lookout-empty');
-  if(empty) empty.hidden = recent.length > 0 || hasVolunteer;
+  if(empty) empty.hidden = alerts.length > 0 || recent.length > 0 || hasVolunteer;
 }
 
 /* ============================================================
    RECORD-KEEPING: harvest log, issue log, per-year notes, compost day.
-   Everything here is keyed by year (like plan_data) and, other than the
-   pre-seeded examples below, only ever gets written to via a tick or a
-   form -- never silently invented -- so what's on the Stats page is
-   always something you actually logged.
+   Everything here is keyed by year (like plan_data) and only ever gets
+   written to via a tick or a form, so what's on the Stats page is always
+   something you actually logged.
    ============================================================ */
-function todayDateString(){ return today.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); }
+// Same "D Mon YYYY" format as isoDateToDisplay (the en-GB locale writes "Sept", which
+// wouldn't match dates logged through the date pickers).
+function todayDateString(){ return isoDateToDisplay(todayISODate()); }
 
 // harvest_log[year][itemId] = [{date, weight(g)|null, qty|null}, ...] -- one
 // entry per occasion, matching "if I harvest tomatoes on three occasions..."
-let harvest_log = {
-  2026: {
-    tomato_cherry: [
-      {date:'28 Jul 2026', weight:155, qty:22},
-      {date:'11 Aug 2026', weight:250, qty:34},
-      {date:'25 Aug 2026', weight:100, qty:15},
-    ],
-    courgette: [
-      {date:'2 Jul 2026', weight:1200, qty:4},
-      {date:'16 Jul 2026', weight:1450, qty:5},
-    ],
-  },
-  2027: {},
-};
+let harvest_log = { 2026: {}, 2027: {} };
 function getHarvestYearLog(y){ if(!harvest_log[y]) harvest_log[y] = {}; return harvest_log[y]; }
 
-// event_log[year] = [{type:'late'|'failed'|'missed', itemId, note, date}]
-let event_log = {
-  2026: [
-    {type:'failed', itemId:'radish', note:'Slugs took the whole first sowing in April.', date:'30 Apr 2026'},
-  ],
-  2027: [],
-};
+// event_log[year] = [{type:'late'|'failed'|'missed', category, itemId, note, date}]
+let event_log = { 2026: [], 2027: [] };
 function getEventYearLog(y){ if(!event_log[y]) event_log[y] = []; return event_log[y]; }
+// Year a "D Mon YYYY" date belongs to, so a log lands in the year it happened.
+function yearOfDisplayDate(d){
+  const iso = displayDateToISO(d);
+  return iso ? parseInt(iso.slice(0,4), 10) : today.getFullYear();
+}
+
+/* ---------- issue categories ----------
+   Every issue carries a fixed category (on top of late/failed/missed) so
+   weather-driven advice can target what's actually been a problem. Older
+   free-text issues are categorised once by keyword match on their note. */
+const ISSUE_CATEGORIES = [
+  {id:'blight', label:'Blight'},
+  {id:'fungal', label:'Other fungal/disease'},
+  {id:'slugs',  label:'Slugs & snails'},
+  {id:'pests',  label:'Aphids & other pests'},
+  {id:'frost',  label:'Frost damage'},
+  {id:'damage', label:'Mechanical/animal damage'},
+  {id:'other',  label:'Other'},
+];
+const ISSUE_CATEGORY_LABEL = Object.fromEntries(ISSUE_CATEGORIES.map(c=>[c.id, c.label]));
+const ISSUE_KEYWORDS = [
+  ['blight', /blight/i],
+  ['slugs',  /slug|snail/i],
+  ['pests',  /aphid|greenfly|blackfly|whitefly|caterpillar|flea ?beetle|thrip|mites?\b|leaf ?miner|carrot ?fly|cabbage white|sawfly|weevil|pest|\bbugs?\b|maggot|grub/i],
+  ['fungal', /mildew|mou?ld|\brot\b|rotten|rotting|\brust\b|fung|disease|virus|wilt|canker|leaf ?spot|botrytis|damping.?off|scab/i],
+  ['frost',  /frost|freez|\bcold\b|\bchill(ed|y)?\b/i],
+  ['damage', /\bwind(y|s)?\b|hail|storm|broke|snapp?ed|trampl|bird|pigeon|squirrel|\bfox(es)?\b|\bmice\b|\bmouse\b|\brats?\b|rabbit|deer|badger|\bcats?\b|\bdogs?\b|dug up/i],
+];
+function guessIssueCategory(note){
+  const hit = ISSUE_KEYWORDS.find(([, re])=> re.test(note || ''));
+  return hit ? hit[0] : 'other';
+}
+function categoriseLegacyIssues(){
+  Object.values(event_log).forEach(list=> list.forEach(e=>{
+    if(!ISSUE_CATEGORY_LABEL[e.category]) e.category = guessIssueCategory(e.note);
+  }));
+}
+function issueCategoryOptions(selected){
+  return ISSUE_CATEGORIES.map(c=>'<option value="'+c.id+'"'+(c.id === selected ? ' selected' : '')+'>'+c.label+'</option>').join('');
+}
+// Pre-selects a category from the note as it's typed, until one is picked by hand.
+function wireCategoryGuess(form, noteSel, catSel){
+  const note = form.querySelector(noteSel), cat = form.querySelector(catSel);
+  let picked = false;
+  cat.addEventListener('change', ()=>{ picked = true; });
+  note.addEventListener('input', ()=>{ if(!picked) cat.value = guessIssueCategory(note.value); });
+}
+// Issues of one category logged in the last `days` days, newest first.
+function recentIssues(category, days){
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - days);
+  return [today.getFullYear()-1, today.getFullYear()]
+    .flatMap(y=> event_log[y] || [])
+    .filter(e=> e.category === category)
+    .map(e=> ({e, d: parseDisplayDate(e.date)}))
+    .filter(x=> x.d && x.d >= cutoff && x.d <= today)
+    .sort((a,b)=> b.d - a.d)
+    .map(x=> x.e);
+}
+
+// watering_log[year] = [{date, target:'bed'|'pots'}]
+let watering_log = { 2026: [], 2027: [] };
+function getWateringYearLog(y){ if(!watering_log[y]) watering_log[y] = []; return watering_log[y]; }
 
 let stats_notes = { 2026:'', 2027:'' };
 
@@ -1852,8 +2677,7 @@ function onTaskCheckClick(chk){
     removeAndRerender();
   } else if(kind === 'harvest'){
     const itemId = chk.dataset.taskItem;
-    const year = parseInt(chk.dataset.taskYear,10);
-    openHarvestLogForm(chk, itemId, year, removeAndRerender);
+    openHarvestLogForm(chk, itemId, removeAndRerender);
     chk.disabled = false; // the harvest form can be cancelled -- let them retry
   } else if(kind === 'compost'){
     const year = parseInt(chk.dataset.taskYear,10);
@@ -1871,7 +2695,7 @@ function onTaskCheckClick(chk){
 }
 
 /* ---------- Harvest logging (weight and/or count, per occasion) ---------- */
-function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
+function openHarvestLogForm(anchorBtn, itemId, onLogged){
   document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const item = getItem(itemId);
   const rect = anchorBtn.getBoundingClientRect();
@@ -1879,7 +2703,7 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
   form.innerHTML =
-    '<strong>Log harvest &mdash; '+item.name+'</strong>'+
+    '<strong>Log Harvest &mdash; '+item.name+'</strong>'+
     '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
     '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
     '<label>Date<input type="date" id="hlf-date" value="'+todayISODate()+'"></label>'+
@@ -1893,7 +2717,7 @@ function openHarvestLogForm(anchorBtn, itemId, year, onLogged){
     const date = isoDateToDisplay(form.querySelector('#hlf-date').value) || todayDateString();
     const comment = form.querySelector('#hlf-comment').value.trim();
     if(!weight && !qty){ form.querySelector('#hlf-weight').focus(); return; }
-    const yLog = getHarvestYearLog(year);
+    const yLog = getHarvestYearLog(yearOfDisplayDate(date));
     if(!yLog[itemId]) yLog[itemId] = [];
     yLog[itemId].push({date, weight: weight||null, qty: qty||null, comment: comment||''});
     form.remove();
@@ -1953,7 +2777,7 @@ function markHarvested(anchorBtn, sectionId){
   // of crops (tomatoes, courgettes) get picked repeatedly over weeks, and
   // there might be more still to come. The only way the tile goes away
   // is the explicit, confirmed "discard" (the X control) below.
-  openHarvestLogForm(anchorBtn, itemId, plan_year);
+  openHarvestLogForm(anchorBtn, itemId);
 }
 
 /* ---------- Discard: the only thing that clears a tile ----------
@@ -2013,21 +2837,25 @@ function openIssueForm(anchorBtn, sectionId){
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
   form.innerHTML =
-    '<strong>Log an issue &mdash; '+sectionId+' ('+item.name+')</strong>'+
+    '<strong>Log an Issue &mdash; '+sectionId+' ('+item.name+')</strong>'+
     '<label>Type<select id="ivf-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
     '<label>Note<input type="text" id="ivf-note" placeholder="e.g. Slug nibbling on lower leaves"></label>'+
+    '<label>Category<select id="ivf-cat">'+issueCategoryOptions('other')+'</select></label>'+
     '<label>Date<input type="date" id="ivf-date" value="'+todayISODate()+'"></label>'+
     '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
   form.querySelector('#ivf-note').focus();
+  wireCategoryGuess(form, '#ivf-note', '#ivf-cat');
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#ivf-type').value;
     const note = form.querySelector('#ivf-note').value.trim();
+    const category = form.querySelector('#ivf-cat').value;
     const date = isoDateToDisplay(form.querySelector('#ivf-date').value) || todayDateString();
-    getEventYearLog(plan_year).push({type, itemId, note, date});
+    getEventYearLog(yearOfDisplayDate(date)).push({type, category, itemId, note, date});
     form.remove();
     showToast('Issue logged for '+sectionId+' ('+item.name+').');
+    renderLookOutFor();
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
   });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
@@ -2118,7 +2946,7 @@ function openPlantForm(anchorBtn, kind, sectionId){
   const form = document.createElement('div');
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
-  const kindLabel = {bed: sectionId, pot:'a new pot', greenhouse:'the greenhouse', windowsill:'the windowsill'}[kind];
+  const kindLabel = {bed: sectionId, pot:'a New Pot', greenhouse:'the Greenhouse', windowsill:'the Windowsill'}[kind];
   const options = INVENTORY.slice()
     .sort((a,b)=> (a.name+a.variety).localeCompare(b.name+b.variety))
     .map(it=> '<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
@@ -2232,7 +3060,7 @@ function getSaturdaysInMonth(year, monthIndex, count){
   }
   return dates;
 }
-function formatShortDate(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}); }
+function formatShortDate(d){ return d.getDate()+' '+MONTH_ABBR[d.getMonth()]; }
 function getCompostDayState(){
   // Find the next occurrence of the target month: this year's, unless
   // that window has already passed or was already logged, in which case
@@ -2294,7 +3122,6 @@ let custom_tasks = [];
 let custom_events = [
   {id:'seed-autumn-frost', title:'First expected autumn frost (approximate)', description:'', date:'15 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
   {id:'seed-onion-sowing', title:'Last safe sowing — overwintering onions', description:'', date:'10 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
-  {id:'seed-brussels-sow', title:'Brussels sprout indoor sow', description:'', date:'1 Feb 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
   {id:'seed-spring-frost', title:'Last expected spring frost (approximate)', description:'', date:'5 May 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
 ];
 
@@ -2335,9 +3162,12 @@ function renderOverviewTasks(){
     kind:'custom', id:t.id, title:t.title, description:t.description,
     due: t.location ? (t.date+' · '+t.location) : t.date,
   }));
+  // Overdue tasks stay listed (flagged) until ticked off or removed,
+  // rather than silently dropping off once their date passes.
+  const todayISO = todayISODate(), horizonISO = toISODate(horizon);
   const pool = BUILTIN_TASKS.concat(custom)
-    .filter(t=>{ const d = new Date(t.date); return !isNaN(d) && d >= today && d <= horizon; })
-    .sort((a,b)=> new Date(a.date) - new Date(b.date))
+    .filter(t=> /^\d{4}-\d{2}-\d{2}$/.test(t.date) && t.date <= horizonISO)
+    .sort((a,b)=> a.date < b.date ? -1 : a.date > b.date ? 1 : 0)
     .slice(0, 10);
   ul.querySelectorAll('li').forEach(li=>{ if(li.id !== 'task-compost-day') li.remove(); });
   pool.forEach(t=>{
@@ -2348,6 +3178,10 @@ function renderOverviewTasks(){
     chk.dataset.taskId = t.id;
     const txt = document.createElement('span'); txt.className = 'task-text';
     const due = document.createElement('span'); due.className = 'due'; due.textContent = t.due;
+    if(t.date < todayISO){
+      const od = document.createElement('span'); od.className = 'pill warn overdue-pill'; od.textContent = 'Overdue';
+      due.append(' ', od);
+    }
     if(t.kind === 'custom'){
       chk.dataset.taskKind = 'custom'; chk.title = 'Mark done and remove';
       txt.appendChild(document.createTextNode(t.title + (t.description ? ' — '+t.description+' ' : ' ')));
@@ -2402,7 +3236,7 @@ function updateTasksEmptyState(){
    removing it via its ✕ ends the whole series. */
 const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const ORDINAL_LABEL = {1:'first',2:'second',3:'third',4:'fourth','-1':'last'};
-function formatDisplayDate(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); }
+function formatDisplayDate(d){ return isoDateToDisplay(toISODate(d)); }
 function parseDisplayDate(s){
   if(!s) return null;
   const m = s.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})$/);
@@ -2489,7 +3323,7 @@ function openAddTaskEventForm(anchorBtn, kind){
       '</div>'
     : '';
   form.innerHTML =
-    '<strong>Add '+noun+'</strong>'+
+    '<strong>Add '+noun.charAt(0).toUpperCase()+noun.slice(1)+'</strong>'+
     '<label>Title<input type="text" id="atf-title" placeholder="e.g. Order seed potatoes"></label>'+
     '<label>Description<input type="text" id="atf-desc" placeholder="Optional detail"></label>'+
     '<label>'+(kind==='event'?'Start date':'Target date')+'<input type="date" id="atf-date" value="'+todayISODate()+'"></label>'+
@@ -2867,7 +3701,11 @@ let INV = {};
 function rebuildInvIndex(){ INV = {}; INVENTORY.forEach(it=>{ INV[it.id]=it; }); }
 rebuildInvIndex();
 function getItem(id){
-  return INV[id] || {id, name:'(removed seed)', variety:'', species:'tomato', sow:[1,1], harvest:[1,1], spacing:30, sun:'', good:[], bad:[]};
+  if(INV[id]) return INV[id];
+  // Bed tiles log by species ('tomato'), which isn't always an inventory id.
+  const bySpecies = INVENTORY.find(i=> i.species === id);
+  if(bySpecies) return {...bySpecies, id, variety:''};
+  return {id, name:'(removed seed)', variety:'', species:'tomato', sow:[1,1], harvest:[1,1], spacing:30, sun:'', good:[], bad:[]};
 }
 const NOT_OWNED_NAMES = {basil:'Basil', potato:'Potato'};
 
@@ -3238,7 +4076,10 @@ function renderYearTabs(){
     ).join('');
   }
   if(statsSeg){
-    statsSeg.innerHTML = years.map(y=>
+    const logYears = [harvest_log, event_log].flatMap(log=>
+      Object.keys(log).filter(y=> Object.keys(log[y] || {}).length).map(Number));
+    const statsYears = [...new Set([...years, ...logYears])].sort((a,b)=> a-b);
+    statsSeg.innerHTML = statsYears.map(y=>
       '<button class="'+(y===stats_year?'active':'')+'" data-year="'+y+'" onclick="setStatsYear('+y+')">'+y+'</button>'
     ).join('');
   }
@@ -3251,6 +4092,7 @@ function addPlanYear(){
   getYearData(next);
   if(!harvest_log[next]) harvest_log[next] = {};
   if(!event_log[next]) event_log[next] = [];
+  if(!watering_log[next]) watering_log[next] = [];
   if(stats_notes[next] === undefined) stats_notes[next] = '';
   renderYearTabs();
   setPlanYear(next);
@@ -3466,7 +4308,7 @@ function makePlanBlock(itemId, start, end, rowId, rowNum, opts){
 function resetCompanionPanel(){
   const el = document.getElementById('companion-panel');
   if(!el) return;
-  el.innerHTML = '<h3><span class="eyebrow">Companion suggestions</span></h3>'+
+  el.innerHTML = '<h3>Companion Suggestions</h3>'+
     '<p class="companion-empty">Click a planting in the grid above to see what grows well alongside it.</p>';
 }
 function showCompanionPanel(itemId){
@@ -3477,12 +4319,12 @@ function showCompanionPanel(itemId){
   const notOwned = m.good.filter(k=>!ownsSpecies(k));
   const label = k=> INVENTORY.find(it=>it.species===k) ? (INVENTORY.find(it=>it.species===k).name) : (NOT_OWNED_NAMES[k]||k);
   el.innerHTML =
-    '<h3><span class="eyebrow">Companion suggestions — '+m.name+(m.variety?' ('+m.variety+')':'')+'</span></h3>'+
+    '<h3>Companion Suggestions — '+m.name+(m.variety?' ('+m.variety+')':'')+'</h3>'+
     '<div class="companion-grid">'+
-      '<div><h4>You already grow</h4><ul class="companion-list">'+
+      '<div><h4>You Already Grow</h4><ul class="companion-list">'+
         (owned.length ? owned.map(k=>'<li><span class="dot"></span>'+label(k)+'</li>').join('') : '<li style="color:var(--m-text-dim)">None from your current inventory</li>')+
       '</ul></div>'+
-      '<div><h4>Worth adding to your seed store</h4><ul class="companion-list not-owned">'+
+      '<div><h4>Worth Adding to Your Seed Store</h4><ul class="companion-list not-owned">'+
         (notOwned.length ? notOwned.map(k=>'<li><span class="dot"></span>'+(NOT_OWNED_NAMES[k]||k)+'</li>').join('') : '<li>Nothing extra suggested</li>')+
       '</ul></div>'+
     '</div>';
@@ -3802,10 +4644,9 @@ function renderStatsHarvestLog(){
     el.appendChild(box);
   });
 }
-// `editing` is {itemId, index} to edit that existing harvest_log entry in
-// place, or omitted to log a brand new one. The crop itself is fixed once
-// an entry exists -- editing is for fixing a mistyped weight/date/etc,
-// not for moving an entry to a different crop's log.
+// `editing` is {itemId, index} of an existing harvest_log[stats_year] entry,
+// or omitted to log a new one. The crop is fixed once an entry exists; a
+// changed date re-files the entry under that date's year.
 function openStatsHarvestForm(anchorBtn, editing){
   document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
@@ -3815,7 +4656,7 @@ function openStatsHarvestForm(anchorBtn, editing){
   const existing = editing ? getHarvestYearLog(stats_year)[editing.itemId][editing.index] : null;
   const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
   form.innerHTML =
-    '<strong>'+(editing?'Edit harvest':'Log a harvest')+' &mdash; '+stats_year+'</strong>'+
+    '<strong>'+(editing?'Edit Harvest':'Log a Harvest')+' &mdash; '+stats_year+'</strong>'+
     (editing
       ? '<p class="confirm-msg">'+getItem(editing.itemId).name+(getItem(editing.itemId).variety?' — '+getItem(editing.itemId).variety:'')+'</p>'
       : '<label>Crop<select id="shf-item">'+options+'</select></label>')+
@@ -3833,11 +4674,14 @@ function openStatsHarvestForm(anchorBtn, editing){
     const date = isoDateToDisplay(form.querySelector('#shf-date').value) || todayDateString();
     const comment = form.querySelector('#shf-comment').value.trim();
     if(!weight && !qty){ form.querySelector('#shf-weight').focus(); return; }
-    const yLog = getHarvestYearLog(stats_year);
     const entry = {date, weight: weight||null, qty: qty||null, comment: comment||''};
-    if(editing) yLog[editing.itemId][editing.index] = entry;
-    else { if(!yLog[itemId]) yLog[itemId] = []; yLog[itemId].push(entry); }
+    if(editing) getHarvestYearLog(stats_year)[editing.itemId].splice(editing.index, 1);
+    const year = yearOfDisplayDate(date);
+    const yLog = getHarvestYearLog(year);
+    if(!yLog[itemId]) yLog[itemId] = [];
+    yLog[itemId].push(entry);
     form.remove();
+    if(year !== stats_year){ showToast('Saved under '+year+' (the year of its date).'); renderYearTabs(); }
     renderStats();
   });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
@@ -3859,7 +4703,7 @@ function confirmDeleteEntry(anchorBtn, message, onConfirm){
   form.className = 'volunteer-form';
   form.style.position = 'fixed';
   form.innerHTML =
-    '<strong>Delete this entry?</strong>'+
+    '<strong>Delete This Entry?</strong>'+
     '<p class="confirm-msg">'+message+'</p>'+
     '<div class="row"><button class="save" style="background:#b3453a;">Yes, delete</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
@@ -3924,7 +4768,7 @@ function renderStatsEventLog(){
     el.appendChild(p);
     return;
   }
-  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
+  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed Planting'};
   const typePill = {late:'info', failed:'warn', missed:'warn'};
   entries.forEach(({e,i})=>{
     const item = getItem(e.itemId);
@@ -3932,7 +4776,7 @@ function renderStatsEventLog(){
     const left = document.createElement('span');
     const pill = document.createElement('span'); pill.className = 'pill '+(typePill[e.type]||'info'); pill.textContent = typeLabel[e.type]||e.type;
     left.appendChild(pill);
-    left.appendChild(document.createTextNode(' '+item.name+(e.note?' — '+e.note:'')));
+    left.appendChild(document.createTextNode(' '+item.name+' ('+(ISSUE_CATEGORY_LABEL[e.category] || 'Other')+')'+(e.note ? ' — '+e.note : '')));
     const right = document.createElement('span'); right.className='d'; right.style.display='inline-flex'; right.style.alignItems='center'; right.style.gap='.35rem';
     const dateSpan = document.createElement('span'); dateSpan.textContent = e.date;
     right.appendChild(dateSpan);
@@ -3945,6 +4789,7 @@ function renderStatsEventLog(){
         {label:'Delete', onClick:()=> confirmDeleteEntry(kebab, 'Removes the '+e.date+' issue logged for '+item.name+'.', ()=>{
           getEventYearLog(stats_year).splice(i,1);
           renderStats();
+          renderLookOutFor();
         })},
       ]);
     });
@@ -3953,11 +4798,9 @@ function renderStatsEventLog(){
     el.appendChild(row);
   });
 }
-// `editing` is the index of an existing event_log[stats_year] entry to
-// edit in place, or omitted to log a brand new one. Unlike a harvest
-// entry, an issue is a flat per-year list rather than one grouped by
-// crop, so there's no separate container to move between -- editing can
-// freely change type, crop, note and date all at once.
+// `editing` is the index of an existing event_log[stats_year] entry, or
+// omitted to log a new one. Any field can change; a changed date re-files
+// the entry under that date's year.
 function openStatsEventForm(anchorBtn, editing){
   document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
   const rect = anchorBtn.getBoundingClientRect();
@@ -3968,24 +4811,30 @@ function openStatsEventForm(anchorBtn, editing){
   const options = INVENTORY.map(it=>'<option value="'+it.id+'"'+(existing&&existing.itemId===it.id?' selected':'')+'>'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
   const typeOptions = ['late','failed','missed'].map(t=>'<option value="'+t+'"'+(existing&&existing.type===t?' selected':'')+'>'+({late:'Late',failed:'Failed',missed:'Missed planting'}[t])+'</option>').join('');
   form.innerHTML =
-    '<strong>'+(existing?'Edit issue':'Log an issue')+' &mdash; '+stats_year+'</strong>'+
+    '<strong>'+(existing?'Edit Issue':'Log an Issue')+' &mdash; '+stats_year+'</strong>'+
     '<label>Type<select id="sef-type">'+typeOptions+'</select></label>'+
     '<label>Crop<select id="sef-item">'+options+'</select></label>'+
     '<label>Note<input type="text" id="sef-note" placeholder="What happened?" value="'+(existing&&existing.note?existing.note.replace(/"/g,'&quot;'):'')+'"></label>'+
+    '<label>Category<select id="sef-cat">'+issueCategoryOptions(existing ? existing.category : 'other')+'</select></label>'+
     '<label>Date<input type="date" id="sef-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
     '<div class="row"><button class="save">'+(existing?'Save':'Log issue')+'</button><button class="cancel" type="button">Cancel</button></div>';
   document.body.appendChild(form);
   positionPopoverForm(form, rect);
+  if(!existing) wireCategoryGuess(form, '#sef-note', '#sef-cat');
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#sef-type').value;
     const itemId = form.querySelector('#sef-item').value;
     const note = form.querySelector('#sef-note').value.trim();
+    const category = form.querySelector('#sef-cat').value;
     const date = isoDateToDisplay(form.querySelector('#sef-date').value) || todayDateString();
-    const entry = {type, itemId, note, date};
-    if(existing) getEventYearLog(stats_year)[editing] = entry;
-    else getEventYearLog(stats_year).push(entry);
+    const entry = {type, category, itemId, note, date};
+    if(existing) getEventYearLog(stats_year).splice(editing, 1);
+    const year = yearOfDisplayDate(date);
+    getEventYearLog(year).push(entry);
     form.remove();
+    if(year !== stats_year){ showToast('Saved under '+year+' (the year of its date).'); renderYearTabs(); }
     renderStats();
+    renderLookOutFor();
   });
   form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
   setTimeout(()=>{
@@ -4014,8 +4863,17 @@ function renderStatsNotes(){
    real mechanism: it shows the viewer a confirmation and only saves the
    file if they accept. */
 async function downloadTextFile(filename, content, mime){
+  // Plain browser (e.g. GitHub Pages): an ordinary blob download.
+  if(typeof window.claude === 'undefined' || !window.claude.use){
+    const url = URL.createObjectURL(new Blob([content], {type: mime}));
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    return;
+  }
   try{
-    const downloads = await claude.use('downloads');
+    const downloads = await window.claude.use('downloads');
     if(!downloads){ showToast('File downloads aren’t available in this preview.'); return; }
     await downloads.save({filename, data: content});
   }catch(err){
@@ -4029,21 +4887,21 @@ function csvCell(v){
   return v;
 }
 function exportStatsCSV(){
-  const rows = [['Section','Crop','Variety','Date','Weight (g)','Count','Type','Note']];
+  const rows = [['Section','Crop','Variety','Date','Weight (g)','Count','Type','Category','Note']];
   const yLog = getHarvestYearLog(stats_year);
   Object.keys(yLog).forEach(itemId=>{
     const item = getItem(itemId);
     (yLog[itemId]||[]).forEach(e=>{
-      rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', e.comment||'']);
+      rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', '', e.comment||'']);
     });
   });
-  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed planting'};
+  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed Planting'};
   getEventYearLog(stats_year).forEach(e=>{
     const item = getItem(e.itemId);
-    rows.push(['Issue', item.name, item.variety||'', e.date, '', '', typeLabel[e.type]||e.type, e.note||'']);
+    rows.push(['Issue', item.name, item.variety||'', e.date, '', '', typeLabel[e.type]||e.type, ISSUE_CATEGORY_LABEL[e.category]||'', e.note||'']);
   });
   const notes = stats_notes[stats_year];
-  if(notes && notes.trim()) rows.push(['Notes','','','','','','', notes]);
+  if(notes && notes.trim()) rows.push(['Notes','','','','','','','', notes]);
   if(rows.length === 1){
     showToast('Nothing logged for '+stats_year+' yet — nothing to export.');
     return;
@@ -4072,6 +4930,7 @@ renderStats();
 renderOverviewTasks();
 renderCompostDayTask();
 renderCustomEvents();
+fetchWeather();
 const statsNotesEl = document.getElementById('stats-notes-input');
 if(statsNotesEl) statsNotesEl.addEventListener('input', (e)=>{ stats_notes[stats_year] = e.target.value; });
 ['today-label-4','today-label-5'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = label; });
@@ -4092,6 +4951,8 @@ const sb = (SUPABASE_URL.indexOf('supabase.co') !== -1 && window.supabase)
 let syncUserId = null;
 let syncChannel = null;
 let lastSyncedJSON = null;
+// Pushes wait for a successful initial load, so local defaults can't overwrite the saved row.
+let syncReady = false;
 
 /* Every piece of state a user actually edits, gathered into one blob that
    maps straight onto the table's single jsonb `data` column. This now
@@ -4110,6 +4971,9 @@ function getSyncState(){
     volunteer_log: volunteer_log,
     harvest_log: harvest_log,
     event_log: event_log,
+    watering_log: watering_log,
+    weather_location: WEATHER_LOCATION,
+    frost_log: frost_log,
     stats_notes: stats_notes,
     compost_log: compost_log,
     custom_tasks: custom_tasks,
@@ -4122,6 +4986,30 @@ function getSyncState(){
     windowsill_trays: WINDOWSILL_TRAYS,
   };
 }
+// One-off clean-up: the example harvests/issue/volunteer entry that used to
+// ship as defaults were synced up by earlier versions. Only exact matches go.
+const OLD_EXAMPLES = {
+  harvest: [['tomato_cherry','28 Jul 2026',155,22],['tomato_cherry','11 Aug 2026',250,34],['tomato_cherry','25 Aug 2026',100,15],
+            ['courgette','2 Jul 2026',1200,4],['courgette','16 Jul 2026',1450,5]],
+  issue: ['radish','30 Apr 2026','Slugs took the whole first sowing in April.'],
+  volunteer: ['A5','10 Jun 2026',2],
+};
+function stripOldExampleData(s){
+  const h = s.harvest_log && s.harvest_log[2026];
+  if(h) OLD_EXAMPLES.harvest.forEach(([id, date, w, q])=>{
+    if(Array.isArray(h[id])){
+      h[id] = h[id].filter(e=> !(e.date === date && e.weight === w && e.qty === q && !e.comment));
+      if(!h[id].length) delete h[id];
+    }
+  });
+  const ev = s.event_log && s.event_log[2026];
+  if(Array.isArray(ev)){
+    const [id, date, note] = OLD_EXAMPLES.issue;
+    s.event_log[2026] = ev.filter(e=> !(e.itemId === id && e.date === date && e.note === note));
+  }
+  const v = s.volunteer_log && s.volunteer_log[OLD_EXAMPLES.volunteer[0]];
+  if(v && v.date === OLD_EXAMPLES.volunteer[1] && v.qty === OLD_EXAMPLES.volunteer[2]) delete s.volunteer_log[OLD_EXAMPLES.volunteer[0]];
+}
 function applySyncState(s){
   if(!s || typeof s !== 'object') return;
   if(Array.isArray(s.inventory)){ INVENTORY = s.inventory; rebuildInvIndex(); }
@@ -4130,8 +5018,18 @@ function applySyncState(s){
     Object.assign(plan_data, s.plan_data);
   }
   if(s.volunteer_log) volunteer_log = s.volunteer_log;
+  stripOldExampleData(s);
   if(s.harvest_log) harvest_log = s.harvest_log;
-  if(s.event_log) event_log = s.event_log;
+  if(s.event_log){ event_log = s.event_log; categoriseLegacyIssues(); }
+  if(s.watering_log) watering_log = s.watering_log;
+  if(s.frost_log && typeof s.frost_log === 'object') frost_log = s.frost_log;
+  const loc = s.weather_location;
+  if(loc && typeof loc.lat === 'number' && typeof loc.lon === 'number'
+     && (loc.lat !== WEATHER_LOCATION.lat || loc.lon !== WEATHER_LOCATION.lon)){
+    setWeatherLocation(loc);
+  } else if(loc && loc.name){
+    WEATHER_LOCATION = {...WEATHER_LOCATION, name: loc.name};
+  }
   if(s.stats_notes) stats_notes = s.stats_notes;
   if(s.compost_log) compost_log = s.compost_log;
   // One-time migration: older synced state has no builtin_tasks (it was
@@ -4173,7 +5071,7 @@ function setSyncStatus(state){
 }
 
 async function pushIfChanged(){
-  if(!sb || !syncUserId) return;
+  if(!sb || !syncUserId || !syncReady) return;
   const json = JSON.stringify(getSyncState());
   if(json === lastSyncedJSON) return;
   lastSyncedJSON = json;
@@ -4193,12 +5091,20 @@ setInterval(pushIfChanged, 2000);
 
 async function startApp(session){
   syncUserId = session.user.id;
+  syncReady = false;
   document.getElementById('auth-overlay').hidden = true;
   setSyncStatus('saving');
   const { data, error } = await sb.from(SYNC_TABLE).select('data').eq('user_id', syncUserId).maybeSingle();
-  if(error){ setSyncStatus('error'); }
-  else { if(data && data.data) applySyncState(data.data); setSyncStatus('saved'); }
+  if(error){
+    // Retry rather than start pushing unsynced local state over the saved row.
+    setSyncStatus('error');
+    setTimeout(()=>{ if(syncUserId === session.user.id && !syncReady) startApp(session); }, 15000);
+    return;
+  }
+  if(data && data.data) applySyncState(data.data);
+  setSyncStatus('saved');
   lastSyncedJSON = JSON.stringify(getSyncState());
+  syncReady = true;
   if(syncChannel){ sb.removeChannel(syncChannel); syncChannel = null; }
   syncChannel = sb.channel('sync:'+syncUserId)
     .on('postgres_changes', {event:'*', schema:'public', table:SYNC_TABLE, filter:'user_id=eq.'+syncUserId}, payload=>{
