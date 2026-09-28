@@ -22,6 +22,20 @@
 --
 -- Retention: 30 days. Change the interval inside the trigger function
 -- below to adjust later.
+--
+--   0. Grants service_role read access to veg_plot_data itself. This was
+--      missing from day one -- the original app setup only ever granted
+--      select/insert/update/delete to the `authenticated` role (which is
+--      what the app uses once you're signed in), never to `service_role`
+--      (which is what backup.yml and keepalive.yml authenticate as). Same
+--      class of gotcha the methodology doc already warns about for RLS +
+--      grants generally, just a different role. Fixes: "permission denied
+--      for table veg_plot_data" (HTTP 403, code 42501) from both
+--      workflows on their first real run.
+
+-- 0. Let service_role actually read the table --------------------------
+grant usage on schema public to service_role;
+grant select on table public.veg_plot_data to service_role;
 
 -- 1. History table -----------------------------------------------------
 create table if not exists veg_plot_data_history (
