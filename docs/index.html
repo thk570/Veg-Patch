@@ -65,6 +65,25 @@ body{ background:var(--m-bg); color:var(--m-text); font-family:var(--font-body);
 }
 .theme-btn:hover{ opacity:1; }
 body[data-style="pixel"] .theme-btn{ border-radius:0; border:2px solid var(--p-accent-ink); }
+.app-version{ font-family:var(--font-mono); font-size:.62rem; color:var(--m-text-dim); white-space:nowrap; cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
+.app-version:hover{ color:var(--m-text); }
+.cl-overlay{ position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:1rem; }
+.cl-overlay[hidden]{ display:none; }
+.cl-panel{ background:var(--m-surface); color:var(--m-text); border:1px solid var(--m-border); border-radius:10px; width:min(560px,100%); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,.35); }
+body[data-style="pixel"] .cl-panel{ border:2px solid var(--p-accent-ink); border-radius:0; }
+.cl-head{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.8rem 1rem; border-bottom:1px solid var(--m-border); }
+.cl-head h3{ margin:0; font-size:1rem; }
+.cl-close{ border:1px solid var(--m-border); background:var(--m-surface-2); color:var(--m-text); border-radius:6px; cursor:pointer; width:1.8rem; height:1.8rem; font-size:1rem; line-height:1; }
+.cl-body{ overflow:auto; padding:.4rem 1rem 1rem; }
+.cl-entry{ padding:.7rem 0; border-bottom:1px dashed var(--m-border); }
+.cl-entry:last-of-type{ border-bottom:none; }
+.cl-entry h4{ margin:0 0 .15rem; font-size:.95rem; display:flex; gap:.5rem; align-items:baseline; flex-wrap:wrap; }
+.cl-entry h4 .cl-date{ font-family:var(--font-mono); font-size:.68rem; font-weight:400; color:var(--m-text-dim); }
+.cl-entry h4 .cl-cur{ font-family:var(--font-mono); font-size:.62rem; background:var(--m-accent); color:var(--m-accent-ink); padding:.05rem .35rem; border-radius:4px; }
+.cl-title{ font-size:.82rem; color:var(--m-text-dim); margin:0 0 .3rem; }
+.cl-entry .cl-kind{ font-family:var(--font-mono); font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; color:var(--m-text-dim); margin:.4rem 0 .1rem; }
+.cl-entry ul{ margin:0; padding-left:1.1rem; font-size:.82rem; line-height:1.45; }
+.cl-foot{ font-family:var(--font-mono); font-size:.66rem; color:var(--m-text-dim); line-height:1.5; margin:.8rem 0 0; }
 .theme-menu{ min-width:210px; }
 .theme-menu .tm-label{ font-family:var(--font-mono); font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; color:var(--m-text-dim); }
 .seg{ display:flex; border:1px solid var(--m-border); border-radius:6px; overflow:hidden; }
@@ -821,7 +840,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= OVERVIEW ============================= -->
   <section id="page-overview" class="page active">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="overview"></nav>
       <div class="app-body">
         <div class="card">
@@ -885,7 +904,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= INVENTORY ============================= -->
   <section id="page-inventory" class="page">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-2"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-2"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="inventory"></nav>
       <div class="app-body">
         <div class="list-toolbar">
@@ -939,7 +958,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= PLAN ============================= -->
   <section id="page-plan" class="page">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-4"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-4"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="plan"></nav>
       <div class="app-body">
         <div class="print-only" id="plan-print-title"></div>
@@ -992,7 +1011,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= VEG PATCH ============================= -->
   <section id="page-patch" class="page">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-3"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-3"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="patch"></nav>
       <div class="app-body">
         <div class="card">
@@ -1037,7 +1056,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= WEATHER ============================= -->
   <section id="page-weather" class="page">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-6"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-6"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="weather"></nav>
       <div class="app-body">
         <div class="card">
@@ -1076,7 +1095,7 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
   <!-- ============================= STATS ============================= -->
   <section id="page-stats" class="page">
     <div class="app-shell">
-      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-5"></span><span class="sync-status"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
+      <div class="app-header"><h1>Veg Plot Planner</h1><span class="header-right"><span class="date" id="today-label-5"></span><span class="sync-status"></span><span class="app-version" role="button" tabindex="0" title="What's new (changelog)"></span><button type="button" class="theme-btn" aria-label="Theme &amp; display settings" title="Theme &amp; display settings" onclick="toggleThemeMenu(this)">⚙</button></span></div>
       <nav class="app-nav" data-navfor="stats"></nav>
       <div class="app-body">
         <div class="year-tabs">
@@ -1126,6 +1145,107 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
 </div>
 
 <script>
+/* ---------- version & changelog ----------
+   Semantic versioning (MAJOR.MINOR.PATCH):
+     MAJOR  changes how data is stored/synced or removes something people rely on
+     MINOR  new, backwards-compatible features
+     PATCH  fixes and internal tidy-ups with no new behaviour
+   To release: add an entry at the TOP of CHANGELOG, set APP_VERSION to its `v`,
+   and ship. The header tag and the Settings -> Changelog panel both read from here.
+   Entries marked `approx` were back-filled from the project history; their dates
+   are best estimates. */
+const APP_VERSION = '2.1.0';
+const CHANGELOG = [
+  {v:'2.1.0', date:'2026-10-15', title:'Versioning & changelog', added:[
+    'Version number shown in the header next to the sync status; tap it to open the changelog.',
+    'Changelog panel under the settings (gear) menu.']},
+  {v:'2.0.0', date:'2026-10-02', title:'All data lives in Supabase', changed:[
+    'BREAKING: the app no longer ships any data of its own. Inventory, plan, bed/pot/tray contents, tasks, events, logs and notes all come from your Supabase row, so editing and redeploying index.html can no longer reset them. A brand-new account now starts empty.',
+    'Removed the leftover example data (greenhouse and windowsill trays, the Brussels sprout pot-on task); synced copies of the examples are cleaned out on load.'],
+    added:[
+    'Overwrite guard: if your saved row had data, the app refuses to save a blank state over it.',
+    'Red banner when your saved data cannot be loaded (retries automatically), so an empty screen is never mistaken for lost data.',
+    'Plan, stats and watering years now follow the real calendar year instead of a fixed 2026.']},
+  {v:'1.4.2', date:'2026-09-30', title:'Code tidy-up', changed:[
+    'Ten popover forms (harvest, issue, discard, plant, move, tasks/events and the stats editors) now share one popover helper, and the "name (variety)" labels share two small helpers: about 125 fewer lines, no change in behaviour.'],
+    infra:[
+    'Backups set up outside the app: a per-write history table in Supabase (30 days), a fortnightly JSON snapshot committed to the repo, and a keep-alive ping.']},
+  {v:'1.4.1', date:'2026-09-25', title:'Sync data-loss fix', fixed:[
+    'Fixed a startup race where the app could save its blank local state over your saved row before the first load finished. Saving now waits for a successful load (and retries the load if it fails).']},
+  {v:'1.4.0', date:'2026-09-24', approx:true, title:'Planning & logging polish', added:[
+    'Plant form for empty bed sections, pots and trays (with sown/planted date).',
+    'Filter panel on the inventory and plan lists.',
+    'Repeating events (daily to yearly) and custom tasks on the Overview page.',
+    'Estimated growth stage (seedling, growing, ready) from the planting date.',
+    'CSV export of the stats logs.'],
+    changed:[
+    'Overdue built-in tasks stay on the list, flagged, until ticked off or removed.']},
+  {v:'1.3.0', date:'2026-09-23', approx:true, title:'Weather alerts & issue categories', added:[
+    'Look Out For alerts on the Overview: first and later frosts, blight risk (Hutton criteria) with a good treatment window, slug nights, strong wind, mildew, aphid weather and greenhouse heat. Each names the crops affected.',
+    'Issues are categorised (slugs, blight, pests, fungal, frost, damage, other) with the category guessed from your note; existing issues are categorised automatically.',
+    'Windowsill tray card alongside the greenhouse.']},
+  {v:'1.2.0', date:'2026-09-22', approx:true, title:'Weather & watering', added:[
+    'Weather page: current conditions, 7-day forecast with frost flags, season rainfall and temperature, and a location picker (Open-Meteo).',
+    'Watering log and a per-area water-level estimate (beds vs pots and greenhouse) using rain and evaporation, shown on the Overview.']},
+  {v:'1.1.0', date:'2026-09-21', title:'Live Veg Patch actions', added:[
+    'Veg Patch tiles get Discard and a ⋮ menu: log harvest, log issue and Move.',
+    'Move crops between greenhouse, pots and bed sections.'],
+    changed:[
+    'The live status (bed sections, pots, greenhouse trays) and the built-in upcoming tasks now sync across devices.']},
+  {v:'1.0.0', date:'2026-09-18', title:'First release', added:[
+    'Single-file web app on GitHub Pages with Supabase sign-in and cross-device sync.',
+    'Seed inventory, month-by-month plan calendar with drag and drop, live bed/pot/greenhouse status board, upcoming tasks and events, and per-year harvest and issue stats.',
+    'Light/dark mode and Pixel / Mixed / Modern styles.']},
+];
+function renderVersionTags(){
+  document.querySelectorAll('.app-version').forEach(el=>{
+    el.textContent = 'v'+APP_VERSION;
+    if(!el.dataset.wired){
+      el.dataset.wired = '1';
+      el.addEventListener('click', openChangelog);
+      el.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openChangelog(); } });
+    }
+  });
+}
+function openChangelog(){
+  const existing = document.getElementById('changelog-overlay');
+  if(existing){ existing.remove(); }
+  const ov = document.createElement('div'); ov.className = 'cl-overlay'; ov.id = 'changelog-overlay';
+  const panel = document.createElement('div'); panel.className = 'cl-panel'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','Changelog');
+  const head = document.createElement('div'); head.className = 'cl-head';
+  const h = document.createElement('h3'); h.textContent = 'Changelog';
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'cl-close'; x.setAttribute('aria-label','Close'); x.textContent = '×';
+  head.append(h, x);
+  const body = document.createElement('div'); body.className = 'cl-body';
+  const KINDS = [['added','Added'],['changed','Changed'],['fixed','Fixed'],['infra','Behind the scenes']];
+  CHANGELOG.forEach(e=>{
+    const sec = document.createElement('div'); sec.className = 'cl-entry';
+    const h4 = document.createElement('h4');
+    h4.append('v'+e.v);
+    const d = document.createElement('span'); d.className = 'cl-date'; d.textContent = (e.approx ? '~' : '')+e.date; h4.append(d);
+    if(e.v === APP_VERSION){ const c = document.createElement('span'); c.className = 'cl-cur'; c.textContent = 'current'; h4.append(c); }
+    sec.append(h4);
+    const t = document.createElement('p'); t.className = 'cl-title'; t.textContent = e.title; sec.append(t);
+    KINDS.forEach(([k, label])=>{
+      if(!e[k] || !e[k].length) return;
+      const kl = document.createElement('div'); kl.className = 'cl-kind'; kl.textContent = label;
+      const ul = document.createElement('ul');
+      e[k].forEach(txt=>{ const li = document.createElement('li'); li.textContent = txt; ul.append(li); });
+      sec.append(kl, ul);
+    });
+    body.append(sec);
+  });
+  const foot = document.createElement('p'); foot.className = 'cl-foot';
+  foot.textContent = 'Versions before 2.0.0 were reconstructed from the project history; dates marked ~ are estimates.';
+  body.append(foot);
+  panel.append(head, body); ov.append(panel); document.body.append(ov);
+  const close = ()=>{ ov.remove(); document.removeEventListener('keydown', onKey); };
+  function onKey(e){ if(e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+  x.addEventListener('click', close);
+  ov.addEventListener('click', e=>{ if(e.target === ov) close(); });
+  x.focus();
+}
 /* ---------- theme settings (Style + light/dark Mode) ----------
    These used to live in a dev-only control bar above the app. They're
    now a real in-app setting: a gear button in every page header opens
@@ -1182,7 +1302,8 @@ function toggleThemeMenu(anchorBtn){
       '<button type="button" data-mode-btn="light">Light</button>'+
       '<button type="button" data-mode-btn="dark">Dark</button>'+
     '</span>'+
-    (sb && syncUserId ? '<button type="button" class="cancel" id="tm-signout" style="margin-top:.2rem;">Sign out</button>' : '');
+    '<button type="button" class="cancel" id="tm-changelog" style="margin-top:.2rem;">Changelog · v'+APP_VERSION+'</button>'+
+    (sb && syncUserId ? '<button type="button" class="cancel" id="tm-signout">Sign out</button>' : '');
   document.body.appendChild(menu);
   menu.querySelectorAll('[data-style-btn]').forEach(b=>{
     b.classList.toggle('active', b.dataset.styleBtn===currentStyle);
@@ -1192,6 +1313,7 @@ function toggleThemeMenu(anchorBtn){
     b.classList.toggle('active', b.dataset.modeBtn===currentMode);
     b.addEventListener('click', ()=> setMode(b.dataset.modeBtn));
   });
+  menu.querySelector('#tm-changelog').addEventListener('click', ()=>{ menu.remove(); openChangelog(); });
   const signOutBtn = menu.querySelector('#tm-signout');
   if(signOutBtn) signOutBtn.addEventListener('click', ()=> sb.auth.signOut());
   setTimeout(()=>{
@@ -1200,6 +1322,7 @@ function toggleThemeMenu(anchorBtn){
     });
   },0);
 }
+renderVersionTags();
 const SPRITE_GRID = 18;
 function setPage(p){
   ['overview','inventory','plan','patch','weather','stats'].forEach(id=>{
