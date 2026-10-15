@@ -1154,8 +1154,10 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
    and ship. The header tag and the Settings -> Changelog panel both read from here.
    Entries marked `approx` were back-filled from the project history; their dates
    are best estimates. */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.1.1';
 const CHANGELOG = [
+  {v:'2.1.1', date:'2026-10-15', title:'Clean-up code removed', changed:[
+    'Removed the one-off routine that cleaned old example data (example harvests, issue, trays and the pot-on task) out of your saved data on every load. Your data is confirmed clean, so it is no longer needed and the app loads your saved data exactly as it is.']},
   {v:'2.1.0', date:'2026-10-15', title:'Versioning & changelog', added:[
     'Version number shown in the header next to the sync status; tap it to open the changelog.',
     'Changelog panel under the settings (gear) menu.']},
@@ -4852,41 +4854,6 @@ function setLoadBanner(show){
   el.textContent = "Couldn't load your saved data — retrying. What you see is empty; don't make changes until this clears.";
   document.body.appendChild(el);
 }
-// One-off clean-up: the example harvests/issue/volunteer entry that used to
-// ship as defaults were synced up by earlier versions. Only exact matches go.
-const OLD_EXAMPLES = {
-  harvest: [['tomato_cherry','28 Jul 2026',155,22],['tomato_cherry','11 Aug 2026',250,34],['tomato_cherry','25 Aug 2026',100,15],
-            ['courgette','2 Jul 2026',1200,4],['courgette','16 Jul 2026',1450,5]],
-  issue: ['radish','30 Apr 2026','Slugs took the whole first sowing in April.'],
-  volunteer: ['A5','10 Jun 2026',2],
-  // Greenhouse/windowsill example trays (exact n + label + note), and the task that pointed at WS1.
-  trays: {
-    greenhouse_trays: [['GH1','Tomato (Red Cherry)','Sown 4 Mar · ready to pot on'],['GH2','Cucumber (Wisconsin)','Sown 12 May · hardening off']],
-    windowsill_trays: [['WS1','Brussels Sprout (x6)','Windowsill tray · sown 3 Mar · true leaves forming']],
-  },
-  task: 'demo-pot-on-brussels',
-};
-function stripOldExampleData(s){
-  Object.entries(OLD_EXAMPLES.trays).forEach(([key, list])=>{
-    if(Array.isArray(s[key])) s[key] = s[key].filter(t=> !list.some(([n, label, note])=> t.n === n && t.label === label && t.note === note));
-  });
-  if(Array.isArray(s.builtin_tasks) && !(s.windowsill_trays||[]).some(t=>t.n==='WS1'))
-    s.builtin_tasks = s.builtin_tasks.filter(t=> t.id !== OLD_EXAMPLES.task);
-  const h = s.harvest_log && s.harvest_log[2026];
-  if(h) OLD_EXAMPLES.harvest.forEach(([id, date, w, q])=>{
-    if(Array.isArray(h[id])){
-      h[id] = h[id].filter(e=> !(e.date === date && e.weight === w && e.qty === q && !e.comment));
-      if(!h[id].length) delete h[id];
-    }
-  });
-  const ev = s.event_log && s.event_log[2026];
-  if(Array.isArray(ev)){
-    const [id, date, note] = OLD_EXAMPLES.issue;
-    s.event_log[2026] = ev.filter(e=> !(e.itemId === id && e.date === date && e.note === note));
-  }
-  const v = s.volunteer_log && s.volunteer_log[OLD_EXAMPLES.volunteer[0]];
-  if(v && v.date === OLD_EXAMPLES.volunteer[1] && v.qty === OLD_EXAMPLES.volunteer[2]) delete s.volunteer_log[OLD_EXAMPLES.volunteer[0]];
-}
 function applySyncState(s){
   if(!s || typeof s !== 'object') return;
   if(Array.isArray(s.inventory)){ INVENTORY = s.inventory; rebuildInvIndex(); }
@@ -4895,7 +4862,6 @@ function applySyncState(s){
     Object.assign(plan_data, s.plan_data);
   }
   if(s.volunteer_log) volunteer_log = s.volunteer_log;
-  stripOldExampleData(s);
   if(s.harvest_log) harvest_log = s.harvest_log;
   if(s.event_log){ event_log = s.event_log; categoriseLegacyIssues(); }
   if(s.watering_log) watering_log = s.watering_log;
