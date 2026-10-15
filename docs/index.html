@@ -1658,37 +1658,13 @@ function renderAllSprites(){
 // Supabase (see getSyncState/applySyncState below), the same way INVENTORY
 // already works. The values here are only the starting point for a brand
 // new user who's never synced anything.
-let A = [
-  {n:'A1', species:'frenchbean', stage:'growing', label:'French Beans'},
-  {n:'A2', species:'frenchbean', stage:'growing', label:'French Beans'},
-  {n:'A3', species:'frenchbean', stage:'ready', label:'French Beans'},
-  {n:'A4', species:'frenchbean', stage:'ready', label:'French Beans'},
-  {n:'A5', species:null, stage:'empty', label:''},
-  {n:'A6', species:null, stage:'empty', label:''},
-  {n:'A7', species:'courgette', stage:'ready', label:'Courgette'},
-  {n:'A8', species:'courgette', stage:'growing', label:'Courgette'},
-  {n:'A9', species:null, stage:'empty', label:''},
-  {n:'A10', species:null, stage:'empty', label:''},
-];
-let B = [
-  {n:'B1', species:'sorrel', stage:'growing', label:'Sorrel'},
-  {n:'B2', species:'sorrel', stage:'growing', label:'Sorrel'},
-  {n:'B3', species:null, stage:'empty', label:''},
-  {n:'B4', species:null, stage:'empty', label:''},
-  {n:'B5', species:null, stage:'empty', label:''},
-  {n:'B6', species:null, stage:'empty', label:''},
-  {n:'B7', species:'brusselsprout', stage:'growing', label:'Brussel Sprout'},
-  {n:'B8', species:'brusselsprout', stage:'growing', label:'Brussel Sprout'},
-  {n:'B9', species:'leek', stage:'growing', label:'Leek'},
-  {n:'B10', species:'leek', stage:'growing', label:'Leek'},
-];
+let A = Array.from({length:10}, (_,i)=>({n:'A'+(i+1), species:null, stage:'empty', label:''}));
+let B = Array.from({length:10}, (_,i)=>({n:'B'+(i+1), species:null, stage:'empty', label:''}));
 // Only occupied pots are ever rendered (see renderPots) -- empty
 // placeholder rows used to pad this out to a fixed count of 4 regardless
 // of how many pots were actually in use. Add a row here per pot that's
 // genuinely in service; there's nothing to add for an unused one.
-let POTS = [
-  {n:'Pot 1', species:'cucumber', stage:'ready', label:'Cucumber (Wisconsin)'},
-];
+let POTS = [];
 // Distinct from POTS: greenhouse/propagation trays, shown in their own
 // card on the Veg Patch page, and mirrored on the Overview page's
 // "Greenhouse" card (both are rendered from this same array -- see
@@ -1698,18 +1674,11 @@ let POTS = [
 // gets the full harvest/issue/move/discard menu, not a bespoke one) plus
 // an optional `note` for the sown-date/status line that beds and pots
 // don't need.
-let GREENHOUSE_TRAYS = [
-  {n:'GH1', species:'tomato',   stage:'seedling', label:'Tomato (Red Cherry)',  note:'Sown 4 Mar · ready to pot on'},
-  {n:'GH2', species:'cucumber', stage:'seedling', label:'Cucumber (Wisconsin)', note:'Sown 12 May · hardening off'},
-];
+let GREENHOUSE_TRAYS = [];
 // Windowsill trays: same shape and same treatment as GREENHOUSE_TRAYS,
 // just a separate card/array since they're a physically different spot
 // (propagating indoors on a windowsill rather than in the greenhouse).
-// Seeded here with what's actually on the windowsill right now -- this
-// used to be static, non-interactive HTML with no backing data at all.
-let WINDOWSILL_TRAYS = [
-  {n:'WS1', species:'brusselsprout', stage:'seedling', label:'Brussels Sprout (x6)', note:'Windowsill tray · sown 3 Mar · true leaves forming'},
-];
+let WINDOWSILL_TRAYS = [];
 // Shared id generator for a new pot or tray -- 'Pot 3', 'GH3', 'WS2', ...
 function nextSlotName(arr, prefix){
   const existing = new Set(arr.map(x=>x.n));
@@ -2246,33 +2215,20 @@ function isoDateToDisplay(s){
 }
 
 function openVolunteerForm(anchorBtn, sectionId){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const existing = volunteer_log[sectionId];
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Volunteer Potato &mdash; '+sectionId+'</strong>'+
     '<label>Quantity spotted<input type="number" inputmode="numeric" min="1" id="vf-qty" value="'+(existing?existing.qty:1)+'"></label>'+
     '<label>Date first seen<input type="date" id="vf-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
-    '<div class="row"><button class="save">Save</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">Save</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const qty = parseInt(form.querySelector('#vf-qty').value,10) || 1;
     const date = isoDateToDisplay(form.querySelector('#vf-date').value) || 'date not set';
     volunteer_log[sectionId] = {qty, date};
-    form.remove();
+    close();
     renderAllSprites();
     refreshVolunteerAlert();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 function refreshVolunteerAlert(){
   const el = document.getElementById('volunteer-alert');
@@ -2544,11 +2500,11 @@ function todayDateString(){ return isoDateToDisplay(todayISODate()); }
 
 // harvest_log[year][itemId] = [{date, weight(g)|null, qty|null}, ...] -- one
 // entry per occasion, matching "if I harvest tomatoes on three occasions..."
-let harvest_log = { 2026: {}, 2027: {} };
+let harvest_log = { [today.getFullYear()]: {} };
 function getHarvestYearLog(y){ if(!harvest_log[y]) harvest_log[y] = {}; return harvest_log[y]; }
 
 // event_log[year] = [{type:'late'|'failed'|'missed', category, itemId, note, date}]
-let event_log = { 2026: [], 2027: [] };
+let event_log = { [today.getFullYear()]: [] };
 function getEventYearLog(y){ if(!event_log[y]) event_log[y] = []; return event_log[y]; }
 // Year a "D Mon YYYY" date belongs to, so a log lands in the year it happened.
 function yearOfDisplayDate(d){
@@ -2610,10 +2566,10 @@ function recentIssues(category, days){
 }
 
 // watering_log[year] = [{date, target:'bed'|'pots'}]
-let watering_log = { 2026: [], 2027: [] };
+let watering_log = { [today.getFullYear()]: [] };
 function getWateringYearLog(y){ if(!watering_log[y]) watering_log[y] = []; return watering_log[y]; }
 
-let stats_notes = { 2026:'', 2027:'' };
+let stats_notes = { [today.getFullYear()]:'' };
 
 // compost_log[year] = {date} once that year's Compost Day is ticked off
 let compost_log = {};
@@ -2696,21 +2652,14 @@ function onTaskCheckClick(chk){
 
 /* ---------- Harvest logging (weight and/or count, per occasion) ---------- */
 function openHarvestLogForm(anchorBtn, itemId, onLogged){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const item = getItem(itemId);
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Log Harvest &mdash; '+item.name+'</strong>'+
     '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="hlf-weight" placeholder="e.g. 220"></label>'+
     '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="hlf-qty" placeholder="e.g. 4"></label>'+
     '<label>Date<input type="date" id="hlf-date" value="'+todayISODate()+'"></label>'+
     '<label>Comments (optional)<textarea id="hlf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year"></textarea></label>'+
-    '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">Log harvest</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const weight = parseFloat(form.querySelector('#hlf-weight').value);
     const qty = parseFloat(form.querySelector('#hlf-qty').value);
@@ -2720,17 +2669,11 @@ function openHarvestLogForm(anchorBtn, itemId, onLogged){
     const yLog = getHarvestYearLog(yearOfDisplayDate(date));
     if(!yLog[itemId]) yLog[itemId] = [];
     yLog[itemId].push({date, weight: weight||null, qty: qty||null, comment: comment||''});
-    form.remove();
+    close();
     showToast('Logged harvest: '+item.name+' on '+date+'.');
     if(onLogged) onLogged();
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 
 function findBedSection(sectionId){
@@ -2787,37 +2730,24 @@ function markHarvested(anchorBtn, sectionId){
    BEFORE discarding -- once the tile is cleared there's no going back
    to attach that history to it. */
 function openDiscardForm(anchorBtn, sectionId){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const sec = findBedSection(sectionId);
   if(!sec || !sec.species) return;
   const itemId = sec.species;
   const item = getItem(itemId);
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Discard '+sectionId+' ('+item.name+')?</strong>'+
     '<p class="confirm-msg">Are you sure? Please log any harvests or issues separately first.</p>'+
     '<label>Date removed<input type="date" id="df-date" value="'+todayISODate()+'"></label>'+
-    '<div class="row"><button class="save" style="background:#b3453a;">Yes, discard</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save" style="background:#b3453a;">Yes, discard</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const date = isoDateToDisplay(form.querySelector('#df-date').value) || todayDateString();
     endPlantingAt(sectionId, date);
-    form.remove();
+    close();
     showToast(sectionId+' cleared — '+item.name+' discarded.');
     renderAllSprites();
     renderPlanGrid();
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 
 /* ---------- Log a non-critical issue directly from the bed ----------
@@ -2827,24 +2757,17 @@ function openDiscardForm(anchorBtn, sectionId){
    missed), for anything worth flagging that doesn't warrant pulling the
    crop out. */
 function openIssueForm(anchorBtn, sectionId){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
   const sec = findBedSection(sectionId);
   if(!sec || !sec.species) return;
   const itemId = sec.species;
   const item = getItem(itemId);
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Log an Issue &mdash; '+sectionId+' ('+item.name+')</strong>'+
     '<label>Type<select id="ivf-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
     '<label>Note<input type="text" id="ivf-note" placeholder="e.g. Slug nibbling on lower leaves"></label>'+
     '<label>Category<select id="ivf-cat">'+issueCategoryOptions('other')+'</select></label>'+
     '<label>Date<input type="date" id="ivf-date" value="'+todayISODate()+'"></label>'+
-    '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('#ivf-note').focus();
   wireCategoryGuess(form, '#ivf-note', '#ivf-cat');
   form.querySelector('.save').addEventListener('click', ()=>{
@@ -2853,17 +2776,11 @@ function openIssueForm(anchorBtn, sectionId){
     const category = form.querySelector('#ivf-cat').value;
     const date = isoDateToDisplay(form.querySelector('#ivf-date').value) || todayDateString();
     getEventYearLog(yearOfDisplayDate(date)).push({type, category, itemId, note, date});
-    form.remove();
+    close();
     showToast('Issue logged for '+sectionId+' ('+item.name+').');
     renderLookOutFor();
     if(document.getElementById('page-stats').classList.contains('active')) renderStats();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 
 /* ---------- Shared "kebab" action menu ----------
@@ -2941,23 +2858,16 @@ function nextPotName(){ return nextSlotName(POTS, 'Pot '); }
    that kind of tile does, with the exact same harvest/issue/move/discard
    menu as anything planted via Plan and a sow tick. */
 function openPlantForm(anchorBtn, kind, sectionId){
-  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
   const kindLabel = {bed: sectionId, pot:'a New Pot', greenhouse:'the Greenhouse', windowsill:'the Windowsill'}[kind];
   const options = INVENTORY.slice()
     .sort((a,b)=> (a.name+a.variety).localeCompare(b.name+b.variety))
-    .map(it=> '<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
-  form.innerHTML =
+    .map(it=> '<option value="'+it.id+'">'+invLabel(it)+'</option>').join('');
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Plant in '+kindLabel+'</strong>'+
     '<label>Crop<select id="pf-item">'+options+'</select></label>'+
     '<label>Plant date<input type="date" id="pf-date" value="'+todayISODate()+'"></label>'+
     '<label>Note (optional)<input type="text" id="pf-note" placeholder="e.g. First true leaves"></label>'+
-    '<div class="row"><button class="save">Plant</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">Plant</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const itemId = form.querySelector('#pf-item').value;
     const item = getItem(itemId);
@@ -2967,7 +2877,7 @@ function openPlantForm(anchorBtn, kind, sectionId){
     // estimateGrowthStage()/refreshGrowthStages() -- rather than being
     // fixed at whatever this popover guessed at planting time.
     const stage = estimateGrowthStage(item, plantedOn);
-    const label = item.name + (item.variety ? ' ('+item.variety+')' : '');
+    const label = invLabelParen(item);
     const dateLabel = (kind === 'greenhouse' || kind === 'windowsill' ? 'Sown ' : 'Planted ') + isoDateToDisplay(plantedOn);
     const note = userNote ? (dateLabel+' · '+userNote) : dateLabel;
     if(kind === 'bed'){
@@ -2980,19 +2890,12 @@ function openPlantForm(anchorBtn, kind, sectionId){
     } else if(kind === 'windowsill'){
       WINDOWSILL_TRAYS.push({n: nextSlotName(WINDOWSILL_TRAYS, 'WS'), species: item.species, stage, label, note, plantedOn});
     }
-    form.remove();
+    close();
     renderAllSprites();
     showToast('Planted '+label+'.');
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 function openMoveForm(anchorBtn, sourceKind, sourceId){
-  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
   const crop = getCropAt(sourceKind, sourceId);
   if(!crop) return;
   const label = crop.name || getItem(crop.species).name;
@@ -3002,30 +2905,18 @@ function openMoveForm(anchorBtn, sourceKind, sourceId){
   if(sourceKind !== 'windowsill') options.push('<option value="windowsill">The windowsill</option>');
   if(sourceKind !== 'pot') options.push('<option value="pot">A new pot</option>');
   if(emptySections.length) options.push('<optgroup label="An empty bed section">'+emptySections.map(s=>'<option value="bed:'+s.n+'">'+s.n+'</option>').join('')+'</optgroup>');
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Move &mdash; '+label+'</strong>'+
     (options.length
       ? '<label>Move to<select id="mvf-dest">'+options.join('')+'</select></label>'
       : '<p class="confirm-msg">Nowhere to move it to right now -- every bed section is full and there\'s nothing else to offer.</p>')+
-    '<div class="row"><button class="save"'+(options.length?'':' disabled')+'>Move</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save"'+(options.length?'':' disabled')+'>Move</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const sel = form.querySelector('#mvf-dest');
     if(!sel) return;
     performMove(sourceKind, sourceId, sel.value, crop, label);
-    form.remove();
+    close();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 function performMove(sourceKind, sourceId, dest, crop, label){
   removeCropFromSource(sourceKind, sourceId);
@@ -3119,11 +3010,7 @@ let custom_tasks = [];
 // engine "+ Add event" uses), so they show, sort and recur exactly like
 // anything added by hand, and the ✕ control removes one for good if it's
 // no longer wanted.
-let custom_events = [
-  {id:'seed-autumn-frost', title:'First expected autumn frost (approximate)', description:'', date:'15 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
-  {id:'seed-onion-sowing', title:'Last safe sowing — overwintering onions', description:'', date:'10 Oct 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
-  {id:'seed-spring-frost', title:'Last expected spring frost (approximate)', description:'', date:'5 May 2026', location:'', repeat:{unit:'year', interval:1, mode:'date'}},
-];
+let custom_events = [];
 
 /* ---------- Overview "Upcoming tasks" ----------
    These used to be five hand-authored <li> elements, always shown in a
@@ -3142,16 +3029,7 @@ let custom_events = [
    `let BUILTIN_TASKS` now, included in getSyncState/applySyncState like
    everything else, and ticking one off removes it outright (see
    onTaskCheckClick) the same way a custom task does. */
-let BUILTIN_TASKS = [
-  {id:'demo-harvest-courgette', date:'2026-09-15', kind:'harvest', itemId:'courgette', year:2026, targets:['A7','A8'], gotoPage:'patch', title:'Harvest courgette/marrow before they get woody', due:'A7–A8, due now'},
-  {id:'demo-earth-up-leeks', date:'2026-09-20', kind:'done', targets:['B9','B10'], gotoPage:'patch', title:'Earth up leeks as they thicken', due:'B9–B10, this week'},
-  {id:'demo-pot-on-brussels', date:'2026-09-22', kind:'done', targets:['WS1'], gotoPage:'overview', title:'Pot on Brussels sprout seedlings from the windowsill tray', due:'Windowsill tray, next few days'},
-  {id:'demo-sow-onion-sets', date:'2026-09-28', kind:'sow', rows:['A9','A10'], year:2026, targets:['A9','A10'], gotoPage:'plan', title:'Sow overwintering onion sets', due:'A9–A10, from 28 Sep'},
-  // kind:'move' relocates a crop from one part of the Live Status page to
-  // another (see applyMoveEffect) -- unlike 'done', ticking this one edits
-  // A/B/POTS/GREENHOUSE_TRAYS so the Veg Patch page reflects the move.
-  {id:'demo-move-cucumber-greenhouse', date:'2026-10-10', kind:'move', moveType:'potToGreenhouse', movePot:'Pot 1', targets:['Pot 1'], gotoPage:'patch', title:'Bring the cucumber pot into the greenhouse before first chill', due:'Pot 1, by 10 Oct'},
-];
+let BUILTIN_TASKS = [];
 const GOTO_PAGE_NAMES = {patch:'Veg Patch', plan:'Plan', overview:'Overview'};
 function renderOverviewTasks(){
   const ul = document.getElementById('overview-tasks');
@@ -3291,11 +3169,6 @@ function describeRepeat(r){
 }
 
 function openAddTaskEventForm(anchorBtn, kind){
-  document.querySelectorAll('.volunteer-form').forEach(f=>f.remove());
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
   const noun = kind === 'event' ? 'event' : 'task';
   // Repeat is an event-only concept for now -- a task is a one-off thing
   // to do and gets ticked off (see onTaskCheckClick), which doesn't map
@@ -3322,16 +3195,15 @@ function openAddTaskEventForm(anchorBtn, kind){
         '</span></label>'+
       '</div>'
     : '';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Add '+noun.charAt(0).toUpperCase()+noun.slice(1)+'</strong>'+
     '<label>Title<input type="text" id="atf-title" placeholder="e.g. Order seed potatoes"></label>'+
     '<label>Description<input type="text" id="atf-desc" placeholder="Optional detail"></label>'+
     '<label>'+(kind==='event'?'Start date':'Target date')+'<input type="date" id="atf-date" value="'+todayISODate()+'"></label>'+
     repeatFields+
     '<label>Location (if applicable)<input type="text" id="atf-loc" placeholder="Optional"></label>'+
-    '<div class="row"><button class="save">Add '+noun+'</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">Add '+noun+'</button><button class="cancel" type="button">Cancel</button></div>');
+  const rect = anchorBtn.getBoundingClientRect(); // re-used below to re-clamp position after fields resize
   form.querySelector('#atf-title').focus();
   if(kind === 'event'){
     const unitSel = form.querySelector('#atf-repeat-unit');
@@ -3372,14 +3244,8 @@ function openAddTaskEventForm(anchorBtn, kind){
     };
     if(kind === 'event'){ custom_events.push(entry); renderCustomEvents(); }
     else { custom_tasks.push(entry); renderOverviewTasks(); }
-    form.remove();
+    close();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 
 function renderCustomEvents(){
@@ -3614,89 +3480,7 @@ const PLAN_ROWS = ['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','B1','B2',
    Several varieties of the same species share a `species` value
    (used for the sprite art and for companion/rotation matching).
    ============================================================ */
-let INVENTORY = [
-  {id:'frenchbean',      species:'frenchbean',   name:'French Beans', variety:'',                    sow:[3,7],  harvest:[7,10], spacing:25, sun:'Full sun',            good:['tomato','courgette','cabbage'],  bad:['onion'],   stock:'open',   comments:'Climbing variety — needs canes by early June. Sow/harvest window and spacing updated from the seed box.'},
-  {id:'beetroot',        species:'beetroot',     name:'Beetroot',     variety:'Cylindra',            sow:[4,6],  harvest:[7,10], spacing:12, sun:'Full sun',            good:['onion','cabbage','leek'],        bad:['frenchbean'], stock:'sealed', comments:'Bolted in the 2025 heatwave — try a slightly later sowing this year. Sow/harvest window and spacing updated from the seed box.'},
-  {id:'courgette',       species:'courgette',    name:'Courgette',    variety:'Marrow',              sow:[3,5],  harvest:[7,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'open',   comments:'Sow window updated from the seed box.'},
-  {id:'cabbage',         species:'cabbage',      name:'Cabbage',      variety:'',                    sow:[3,4],  harvest:[6,7],  spacing:30, sun:'Full sun',            good:['beetroot','onion','frenchbean'], bad:['tomato'],  stock:'none',   comments:'Sow/harvest window and spacing updated from the seed box.'},
-  {id:'onion',           species:'onion',        name:'Onion',        variety:'',                    sow:[2,4],  harvest:[8,9],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage','leek'],     bad:['frenchbean'], stock:'sealed', comments:'Harvest window tuned for Norfolk — maincrop bulb onions are usually still bulking in Jul and ready once the tops fall over in Aug/Sep.'},
-  {id:'squash',          species:'squash',       name:'Squash',       variety:'',                    sow:[3,5],  harvest:[8,10], spacing:90, sun:'Full sun',            good:['frenchbean','sweetcorn'],        bad:[],          stock:'sealed', comments:'Sow window updated from the seed box.'},
-  {id:'brusselsprout',   species:'brusselsprout',name:'Brussel Sprout',variety:'',                   sow:[2,4],  harvest:[9,12], spacing:60, sun:'Full sun',            good:['onion','beetroot'],              bad:[],          stock:'open',   comments:'Sow/harvest window updated from the seed box.'},
-  {id:'sorrel',          species:'sorrel',       name:'Sorrel',       variety:'',                    sow:[4,5],  harvest:[6,9],  spacing:30, sun:'Part shade',          good:['cabbage','leek'],                bad:[],          stock:'sealed', comments:'Sow/harvest window updated from the seed box.'},
-  {id:'leek',            species:'leek',         name:'Leek',         variety:'Musselburgh',         sow:[2,4],  harvest:[9,12], spacing:15, sun:'Full sun',            good:['beetroot','carrot','onion'],     bad:[],          stock:'open',   comments:'Harvest window tuned for Norfolk — Musselburgh stands well into early winter here.'},
-  {id:'tomato_cherry',   species:'tomato',       name:'Tomato',       variety:'Red Cherry',          sow:[3,4],  harvest:[8,10], spacing:50, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'open',   comments:'Reliable, heavy cropper — the one to bulk-sow. Sow/harvest window and spacing updated from the seed box.'},
-  {id:'tomato_beefsteak',species:'tomato',       name:'Tomato',       variety:'Beefsteak',           sow:[2,3],  harvest:[8,10], spacing:60, sun:'Full sun',            good:['frenchbean','onion','basil'],    bad:['cabbage'], stock:'sealed', comments:'First time growing this one — needs sturdier stakes than the cherry. Sow window tuned for Norfolk — beefsteaks need the longest indoor start to ripen before the first Oct frost.'},
-  {id:'cucumber',        species:'cucumber',     name:'Cucumber',     variety:'Wisconsin',           sow:[5,7],  harvest:[7,10], spacing:20, sun:'Full sun, sheltered', good:['frenchbean','onion'],            bad:[],          stock:'open',   comments:'Sow/harvest window and spacing updated from the seed box.'},
-  {id:'garlic',          species:'garlic',       name:'Garlic',       variety:'',                    sow:[10,11],harvest:[6,7],  spacing:15, sun:'Full sun',            good:['beetroot','sorrel'],             bad:['frenchbean'], stock:'sealed', comments:'Sow window tuned for Norfolk — Oct/Nov planting suits the region\'s well-drained soil better than an early Sep start.', overwinters:true},
-  {id:'broadbean',       species:'broadbean',    name:'Broad Beans',  variety:'Aquadulce Claudia',   sow:[10,11],harvest:[5,6],  spacing:20, sun:'Full sun',            good:['cabbage','potato'],              bad:[],          stock:'none',   comments:'Aquadulce Claudia is bred for autumn sowing — Norfolk\'s drier, well-drained soil suits overwintering it better than damper parts of the UK.', overwinters:true},
-  {id:'onionsets',       species:'onion',        name:'Onion',        variety:'Overwintering sets',  sow:[9,10], harvest:[6,7],  spacing:10, sun:'Full sun',            good:['beetroot','cabbage'],            bad:['frenchbean'], stock:'sealed', comments:'', overwinters:true, sprite:'onion'},
-  {id:'carrot',          species:'carrot',       name:'Carrot',       variety:'',                    sow:[3,7],  harvest:[6,10], spacing:5,  sun:'Full sun',            good:['onion','leek'],                  bad:[],          stock:'sealed', comments:'Harvest window tuned for Norfolk — the region\'s light, sandy soils are classic carrot-growing ground and roots size up quickly.'},
-  {id:'radish',          species:'radish',       name:'Radish',       variety:'',                    sow:[3,8],  harvest:[4,9],  spacing:5,  sun:'Full sun',            good:['cucumber','peas'],               bad:[],          stock:'open',   comments:''},
-  {id:'spinach',         species:'spinach',      name:'Spinach',      variety:'',                    sow:[3,8],  harvest:[5,10], spacing:15, sun:'Part shade',          good:['brusselsprout','onion'],         bad:[],          stock:'none',   comments:'Sow window tuned for Norfolk — the region\'s dry, sunny summers push spinach to bolt fast, so it does best sown early and again in late summer rather than mid-summer.'},
-  {id:'peas',            species:'peas',         name:'Peas',         variety:'',                    sow:[2,6],  harvest:[6,9],  spacing:5,  sun:'Full sun',            good:['carrot','radish'],               bad:['onion'],   stock:'sealed', comments:'Sow window tuned for Norfolk — mild springs here often allow an under-cover Feb sowing.'},
-  {id:'sweetcorn',       species:'sweetcorn',    name:'Sweetcorn',    variety:'',                    sow:[4,5],  harvest:[8,9],  spacing:35, sun:'Full sun',            good:['courgette','squash'],            bad:[],          stock:'none',   comments:'Norfolk\'s reliably sunny, dry summers are some of the best sweetcorn-growing conditions in the UK.'},
-
-  /* ---------- added from the seed-box inventory table (flowers excluded; see
-     README/chat note) -- rows that duplicated an item already above (plain
-     "Spinach", plain "Pea") were left out rather than added a second time.
-     Anything below with no min-spacing/planting dates on the packet gets a
-     sow/harvest window estimated and tuned for Norfolk's climate (mild,
-     dry, temperate-maritime East Anglia; last spring frost ~late April,
-     first autumn frost ~mid/late October) rather than being left out of
-     the Plan page entirely -- flagged in its comments as an estimate. ---------- */
-  {id:'pepper_hungarianyellow', species:'pepper', name:'Pepper', variety:'Hungarian Yellow', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'pepper_redcalifornia', species:'pepper', name:'Pepper', variety:'Red California', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'pepper_yellowcalifornia', species:'pepper', name:'Pepper', variety:'Yellow California', sow:[2,3], harvest:[8,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'pumpkin_bigmax', species:'pumpkin', name:'Pumpkin', variety:'Big Max', sow:[4,5], harvest:[9,10], spacing:200, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'tomato_marmande', species:'tomato', name:'Tomato', variety:'Marmande', sow:[2,3], harvest:[8,10], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'tomato_romavf', species:'tomato', name:'Tomato', variety:'Roma VF', sow:[2,3], harvest:[8,9], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'watermelon_sugarbaby', species:'watermelon', name:'Watermelon', variety:'Sugar Baby', sow:[4,5], harvest:[8,9], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'basil', species:'basil', name:'Basil', variety:'', sow:[4,5], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'basil_darkopal', species:'basil', name:'Basil', variety:'Dark Opal', sow:[4,5], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'coriander', species:'coriander', name:'Coriander', variety:'', sow:[3,8], harvest:[5,10], spacing:15, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'dill', species:'dill', name:'Dill', variety:'', sow:[4,7], harvest:[6,9], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'parsley', species:'parsley', name:'Parsley', variety:'', sow:[3,7], harvest:[6,10], spacing:20, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'rocket', species:'rocket', name:'Rocket', variety:'', sow:[3,9], harvest:[5,10], spacing:15, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'rosemary', species:'rosemary', name:'Rosemary', variety:'', sow:[4,5], harvest:[6,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'thyme', species:'thyme', name:'Thyme', variety:'', sow:[4,5], harvest:[6,9], spacing:30, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'artichoke', species:'artichoke', name:'Artichoke', variety:'', sow:[2,3], harvest:[7,9], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'aubergine_longpurple', species:'aubergine', name:'Aubergine', variety:'Long Purple', sow:[2,3], harvest:[7,9], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'beetroot_plain', species:'beetroot', name:'Beetroot', variety:'', sow:[3,7], harvest:[6,10], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:''},
-  {id:'beetroot_bordo237', species:'beetroot', name:'Beetroot', variety:'Bordo 237', sow:[3,7], harvest:[6,10], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'blackradish_spanishround', species:'radish', name:'Black Radish', variety:'Spanish Round', sow:[6,7], harvest:[10,12], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'broccoli_ramoso', species:'broccoli', name:'Broccoli', variety:'Ramoso', sow:[3,6], harvest:[7,10], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'brusselsprout_redbull', species:'brusselsprout', name:'Brussel Sprout', variety:'Red Bull', sow:[3,4], harvest:[10,12], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'carrot_amsterdam2', species:'carrot', name:'Carrot', variety:'Amsterdam 2', sow:[2,7], harvest:[5,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'carrot_chantenay', species:'carrot', name:'Carrot', variety:'Chantenay', sow:[3,7], harvest:[7,10], spacing:8, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'carrot_flyawayf1', species:'carrot', name:'Carrot', variety:'Flyaway F1', sow:[4,7], harvest:[7,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'carrot_nantes2', species:'carrot', name:'Carrot', variety:'Nantes 2', sow:[3,7], harvest:[6,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'cauliflower_earlysnowball', species:'cauliflower', name:'Cauliflower', variety:'Early Snowball', sow:[2,3], harvest:[6,7], spacing:50, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'celery', species:'celery', name:'Celery', variety:'', sow:[2,3], harvest:[8,10], spacing:25, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'chicory_redballaverto', species:'chicory', name:'Chicory', variety:'Red Ball Averto', sow:[5,7], harvest:[9,11], spacing:25, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'courgette_plain', species:'courgette', name:'Courgette', variety:'', sow:[4,6], harvest:[7,10], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'courgette_goldendelight', species:'courgette', name:'Courgette', variety:'Golden Delight', sow:[4,6], harvest:[7,10], spacing:90, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'cucumber_cornichondeparis', species:'cucumber', name:'Cucumber', variety:'Cornichon de Paris', sow:[5,6], harvest:[7,9], spacing:40, sun:'Full sun, sheltered', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'fennel_romanesco', species:'fennel', name:'Fennel', variety:'Romanesco', sow:[6,7], harvest:[9,10], spacing:25, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'kale', species:'kale', name:'Kale', variety:'', sow:[4,6], harvest:[10,3], spacing:45, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
-  {id:'leek_autumngiant', species:'leek', name:'Leek', variety:'Autumn Giant', sow:[2,4], harvest:[9,12], spacing:15, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'lettuce_grandrapids', species:'lettuce', name:'Lettuce', variety:'Grand Rapids', sow:[3,8], harvest:[5,10], spacing:20, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'lettuce_iceberg3', species:'lettuce', name:'Lettuce', variety:'Iceberg 3', sow:[4,7], harvest:[7,10], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'lettuce_iceberg', species:'lettuce', name:'Lettuce', variety:'Iceberg', sow:[4,7], harvest:[7,10], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'lettuce_lollorosia', species:'lettuce', name:'Lettuce', variety:'Lollo Rosia', sow:[3,8], harvest:[5,10], spacing:25, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'longradish_whiteicicle', species:'radish', name:'Long Radish', variety:'White Icicle', sow:[3,8], harvest:[4,9], spacing:8, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'onion_debrunswick', species:'onion', name:'Onion', variety:'De Brunswick', sow:[3,4], harvest:[8,9], spacing:10, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'parsnip', species:'parsnip', name:'Parsnip', variety:'', sow:[3,4], harvest:[10,3], spacing:12, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
-  {id:'radish_saxa2', species:'radish', name:'Radish', variety:'Saxa 2', sow:[3,8], harvest:[4,9], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'rhubarbchard', species:'rhubarbchard', name:'Rhubarb Chard', variety:'', sow:[4,7], harvest:[6,11], spacing:30, sun:'Part shade', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'runnerbean', species:'runnerbean', name:'Runner Bean', variety:'', sow:[5,6], harvest:[7,10], spacing:20, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'springonion', species:'springonion', name:'Spring Onion', variety:'', sow:[3,8], harvest:[5,10], spacing:5, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-  {id:'sweetcorn_goldenbantam', species:'sweetcorn', name:'Sweet Corn', variety:'Golden Bantam', sow:[4,5], harvest:[8,9], spacing:35, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.'},
-
-  /* ---------- additional overwintering crops (2026-09) ---------- */
-  {id:'broccoli_purplesprouting', species:'broccoli', name:'Broccoli', variety:'Purple Sprouting', sow:[4,5], harvest:[1,4], spacing:60, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Sown late spring and transplanted out in summer, then stands through winter for a late-winter/early-spring pick — the reward for the longest wait of anything in the plot. Planting window estimated and tuned for Norfolk\'s climate.', overwinters:true},
-  {id:'cabbage_spring', species:'cabbage', name:'Cabbage', variety:'Spring (April)', sow:[8,9], harvest:[3,5], spacing:30, sun:'Full sun', good:['beetroot','onion','frenchbean'], bad:['tomato'], stock:'sealed', comments:'Autumn-sown so it overwinters as a small plant and hearts up in spring, well before the summer-sown cabbage above is anywhere near ready. Planting window estimated and tuned for Norfolk\'s climate.', overwinters:true},
-  {id:'swede', species:'swede', name:'Swede', variety:'', sow:[5,6], harvest:[10,2], spacing:30, sun:'Full sun', good:[], bad:[], stock:'sealed', comments:'Left in the ground and lifted through winter as needed rather than harvested all at once. Planting window estimated and tuned for Norfolk\'s climate (no spacing/dates on the packet) — check against your own packet when handy.', overwinters:true},
-];
+let INVENTORY = [];
 let INV = {};
 function rebuildInvIndex(){ INV = {}; INVENTORY.forEach(it=>{ INV[it.id]=it; }); }
 rebuildInvIndex();
@@ -3707,6 +3491,10 @@ function getItem(id){
   if(bySpecies) return {...bySpecies, id, variety:''};
   return {id, name:'(removed seed)', variety:'', species:'tomato', sow:[1,1], harvest:[1,1], spacing:30, sun:'', good:[], bad:[]};
 }
+// Two display forms for a "name (+ variety)" label, used across inventory
+// <option> lists and planted-tile labels respectively.
+function invLabel(it){ return it.name + (it.variety ? ' — '+it.variety : ''); }
+function invLabelParen(it){ return it.name + (it.variety ? ' ('+it.variety+')' : ''); }
 const NOT_OWNED_NAMES = {basil:'Basil', potato:'Potato'};
 
 function spriteFor(id){ const it=getItem(id); return it.sprite || it.species; }
@@ -3942,7 +3730,7 @@ function renderInventory(){
 
     const back = document.createElement('div'); back.className = 'inv-card inv-card-face back';
     back.innerHTML =
-      '<div class="inv-back-head"><b>'+item.name+(item.variety?' — '+item.variety:'')+'</b>'+
+      '<div class="inv-back-head"><b>'+invLabel(item)+'</b>'+
         '<button class="inv-icon-btn" title="Back to card" data-flip-for="'+item.id+'">Done</button></div>'+
       '<textarea placeholder="Notes on this variety — sowing quirks, pests, how it did last year…" data-comment-for="'+item.id+'">'+item.comments+'</textarea>';
 
@@ -3974,7 +3762,7 @@ function renderInventory(){
   el.querySelectorAll('[data-delete-for]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const item = getItem(btn.dataset.deleteFor);
-      if(item.comments && !confirm('"'+item.name+(item.variety?' ('+item.variety+')':'')+'" has notes saved on it. Delete it anyway?')) return;
+      if(item.comments && !confirm('"'+invLabelParen(item)+'" has notes saved on it. Delete it anyway?')) return;
       INVENTORY = INVENTORY.filter(it=>it.id!==item.id);
       rebuildInvIndex();
       renderInventory();
@@ -4027,26 +3815,8 @@ function submitAddForm(ev){
 // via markPlanted() when a sow tick (Overview task or the Plan block's own
 // ○/✓ control) is clicked. start/end are still the *planned* month window;
 // plantedOn (when present) is what the record actually happened on.
-const plan_data = {
-  2026: {
-    pots: ['Pot 1'],
-    plantings: {
-      A1:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'}, A2:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'},
-      A3:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'}, A4:{itemId:'frenchbean', start:5, end:9, plantedOn:'18 May 2026'},
-      A5:{itemId:'beetroot', start:4, end:8, plantedOn:'22 Apr 2026'},   A6:{itemId:'beetroot', start:4, end:8, plantedOn:'22 Apr 2026'},
-      A7:{itemId:'courgette', start:5, end:10, plantedOn:'9 May 2026'}, A8:{itemId:'courgette', start:5, end:10, plantedOn:'9 May 2026'},
-      A9:{itemId:'onion', start:2, end:8},      A10:{itemId:'onion', start:2, end:8}, // not yet ticked -- matches the pending Overview task
-      B1:{itemId:'sorrel', start:5, end:10, plantedOn:'14 May 2026'},    B2:{itemId:'sorrel', start:5, end:10, plantedOn:'14 May 2026'},
-      B4:{itemId:'garlic', start:10, end:20},   // Oct 2026 -> Aug 2027: carries into next year's plan
-      B7:{itemId:'brusselsprout', start:3, end:12, plantedOn:'2 Mar 2026'}, B8:{itemId:'brusselsprout', start:3, end:12, plantedOn:'2 Mar 2026'},
-      B9:{itemId:'leek', start:2, end:11, plantedOn:'25 Feb 2026'},      B10:{itemId:'leek', start:2, end:11, plantedOn:'25 Feb 2026'},
-      'Pot 1':{itemId:'cucumber', start:6, end:9, plantedOn:'30 Jun 2026'}, // planted a month late on purpose -- shows the warning
-    },
-    clearedCarry: {},
-  },
-  2027: { pots: [], plantings: {}, clearedCarry: {} },
-};
-let plan_year = 2026;
+const plan_data = { [today.getFullYear()]: {pots:[], plantings:{}, clearedCarry:{}} };
+let plan_year = today.getFullYear();
 function getYearData(y){
   if(!plan_data[y]) plan_data[y] = {pots:[], plantings:{}, clearedCarry:{}};
   return plan_data[y];
@@ -4319,7 +4089,7 @@ function showCompanionPanel(itemId){
   const notOwned = m.good.filter(k=>!ownsSpecies(k));
   const label = k=> INVENTORY.find(it=>it.species===k) ? (INVENTORY.find(it=>it.species===k).name) : (NOT_OWNED_NAMES[k]||k);
   el.innerHTML =
-    '<h3>Companion Suggestions — '+m.name+(m.variety?' ('+m.variety+')':'')+'</h3>'+
+    '<h3>Companion Suggestions — '+invLabelParen(m)+'</h3>'+
     '<div class="companion-grid">'+
       '<div><h4>You Already Grow</h4><ul class="companion-list">'+
         (owned.length ? owned.map(k=>'<li><span class="dot"></span>'+label(k)+'</li>').join('') : '<li style="color:var(--m-text-dim)">None from your current inventory</li>')+
@@ -4487,7 +4257,7 @@ function onPlanDragCancel(){
    yourself (harvest log, issue log, notes, compost) -- nothing here is
    an invented placeholder.
    ============================================================ */
-let stats_year = 2026;
+let stats_year = today.getFullYear();
 function setStatsYear(y){
   stats_year = y;
   renderYearTabs();
@@ -4611,7 +4381,7 @@ function renderStatsHarvestLog(){
     const head = document.createElement('div'); head.className='stats-harvest-head';
     const sw = document.createElement('div'); sw.className='sprite-wrap';
     sw.appendChild(buildSpriteEl(spriteFor(itemId), 'mature', 26));
-    const nm = document.createElement('b'); nm.textContent = item.name + (item.variety ? ' — '+item.variety : '');
+    const nm = document.createElement('b'); nm.textContent = invLabel(item);
     const tot = document.createElement('span'); tot.className='stats-harvest-total'; tot.textContent = totalsParts.join(' · ');
     head.appendChild(sw); head.appendChild(nm); head.appendChild(tot);
     box.appendChild(head);
@@ -4648,25 +4418,18 @@ function renderStatsHarvestLog(){
 // or omitted to log a new one. The crop is fixed once an entry exists; a
 // changed date re-files the entry under that date's year.
 function openStatsHarvestForm(anchorBtn, editing){
-  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
   const existing = editing ? getHarvestYearLog(stats_year)[editing.itemId][editing.index] : null;
-  const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
-  form.innerHTML =
+  const options = INVENTORY.map(it=>'<option value="'+it.id+'">'+invLabel(it)+'</option>').join('');
+  const {form, close} = openPopover(anchorBtn,
     '<strong>'+(editing?'Edit Harvest':'Log a Harvest')+' &mdash; '+stats_year+'</strong>'+
     (editing
-      ? '<p class="confirm-msg">'+getItem(editing.itemId).name+(getItem(editing.itemId).variety?' — '+getItem(editing.itemId).variety:'')+'</p>'
+      ? '<p class="confirm-msg">'+invLabel(getItem(editing.itemId))+'</p>'
       : '<label>Crop<select id="shf-item">'+options+'</select></label>')+
     '<label>Weight (g)<input type="number" inputmode="numeric" min="0" step="1" id="shf-weight" placeholder="e.g. 220" value="'+(existing&&existing.weight?existing.weight:'')+'"></label>'+
     '<label>Count<input type="number" inputmode="numeric" min="0" step="1" id="shf-qty" placeholder="e.g. 4" value="'+(existing&&existing.qty?existing.qty:'')+'"></label>'+
     '<label>Date<input type="date" id="shf-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
     '<label>Comments (optional)<textarea id="shf-comment" rows="2" placeholder="e.g. a bit slug-nibbled, or first pick of the year">'+(existing&&existing.comment?existing.comment:'')+'</textarea></label>'+
-    '<div class="row"><button class="save">'+(editing?'Save':'Log harvest')+'</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">'+(editing?'Save':'Log harvest')+'</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('.save').addEventListener('click', ()=>{
     const itemId = editing ? editing.itemId : form.querySelector('#shf-item').value;
     const weight = parseFloat(form.querySelector('#shf-weight').value);
@@ -4680,16 +4443,10 @@ function openStatsHarvestForm(anchorBtn, editing){
     const yLog = getHarvestYearLog(year);
     if(!yLog[itemId]) yLog[itemId] = [];
     yLog[itemId].push(entry);
-    form.remove();
+    close();
     if(year !== stats_year){ showToast('Saved under '+year+' (the year of its date).'); renderYearTabs(); }
     renderStats();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 /* ---------- Shared confirm-delete popover for a single log entry ----------
    Same fixed-position, click-outside-dismiss popover as everywhere else,
@@ -4697,24 +4454,11 @@ function openStatsHarvestForm(anchorBtn, editing){
    might actually want back, so deleting one still gets a confirmation
    step rather than vanishing on the first click. */
 function confirmDeleteEntry(anchorBtn, message, onConfirm){
-  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>Delete This Entry?</strong>'+
     '<p class="confirm-msg">'+message+'</p>'+
-    '<div class="row"><button class="save" style="background:#b3453a;">Yes, delete</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
-  form.querySelector('.save').addEventListener('click', ()=>{ form.remove(); onConfirm(); });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
+    '<div class="row"><button class="save" style="background:#b3453a;">Yes, delete</button><button class="cancel" type="button">Cancel</button></div>');
+  form.querySelector('.save').addEventListener('click', ()=>{ close(); onConfirm(); });
 }
 
 /* ---------- Most-grown crops (scoped to the selected year) ---------- */
@@ -4802,24 +4546,17 @@ function renderStatsEventLog(){
 // omitted to log a new one. Any field can change; a changed date re-files
 // the entry under that date's year.
 function openStatsEventForm(anchorBtn, editing){
-  document.querySelectorAll('.volunteer-form, .action-menu').forEach(f=>f.remove());
-  const rect = anchorBtn.getBoundingClientRect();
-  const form = document.createElement('div');
-  form.className = 'volunteer-form';
-  form.style.position = 'fixed';
   const existing = (editing!==undefined && editing!==null) ? getEventYearLog(stats_year)[editing] : null;
-  const options = INVENTORY.map(it=>'<option value="'+it.id+'"'+(existing&&existing.itemId===it.id?' selected':'')+'>'+it.name+(it.variety?' — '+it.variety:'')+'</option>').join('');
+  const options = INVENTORY.map(it=>'<option value="'+it.id+'"'+(existing&&existing.itemId===it.id?' selected':'')+'>'+invLabel(it)+'</option>').join('');
   const typeOptions = ['late','failed','missed'].map(t=>'<option value="'+t+'"'+(existing&&existing.type===t?' selected':'')+'>'+({late:'Late',failed:'Failed',missed:'Missed planting'}[t])+'</option>').join('');
-  form.innerHTML =
+  const {form, close} = openPopover(anchorBtn,
     '<strong>'+(existing?'Edit Issue':'Log an Issue')+' &mdash; '+stats_year+'</strong>'+
     '<label>Type<select id="sef-type">'+typeOptions+'</select></label>'+
     '<label>Crop<select id="sef-item">'+options+'</select></label>'+
     '<label>Note<input type="text" id="sef-note" placeholder="What happened?" value="'+(existing&&existing.note?existing.note.replace(/"/g,'&quot;'):'')+'"></label>'+
     '<label>Category<select id="sef-cat">'+issueCategoryOptions(existing ? existing.category : 'other')+'</select></label>'+
     '<label>Date<input type="date" id="sef-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
-    '<div class="row"><button class="save">'+(existing?'Save':'Log issue')+'</button><button class="cancel" type="button">Cancel</button></div>';
-  document.body.appendChild(form);
-  positionPopoverForm(form, rect);
+    '<div class="row"><button class="save">'+(existing?'Save':'Log issue')+'</button><button class="cancel" type="button">Cancel</button></div>');
   if(!existing) wireCategoryGuess(form, '#sef-note', '#sef-cat');
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#sef-type').value;
@@ -4831,17 +4568,11 @@ function openStatsEventForm(anchorBtn, editing){
     if(existing) getEventYearLog(stats_year).splice(editing, 1);
     const year = yearOfDisplayDate(date);
     getEventYearLog(year).push(entry);
-    form.remove();
+    close();
     if(year !== stats_year){ showToast('Saved under '+year+' (the year of its date).'); renderYearTabs(); }
     renderStats();
     renderLookOutFor();
   });
-  form.querySelector('.cancel').addEventListener('click', ()=> form.remove());
-  setTimeout(()=>{
-    document.addEventListener('click', function outside(e){
-      if(!form.contains(e.target) && e.target!==anchorBtn){ form.remove(); document.removeEventListener('click', outside); }
-    });
-  },0);
 }
 
 /* ---------- Compost Day status + per-year notes ---------- */
@@ -4986,6 +4717,18 @@ function getSyncState(){
     windowsill_trays: WINDOWSILL_TRAYS,
   };
 }
+// Snapshot of the untouched, empty app state: pushes that would write this over a saved row are refused.
+const PRISTINE_JSON = JSON.stringify(getSyncState());
+let savedRowHadData = false;
+function setLoadBanner(show){
+  let el = document.getElementById('sync-load-banner');
+  if(!show){ if(el) el.remove(); return; }
+  if(el) return;
+  el = document.createElement('div'); el.id = 'sync-load-banner'; el.setAttribute('role','alert');
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:.6rem 1rem;text-align:center;background:#b3261e;color:#fff;font-weight:600;';
+  el.textContent = "Couldn't load your saved data — retrying. What you see is empty; don't make changes until this clears.";
+  document.body.appendChild(el);
+}
 // One-off clean-up: the example harvests/issue/volunteer entry that used to
 // ship as defaults were synced up by earlier versions. Only exact matches go.
 const OLD_EXAMPLES = {
@@ -4993,8 +4736,19 @@ const OLD_EXAMPLES = {
             ['courgette','2 Jul 2026',1200,4],['courgette','16 Jul 2026',1450,5]],
   issue: ['radish','30 Apr 2026','Slugs took the whole first sowing in April.'],
   volunteer: ['A5','10 Jun 2026',2],
+  // Greenhouse/windowsill example trays (exact n + label + note), and the task that pointed at WS1.
+  trays: {
+    greenhouse_trays: [['GH1','Tomato (Red Cherry)','Sown 4 Mar · ready to pot on'],['GH2','Cucumber (Wisconsin)','Sown 12 May · hardening off']],
+    windowsill_trays: [['WS1','Brussels Sprout (x6)','Windowsill tray · sown 3 Mar · true leaves forming']],
+  },
+  task: 'demo-pot-on-brussels',
 };
 function stripOldExampleData(s){
+  Object.entries(OLD_EXAMPLES.trays).forEach(([key, list])=>{
+    if(Array.isArray(s[key])) s[key] = s[key].filter(t=> !list.some(([n, label, note])=> t.n === n && t.label === label && t.note === note));
+  });
+  if(Array.isArray(s.builtin_tasks) && !(s.windowsill_trays||[]).some(t=>t.n==='WS1'))
+    s.builtin_tasks = s.builtin_tasks.filter(t=> t.id !== OLD_EXAMPLES.task);
   const h = s.harvest_log && s.harvest_log[2026];
   if(h) OLD_EXAMPLES.harvest.forEach(([id, date, w, q])=>{
     if(Array.isArray(h[id])){
@@ -5074,6 +4828,7 @@ async function pushIfChanged(){
   if(!sb || !syncUserId || !syncReady) return;
   const json = JSON.stringify(getSyncState());
   if(json === lastSyncedJSON) return;
+  if(savedRowHadData && json === PRISTINE_JSON) return; // never overwrite saved data with the empty app
   lastSyncedJSON = json;
   setSyncStatus('saving');
   const { error } = await sb.from(SYNC_TABLE).upsert({
@@ -5098,9 +4853,12 @@ async function startApp(session){
   if(error){
     // Retry rather than start pushing unsynced local state over the saved row.
     setSyncStatus('error');
+    setLoadBanner(true);
     setTimeout(()=>{ if(syncUserId === session.user.id && !syncReady) startApp(session); }, 15000);
     return;
   }
+  setLoadBanner(false);
+  savedRowHadData = !!(data && data.data && Object.keys(data.data).length);
   if(data && data.data) applySyncState(data.data);
   setSyncStatus('saved');
   lastSyncedJSON = JSON.stringify(getSyncState());
