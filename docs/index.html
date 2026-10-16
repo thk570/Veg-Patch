@@ -415,6 +415,10 @@ body[data-style="pixel"] .stats-rank-bar-wrap, body[data-style="pixel"] .stats-r
   font-size:.65rem; font-weight:800; cursor:pointer; padding:0;
 }
 .log-kebab:hover{ background:var(--m-surface-2); }
+.lookout-acts{ flex:none; display:inline-flex; gap:.3rem; margin-left:.5rem; align-self:center; }
+.lookout-act{ font-family:var(--font-mono); font-size:.66rem; padding:.15rem .45rem; border-radius:5px; border:1px solid var(--m-border); background:var(--m-surface); color:var(--m-text-dim); cursor:pointer; }
+.lookout-act:hover{ background:var(--m-surface-2); }
+@media (max-width:480px){ .lookout-row{ flex-wrap:wrap; } .lookout-acts{ margin:.35rem 0 0; } }
 body[data-style="pixel"] .stats-harvest-head .sprite-wrap{ background:var(--p-sky); border:2px solid var(--p-text); border-radius:0; }
 body[data-style="pixel"] .stats-harvest-item{ border-bottom:2px dotted var(--p-text); }
 
@@ -1154,8 +1158,17 @@ body[data-style="pixel"] .mobile-scroll-hint{ color:var(--p-text-dim); }
    and ship. The header tag and the Settings -> Changelog panel both read from here.
    Entries marked `approx` were back-filled from the project history; their dates
    are best estimates. */
-const APP_VERSION = '2.1.1';
+const APP_VERSION = '2.2.1';
 const CHANGELOG = [
+  {v:'2.2.1', date:'2026-10-16', title:'Treated issues stay for 14 days', changed:[
+    'A Disease or Pest issue marked Treated now stays in Look Out For for 14 days (it was 7) as a reminder to re-check.']},
+  {v:'2.2.0', date:'2026-10-16', title:'Disease & pest issues, calmer Look Out For', added:[
+    'Two new issue types, Disease and Pest. Disease offers Blight or Other fungal/disease; Pest offers Slugs & snails or Aphids & other pests.',
+    'Disease and Pest issues start as Open and stay in Look Out For until you mark them Treated or Resolved (buttons on the Look Out For row, and in the issue menu on the Stats page). Treated issues stay for 7 days as a reminder to re-check, then drop off.',
+    'Mildew Risk now appears for courgettes, cucumbers, squash, pumpkins, watermelon and peas planted outdoors, not just for a greenhouse or a logged fungal issue.'],
+    changed:[
+    'Late, Failed and Missed Planting issues no longer appear in Look Out For. They stay on the Issues list and Stats page as a record.',
+    'Resolved Disease and Pest issues no longer trigger blight, mildew, slug or aphid alerts.']},
   {v:'2.1.1', date:'2026-10-15', title:'Clean-up code removed', changed:[
     'Removed the one-off routine that cleaned old example data (example harvests, issue, trays and the pot-on task) out of your saved data on every load. Your data is confirmed clean, so it is no longer needed and the app loads your saved data exactly as it is.']},
   {v:'2.1.0', date:'2026-10-15', title:'Versioning & changelog', added:[
@@ -2375,6 +2388,7 @@ function refreshVolunteerAlert(){
    points, tunable later. */
 const TENDER_SPECIES = new Set(['tomato','cucumber','courgette','squash','pumpkin','pepper','aubergine','frenchbean','runnerbean','sweetcorn','basil','watermelon']);
 const BLIGHT_SPECIES = new Set(['tomato','potato']);
+const MILDEW_SPECIES = new Set(['courgette','cucumber','squash','pumpkin','watermelon','peas']);
 const SLUG_SPECIES = new Set(['lettuce','cabbage','kale','spinach','rocket','broccoli','cauliflower','brusselsprout','rhubarbchard','sorrel','frenchbean','runnerbean','peas','courgette','squash','pumpkin','basil','chicory','celery']);
 const TALL_SPECIES = new Set(['brusselsprout','runnerbean','sweetcorn','broadbean','peas','tomato','frenchbean','artichoke','kale','broccoli']);
 const ISSUE_RECENT_DAYS = 60;
@@ -2530,7 +2544,8 @@ function computeWeatherAlerts(){
 
   // Mildew / grey mould: a humid, still spell, mostly a greenhouse problem.
   const fungalLogged = recentIssues('fungal', ISSUE_RECENT_DAYS);
-  if(greenhouse.length || fungalLogged.length){
+  const mildewHosts = outdoor.filter(p=> MILDEW_SPECIES.has(p.s.species));
+  if(greenhouse.length || mildewHosts.length || fungalLogged.length){
     const spell = findSpell(d=>{
       const idx = hoursOfDay(d.date);
       return mean(idx.map(k=> h.relative_humidity_2m[k])) >= 85 && d.windMax <= 15;
@@ -2538,6 +2553,7 @@ function computeWeatherAlerts(){
     if(spell){
       let text = 'Humid, still spell '+dayRange(spell[0], spell[1])+', ideal for mildew and grey mould.';
       text += greenhouse.length ? ' Ventilate the greenhouse during the day, water in the morning at the base, and clear fallen leaves.' : ' Water in the morning at the base and clear fallen leaves.';
+      if(mildewHosts.length) text += ' Watch '+describePlantings(mildewHosts)+' for white powdery patches.'+(fungalLogged.length ? '' : treatmentTip('apply a preventative treatment'));
       if(fungalLogged.length) text += ' A fungal issue was logged recently on '+describeIssues(fungalLogged)+'.'+treatmentTip('treat it');
       alerts.push({pill:'Mildew Risk', cls:'info', text});
     }
@@ -2564,7 +2580,7 @@ function computeWeatherAlerts(){
 
   // A good treatment day, flagged on its own if an issue is still recent and no alert above covered it.
   const treatable = [...blightLogged, ...fungalLogged, ...pestLogged].filter(e=>{
-    const d = parseDisplayDate(e.date); return d && (today - d)/86400000 <= 21;
+    const d = parseDisplayDate(e.date); return d && e.status !== 'treated' && (today - d)/86400000 <= 21;
   });
   if(treatable.length && !alerts.some(a=> /Best window/.test(a.text))){
     const d = goodTreatmentDay();
@@ -2575,20 +2591,25 @@ function computeWeatherAlerts(){
 }
 
 /* ---------- Overview "Look Out For" ----------
-   Weather alerts first, then issues logged in the last two weeks (older
-   ones stay on the Stats page), then the volunteer-potato alert. */
-const LOOKOUT_RECENT_DAYS = 14;
-const LOOKOUT_TYPE_PILL = {
-  failed: {cls:'warn', label:'Failed'},
-  missed: {cls:'warn', label:'Missed Planting'},
-  late:   {cls:'info', label:'Late'},
-};
-function lookoutRow(pillLabel, pillCls, text){
+   Weather alerts first, then Disease and Pest issues that are still open (or
+   treated within the last 14 days, as a re-check reminder), then the
+   volunteer-potato alert. Late / Failed / Missed Planting are records of what
+   already happened, so they live on the Stats page only. */
+function lookoutRow(pillLabel, pillCls, text, actions){
   const row = document.createElement('div'); row.className = 'event lookout-row';
   const span = document.createElement('span');
   const p = document.createElement('span'); p.className = 'pill '+pillCls; p.textContent = pillLabel;
   span.append(p, ' '+text);
   row.appendChild(span);
+  if(actions && actions.length){
+    const acts = document.createElement('span'); acts.className = 'lookout-acts';
+    actions.forEach(a=>{
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'lookout-act'; b.textContent = a.label;
+      b.addEventListener('click', a.onClick);
+      acts.appendChild(b);
+    });
+    row.appendChild(acts);
+  }
   return row;
 }
 function renderLookOutFor(){
@@ -2599,18 +2620,25 @@ function renderLookOutFor(){
   const add = row=> volunteerAlert ? el.insertBefore(row, volunteerAlert) : el.appendChild(row);
   const alerts = computeWeatherAlerts();
   alerts.forEach(a=> add(lookoutRow(a.pill, a.cls, a.text)));
-  const recent = getEventYearLog(today.getFullYear())
-    .map(ev=> ({ev, d: parseDisplayDate(ev.date)}))
-    .filter(x=> x.d && (today - x.d)/86400000 >= 0 && (today - x.d)/86400000 <= LOOKOUT_RECENT_DAYS)
+  const active = [today.getFullYear()-1, today.getFullYear()]
+    .flatMap(y=> event_log[y] || [])
+    .filter(isActiveIssue)
+    .map(ev=> ({ev, d: parseDisplayDate(ev.date) || 0}))
     .sort((a,b)=> b.d - a.d);
-  recent.forEach(({ev})=>{
-    const pill = LOOKOUT_TYPE_PILL[ev.type] || {cls:'info', label:ev.type};
-    add(lookoutRow(pill.label, pill.cls, getItem(ev.itemId).name+' ('+(ISSUE_CATEGORY_LABEL[ev.category] || 'Other')+')'+(ev.note ? ' — '+ev.note : '')+' ('+ev.date+')'));
+  active.forEach(({ev})=>{
+    const t = ISSUE_TYPES[ev.type];
+    const treated = issueStatus(ev) === 'treated';
+    const text = getItem(ev.itemId).name+' ('+(ISSUE_CATEGORY_LABEL[ev.category] || 'Other')+')'+(ev.note ? ' — '+ev.note : '')+' ('+ev.date+')'
+      + (treated ? ' · Treated '+ev.treatedOn+', re-check soon' : '');
+    const actions = treated
+      ? [{label:'Resolved', onClick:()=> setIssueStatus(ev,'resolved')}, {label:'Reopen', onClick:()=> setIssueStatus(ev,'open')}]
+      : [{label:'Treated', onClick:()=> setIssueStatus(ev,'treated')}, {label:'Resolved', onClick:()=> setIssueStatus(ev,'resolved')}];
+    add(lookoutRow(t.label, t.pill, text, actions));
   });
   refreshVolunteerAlert();
   const hasVolunteer = !!(volunteerAlert && !volunteerAlert.hidden);
   const empty = document.getElementById('lookout-empty');
-  if(empty) empty.hidden = alerts.length > 0 || recent.length > 0 || hasVolunteer;
+  if(empty) empty.hidden = alerts.length > 0 || active.length > 0 || hasVolunteer;
 }
 
 /* ============================================================
@@ -2628,7 +2656,8 @@ function todayDateString(){ return isoDateToDisplay(todayISODate()); }
 let harvest_log = { [today.getFullYear()]: {} };
 function getHarvestYearLog(y){ if(!harvest_log[y]) harvest_log[y] = {}; return harvest_log[y]; }
 
-// event_log[year] = [{type:'late'|'failed'|'missed', category, itemId, note, date}]
+// event_log[year] = [{type:'late'|'failed'|'missed'|'disease'|'pest', category, itemId, note, date,
+//   status?:'open'|'treated'|'resolved' (disease/pest only), treatedOn?:date}]
 let event_log = { [today.getFullYear()]: [] };
 function getEventYearLog(y){ if(!event_log[y]) event_log[y] = []; return event_log[y]; }
 // Year a "D Mon YYYY" date belongs to, so a log lands in the year it happened.
@@ -2637,8 +2666,38 @@ function yearOfDisplayDate(d){
   return iso ? parseInt(iso.slice(0,4), 10) : today.getFullYear();
 }
 
+/* ---------- issue types ----------
+   late / failed / missed are records of what happened. disease / pest are
+   things to act on: they carry a status (open -> treated -> resolved) and
+   only offer the categories that make sense for them. */
+const ISSUE_TYPES = {
+  late:    {label:'Late',            pill:'info'},
+  failed:  {label:'Failed',          pill:'warn'},
+  missed:  {label:'Missed Planting', pill:'warn'},
+  disease: {label:'Disease',         pill:'warn'},
+  pest:    {label:'Pest',            pill:'warn'},
+};
+const TREATABLE_CATEGORIES = {disease:['blight','fungal'], pest:['slugs','pests']};
+const TREATED_RECHECK_DAYS = 14;
+function issueTypeOptions(selected){
+  return Object.entries(ISSUE_TYPES).map(([id,t])=>'<option value="'+id+'"'+(id === selected ? ' selected' : '')+'>'+t.label+'</option>').join('');
+}
+// null for records (late/failed/missed); open/treated/resolved for disease and pest.
+function issueStatus(e){ return TREATABLE_CATEGORIES[e.type] ? (e.status || 'open') : null; }
+function isActiveIssue(e){
+  const st = issueStatus(e);
+  if(st === 'open') return true;
+  if(st === 'treated'){ const d = parseDisplayDate(e.treatedOn); return !!d && (today - d)/86400000 <= TREATED_RECHECK_DAYS; }
+  return false;
+}
+function setIssueStatus(e, status){
+  e.status = status;
+  if(status === 'treated') e.treatedOn = todayDateString(); else delete e.treatedOn;
+  renderLookOutFor();
+  if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
 /* ---------- issue categories ----------
-   Every issue carries a fixed category (on top of late/failed/missed) so
+   Every issue carries a fixed category (on top of its type) so
    weather-driven advice can target what's actually been a problem. Older
    free-text issues are categorised once by keyword match on their note. */
 const ISSUE_CATEGORIES = [
@@ -2668,22 +2727,33 @@ function categoriseLegacyIssues(){
     if(!ISSUE_CATEGORY_LABEL[e.category]) e.category = guessIssueCategory(e.note);
   }));
 }
-function issueCategoryOptions(selected){
-  return ISSUE_CATEGORIES.map(c=>'<option value="'+c.id+'"'+(c.id === selected ? ' selected' : '')+'>'+c.label+'</option>').join('');
+function issueCategoryOptions(selected, type){
+  const allowed = TREATABLE_CATEGORIES[type];
+  return ISSUE_CATEGORIES.filter(c=> !allowed || allowed.includes(c.id)).map(c=>'<option value="'+c.id+'"'+(c.id === selected ? ' selected' : '')+'>'+c.label+'</option>').join('');
 }
-// Pre-selects a category from the note as it's typed, until one is picked by hand.
-function wireCategoryGuess(form, noteSel, catSel){
-  const note = form.querySelector(noteSel), cat = form.querySelector(catSel);
+// Keeps the category list matched to the chosen type (Disease/Pest only offer their own),
+// and, for new issues, pre-selects a category from the note as it's typed until one is picked by hand.
+function wireIssueForm(form, typeSel, noteSel, catSel, guess){
+  const type = form.querySelector(typeSel), note = form.querySelector(noteSel), cat = form.querySelector(catSel);
   let picked = false;
   cat.addEventListener('change', ()=>{ picked = true; });
-  note.addEventListener('input', ()=>{ if(!picked) cat.value = guessIssueCategory(note.value); });
+  type.addEventListener('change', ()=>{
+    const keep = cat.value, allowed = TREATABLE_CATEGORIES[type.value];
+    cat.innerHTML = issueCategoryOptions(keep, type.value);
+    if(allowed && !allowed.includes(keep)){ const g = guessIssueCategory(note.value); cat.value = allowed.includes(g) ? g : allowed[0]; }
+  });
+  if(guess) note.addEventListener('input', ()=>{
+    if(picked) return;
+    const g = guessIssueCategory(note.value), allowed = TREATABLE_CATEGORIES[type.value];
+    if(!allowed || allowed.includes(g)) cat.value = g;
+  });
 }
 // Issues of one category logged in the last `days` days, newest first.
 function recentIssues(category, days){
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - days);
   return [today.getFullYear()-1, today.getFullYear()]
     .flatMap(y=> event_log[y] || [])
-    .filter(e=> e.category === category)
+    .filter(e=> e.category === category && e.status !== 'resolved')
     .map(e=> ({e, d: parseDisplayDate(e.date)}))
     .filter(x=> x.d && x.d >= cutoff && x.d <= today)
     .sort((a,b)=> b.d - a.d)
@@ -2888,19 +2958,21 @@ function openIssueForm(anchorBtn, sectionId){
   const item = getItem(itemId);
   const {form, close} = openPopover(anchorBtn,
     '<strong>Log an Issue &mdash; '+sectionId+' ('+item.name+')</strong>'+
-    '<label>Type<select id="ivf-type"><option value="late">Late</option><option value="failed">Failed</option><option value="missed">Missed planting</option></select></label>'+
+    '<label>Type<select id="ivf-type">'+issueTypeOptions('late')+'</select></label>'+
     '<label>Note<input type="text" id="ivf-note" placeholder="e.g. Slug nibbling on lower leaves"></label>'+
-    '<label>Category<select id="ivf-cat">'+issueCategoryOptions('other')+'</select></label>'+
+    '<label>Category<select id="ivf-cat">'+issueCategoryOptions('other','late')+'</select></label>'+
     '<label>Date<input type="date" id="ivf-date" value="'+todayISODate()+'"></label>'+
     '<div class="row"><button class="save">Log issue</button><button class="cancel" type="button">Cancel</button></div>');
   form.querySelector('#ivf-note').focus();
-  wireCategoryGuess(form, '#ivf-note', '#ivf-cat');
+  wireIssueForm(form, '#ivf-type', '#ivf-note', '#ivf-cat', true);
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#ivf-type').value;
     const note = form.querySelector('#ivf-note').value.trim();
     const category = form.querySelector('#ivf-cat').value;
     const date = isoDateToDisplay(form.querySelector('#ivf-date').value) || todayDateString();
-    getEventYearLog(yearOfDisplayDate(date)).push({type, category, itemId, note, date});
+    const entry = {type, category, itemId, note, date};
+    if(TREATABLE_CATEGORIES[type]) entry.status = 'open';
+    getEventYearLog(yearOfDisplayDate(date)).push(entry);
     close();
     showToast('Issue logged for '+sectionId+' ('+item.name+').');
     renderLookOutFor();
@@ -4622,7 +4694,12 @@ function renderStatsCropRank(){
   });
 }
 
-/* ---------- Late / failed / missed log ---------- */
+/* ---------- Issues log (late / failed / missed / disease / pest) ---------- */
+function statusSuffix(e){
+  const st = issueStatus(e);
+  if(!st) return '';
+  return ' · '+(st === 'open' ? 'Open' : st === 'treated' ? 'Treated '+(e.treatedOn||'') : 'Resolved');
+}
 function renderStatsEventLog(){
   const el = document.getElementById('stats-event-log');
   if(!el) return;
@@ -4637,15 +4714,13 @@ function renderStatsEventLog(){
     el.appendChild(p);
     return;
   }
-  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed Planting'};
-  const typePill = {late:'info', failed:'warn', missed:'warn'};
   entries.forEach(({e,i})=>{
     const item = getItem(e.itemId);
     const row = document.createElement('div'); row.className='event';
     const left = document.createElement('span');
-    const pill = document.createElement('span'); pill.className = 'pill '+(typePill[e.type]||'info'); pill.textContent = typeLabel[e.type]||e.type;
+    const pill = document.createElement('span'); pill.className = 'pill '+(ISSUE_TYPES[e.type]?.pill||'info'); pill.textContent = ISSUE_TYPES[e.type]?.label||e.type;
     left.appendChild(pill);
-    left.appendChild(document.createTextNode(' '+item.name+' ('+(ISSUE_CATEGORY_LABEL[e.category] || 'Other')+')'+(e.note ? ' — '+e.note : '')));
+    left.appendChild(document.createTextNode(' '+item.name+' ('+(ISSUE_CATEGORY_LABEL[e.category] || 'Other')+')'+(e.note ? ' — '+e.note : '')+statusSuffix(e)));
     const right = document.createElement('span'); right.className='d'; right.style.display='inline-flex'; right.style.alignItems='center'; right.style.gap='.35rem';
     const dateSpan = document.createElement('span'); dateSpan.textContent = e.date;
     right.appendChild(dateSpan);
@@ -4653,7 +4728,14 @@ function renderStatsEventLog(){
     kebab.textContent = '⋮';
     kebab.addEventListener('click', (ev)=>{
       ev.stopPropagation();
+      const st = issueStatus(e);
+      const statusActions = !st ? [] : [
+        ...(st === 'open' ? [{label:'Mark treated', onClick:()=> setIssueStatus(e,'treated')}] : []),
+        ...(st !== 'resolved' ? [{label:'Mark resolved', onClick:()=> setIssueStatus(e,'resolved')}] : []),
+        ...(st !== 'open' ? [{label:'Reopen', onClick:()=> setIssueStatus(e,'open')}] : []),
+      ];
       openActionMenu(kebab, [
+        ...statusActions,
         {label:'Edit', onClick:()=> openStatsEventForm(kebab, i)},
         {label:'Delete', onClick:()=> confirmDeleteEntry(kebab, 'Removes the '+e.date+' issue logged for '+item.name+'.', ()=>{
           getEventYearLog(stats_year).splice(i,1);
@@ -4673,16 +4755,16 @@ function renderStatsEventLog(){
 function openStatsEventForm(anchorBtn, editing){
   const existing = (editing!==undefined && editing!==null) ? getEventYearLog(stats_year)[editing] : null;
   const options = INVENTORY.map(it=>'<option value="'+it.id+'"'+(existing&&existing.itemId===it.id?' selected':'')+'>'+invLabel(it)+'</option>').join('');
-  const typeOptions = ['late','failed','missed'].map(t=>'<option value="'+t+'"'+(existing&&existing.type===t?' selected':'')+'>'+({late:'Late',failed:'Failed',missed:'Missed planting'}[t])+'</option>').join('');
+  const typeOptions = issueTypeOptions(existing ? existing.type : 'late');
   const {form, close} = openPopover(anchorBtn,
     '<strong>'+(existing?'Edit Issue':'Log an Issue')+' &mdash; '+stats_year+'</strong>'+
     '<label>Type<select id="sef-type">'+typeOptions+'</select></label>'+
     '<label>Crop<select id="sef-item">'+options+'</select></label>'+
     '<label>Note<input type="text" id="sef-note" placeholder="What happened?" value="'+(existing&&existing.note?existing.note.replace(/"/g,'&quot;'):'')+'"></label>'+
-    '<label>Category<select id="sef-cat">'+issueCategoryOptions(existing ? existing.category : 'other')+'</select></label>'+
+    '<label>Category<select id="sef-cat">'+issueCategoryOptions(existing ? existing.category : 'other', existing ? existing.type : 'late')+'</select></label>'+
     '<label>Date<input type="date" id="sef-date" value="'+(existing?displayDateToISO(existing.date):todayISODate())+'"></label>'+
     '<div class="row"><button class="save">'+(existing?'Save':'Log issue')+'</button><button class="cancel" type="button">Cancel</button></div>');
-  if(!existing) wireCategoryGuess(form, '#sef-note', '#sef-cat');
+  wireIssueForm(form, '#sef-type', '#sef-note', '#sef-cat', !existing);
   form.querySelector('.save').addEventListener('click', ()=>{
     const type = form.querySelector('#sef-type').value;
     const itemId = form.querySelector('#sef-item').value;
@@ -4690,6 +4772,7 @@ function openStatsEventForm(anchorBtn, editing){
     const category = form.querySelector('#sef-cat').value;
     const date = isoDateToDisplay(form.querySelector('#sef-date').value) || todayDateString();
     const entry = {type, category, itemId, note, date};
+    if(TREATABLE_CATEGORIES[type]){ entry.status = (existing && existing.status) || 'open'; if(existing && existing.treatedOn) entry.treatedOn = existing.treatedOn; }
     if(existing) getEventYearLog(stats_year).splice(editing, 1);
     const year = yearOfDisplayDate(date);
     getEventYearLog(year).push(entry);
@@ -4751,10 +4834,9 @@ function exportStatsCSV(){
       rows.push(['Harvest', item.name, item.variety||'', e.date, e.weight||'', e.qty||'', '', '', e.comment||'']);
     });
   });
-  const typeLabel = {late:'Late', failed:'Failed', missed:'Missed Planting'};
   getEventYearLog(stats_year).forEach(e=>{
     const item = getItem(e.itemId);
-    rows.push(['Issue', item.name, item.variety||'', e.date, '', '', typeLabel[e.type]||e.type, ISSUE_CATEGORY_LABEL[e.category]||'', e.note||'']);
+    rows.push(['Issue', item.name, item.variety||'', e.date, '', '', ISSUE_TYPES[e.type]?.label||e.type, ISSUE_CATEGORY_LABEL[e.category]||'', e.note||'']);
   });
   const notes = stats_notes[stats_year];
   if(notes && notes.trim()) rows.push(['Notes','','','','','','','', notes]);
